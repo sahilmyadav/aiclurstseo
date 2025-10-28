@@ -54,8 +54,25 @@ app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
 
+// Test routes
 app.get('/', (req, res) => {
-    res.json({ status: 'ok', service: 'backend' });
+    res.json({ 
+        status: 'ok', 
+        service: 'backend',
+        message: 'Server is running!',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Test API route
+app.get('/api/status', (req, res) => {
+    res.json({
+        status: 'success',
+        message: 'API is working!',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development',
+        version: '1.0.0'
+    });
 });
 
 // DB and server start
