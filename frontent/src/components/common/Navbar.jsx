@@ -43,7 +43,7 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center justify-between md:justify-around gap-4 lg:gap-10 space-x-4 lg:space-x-8 font-medium">
             <Link to="/" className="text-sm font-normal text-black hover:text-indigo-600">Home</Link>
-            <Link to="/dashboard" className="text-sm font-normal text-black hover:text-indigo-600">Dashboard</Link>
+            {isAuthenticated && <Link to="/dashboard" className="text-sm font-normal text-black hover:text-indigo-600">Dashboard</Link>}
             <Link to="/reviews" className="text-sm font-normal text-black hover:text-indigo-600">Reviews</Link>
             <Link to="/seo-dashboard" className="text-sm font-normal text-black hover:text-indigo-600">SEO</Link>
             <Link to="/analytics-dashboard" className="text-sm font-normal text-black hover:text-indigo-600">Analytics</Link>
@@ -103,7 +103,7 @@ const Navbar = () => {
           <nav className="space-y-1">
             {[
               { name: 'Home', path: '/' },
-              { name: 'Dashboard', path: '/dashboard' },
+              ...(isAuthenticated ? [{ name: 'Dashboard', path: '/dashboard' }] : []),
               { name: 'Reviews', path: '/reviews' },
               { name: 'SEO', path: '/seo-dashboard' },
               { name: 'Analytics', path: '/analytics-dashboard' },

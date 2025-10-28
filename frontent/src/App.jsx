@@ -25,11 +25,11 @@ import MakeReview from './pages/MakeReview'
 const AppContent = () => {
   const location = useLocation()
   const isDashboardRoute = location.pathname.startsWith('/dashboard')
-  const isReviewRoute = location.pathname.startsWith('/review')
+  // const isReviewRoute = location.pathname.startsWith('/review')
 
   return (
     <>
-      {!isDashboardRoute && !isReviewRoute && <Navbar />}
+      {!isDashboardRoute  && <Navbar />}
       <Toaster richColors position="top-center" />
 
       <Routes>
