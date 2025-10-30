@@ -50,13 +50,9 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
             <FaGoogle className="text-blue-300 text-lg" />
           </div>
           <div>
-            <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex items-center">
               <span className="text-blue-300 text-xs font-medium bg-blue-500/20 px-2.5 py-1 rounded-full border border-blue-400/20">
                 {displayBusinessName}
-              </span>
-              <span className="text-xs text-white/40">•</span>
-              <span className="text-xs text-white/60 bg-white/5 px-2 py-1 rounded-full">
-                {getDisplayStatus(post.status)}
               </span>
             </div>
           </div>
