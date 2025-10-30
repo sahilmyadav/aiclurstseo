@@ -201,7 +201,7 @@ const Audit = () => {
 
       if (response.success && response.audit) {
         setAIInsights(response.audit);
-        toast.success(`✨ AI insights generated! Analyzed ${response.reviewCount || reviews.length} reviews`);
+        toast.success(`✨ AI insights generated!`);
         // Start 30-second cooldown timer
         setCooldownTimer(30);
       } else {
@@ -211,7 +211,7 @@ const Audit = () => {
       console.error('Insights generation error:', error);
       const errorMessage = error.message || 'Failed to generate AI insights';
       setInsightsError(errorMessage);
-      toast.error(errorMessage);
+      // toast.error(errorMessage);
     } finally {
       setInsightsLoading(false);
     }

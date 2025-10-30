@@ -7,6 +7,7 @@ const API_BASE_URL = 'https://generativelanguage.googleapis.com/v1';
 export const generateAuditAnalysis = async (reviews, businessName) => {
   console.log(' [AUDIT] Starting AI-powered review analysis...');
   
+  
   try {
     if (!reviews || !reviews.length) {
       throw new Error('No reviews available for analysis');

@@ -1,82 +1,42 @@
-import axios from 'axios';
-import { getAuth } from 'firebase/auth';
 import { useEffect, useState } from 'react';
-import { FaPaperPlane, FaPhone, FaUpload, FaUser } from 'react-icons/fa';
+import { FaPaperPlane, FaPhone, FaUpload, FaUser, FaSpinner } from 'react-icons/fa';
 import { toast } from 'sonner';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from './context/AuthContext';
+import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import BulkUploadComponent from './BulkUploadComponent';
 
 const SMSComponent = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
+  const { businesses, loading: businessesLoading, selectedBusiness, fetchBusinesses } = useGoogleBusiness();
+  
   const [formData, setFormData] = useState({
     businessId: '',
     customerName: '',
     customerPhone: ''
   });
-  const [showBulkUpload, setShowBulkUpload] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [businesses, setBusinesses] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const BACKEND_URL = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
-
+  const [showBulkUpload, setShowBulkUpload] = useState(false);
+  const BACKEND_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || "http://localhost:8000";
+  
+  // Set the selected business when businesses are loaded or changed
   useEffect(() => {
-    const fetchGoogleBusinesses = async () => {
-      try {
-        const auth = getAuth();
-        const currentUser = auth.currentUser;
-        
-        if (!currentUser) {
-          throw new Error('No authenticated user found. Please log in again.');
-        }
-        
-        // Get fresh token
-        const token = await currentUser.getIdToken(true);
-        
-        // Fetch Google businesses
-        const response = await fetch(`${BACKEND_URL}/auth/google/businesses`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          credentials: 'include'
-        });
-        
-        if (response.status === 401) {
-          throw new Error('Authentication failed. Please reconnect your Google account.');
-        }
-        
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || `Failed to fetch Google businesses: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        const googleBusinesses = data.businesses || [];
-        setBusinesses(googleBusinesses);
-        
-        // Auto-select first business if available
-        if (googleBusinesses.length > 0) {
-          setFormData(prev => ({
-            ...prev,
-            businessId: googleBusinesses[0].name // Using Google business name as ID
-          }));
-        } else {
-          toast.info('No Google businesses found. Please connect your Google My Business account.');
-        }
-      } catch (error) {
-        console.error('Error fetching Google businesses:', error);
-        toast.error(error.message || 'Failed to load Google business information. Please ensure you have connected your Google account.');
-      } finally {
-        setIsLoading(false);
+    if (businesses.length > 0) {
+      // If there's a selectedBusiness, use that, otherwise use the first business
+      const businessToSelect = selectedBusiness || businesses[0];
+      if (businessToSelect) {
+        setFormData(prev => ({
+          ...prev,
+          businessId: businessToSelect.id || '',
+          businessName: businessToSelect.title || businessToSelect.locationName || 'Selected Business'
+        }));
       }
-    };
-
-    if (user) {
-      fetchGoogleBusinesses();
-    } else {
-      setIsLoading(false);
     }
-  }, [user]);
+  }, [businesses, selectedBusiness]);
+  
+  // Format business name for display
+  const getBusinessDisplayName = (business) => {
+    return business?.title || business?.locationName || 'Business Location';
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -89,66 +49,82 @@ const SMSComponent = () => {
   const handleSendSMS = async (e) => {
     e.preventDefault();
     
-    if (!formData.businessId || !formData.customerPhone || !formData.customerName) {
-      toast.error("Please fill in all fields");
+    if (!formData.businessId) {
+      toast.error("Please select a business");
+      return;
+    }
+    
+    if (!formData.customerName?.trim()) {
+      toast.error("Please enter customer name");
       return;
     }
 
     const phoneRegex = /^\+?[1-9]\d{9,14}$/;
-    if (!phoneRegex.test(formData.customerPhone)) {
-      toast.error("Please enter a valid phone number");
+    const phoneNumber = formData.customerPhone.replace(/[^\d+]/g, '');
+    
+    if (!phoneRegex.test(phoneNumber)) {
+      toast.error("Please enter a valid phone number with country code (e.g., +1 for US)");
+      return;
+    }
+
+    if (!token) {
+      toast.error("Authentication error. Please sign in again.");
       return;
     }
 
     setIsSending(true);
     try {
-      const auth = getAuth();
-      const currentUser = auth.currentUser;
-      if (!currentUser) throw new Error('No authenticated user found');
-      
-      const token = await currentUser.getIdToken();
-      
-      const response = await axios.post(
-        '/api/invitations/sms',
-        {
-          businessId: formData.businessId,
-          customerPhone: formData.customerPhone,
-          customerName: formData.customerName
+      const response = await fetch(`${BACKEND_URL}/api/sms/invite`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          withCredentials: true
-        }
-      );
-      
-      if (response.status === 200 || response.status === 201) {
-        toast.success("SMS invitation sent successfully!");
-        setFormData(prev => ({
-          ...prev,
-          customerName: "",
-          customerPhone: ""
-        }));
-      } else {
-        throw new Error(`Unexpected status code: ${response.status}`);
+        body: JSON.stringify({
+          businessId: formData.businessId,
+          customerName: formData.customerName.trim(),
+          customerPhone: phoneNumber,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send SMS invitation');
       }
+
+      toast.success(data.message || "SMS invitation sent successfully!");
+      setFormData(prev => ({
+        ...prev,
+        customerName: '',
+        customerPhone: ''
+      }));
     } catch (error) {
-      console.error("Error sending SMS:", error);
-      const errorMessage = error.response?.data?.error || 
-                         error.message || 
-                         "Failed to send SMS invitation";
-      toast.error(errorMessage);
+      console.error('Error sending SMS invitation:', error);
+      toast.error(error.message);
     } finally {
       setIsSending(false);
     }
   };
 
-  if (isLoading) {
+  if (businessesLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
+      <div className="flex items-center justify-center h-64">
+        <FaSpinner className="animate-spin text-2xl text-purple-500" />
+      </div>
+    );
+  }
+
+  if (!businesses || businesses.length === 0) {
+    return (
+      <div className="text-center p-8">
+        <p className="text-gray-600 mb-4">No Google Business accounts found.</p>
+        <button
+          onClick={() => window.open('/dashboard/integrations', '_blank')}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
+        >
+          Connect Google Business
+        </button>
       </div>
     );
   }
@@ -188,33 +164,30 @@ const SMSComponent = () => {
         ) : (
           <form onSubmit={handleSendSMS} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label htmlFor="businessId" className="block text-sm font-medium text-gray-300 mb-1">
-                  Select Google Business
+              <div className="mb-4">
+                <label htmlFor="businessId" className="block text-sm font-medium text-gray-700 mb-1">
+                  Select Business
                 </label>
                 <select
                   id="businessId"
                   name="businessId"
                   value={formData.businessId}
                   onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 [&_option]:bg-gray-800 [&_option]:text-white"
+                  disabled={businessesLoading}
                   required
                 >
+                  <option value="">Select a business</option>
                   {businesses.map((business) => (
-                    <option key={business.name} value={business.name}>
-                      {business.title}
+                    <option key={business.id} value={business.id}>
+                      {getBusinessDisplayName(business)}
                     </option>
                   ))}
                 </select>
-                {businesses.length === 0 && (
-                  <p className="text-xs text-yellow-400 mt-1">
-                    No Google businesses found. Please connect your Google My Business account in Integrations.
-                  </p>
-                )}
               </div>
               <div>
                 <label htmlFor="customerName" className="block text-sm font-medium text-gray-300 mb-1">
-                  Customer Name
+                  Customer Name (Optional)
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -228,13 +201,12 @@ const SMSComponent = () => {
                     onChange={handleInputChange}
                     placeholder="John Doe"
                     className="w-full pl-10 px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    required
                   />
                 </div>
               </div>
-              <div>
+              <div className="md:col-span-2">
                 <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-300 mb-1">
-                  Customer Phone Number
+                  Phone Number <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -251,6 +223,7 @@ const SMSComponent = () => {
                     required
                   />
                 </div>
+                <p className="text-xs text-gray-400 mt-1">Include country code (e.g., +1 for US)</p>
               </div>
             </div>
 
@@ -258,18 +231,11 @@ const SMSComponent = () => {
               <button
                 type="submit"
                 disabled={isSending || businesses.length === 0}
-                className={`flex items-center justify-center w-full md:w-auto px-6 py-2.5 rounded-md text-white font-medium ${
-                  isSending || businesses.length === 0
-                    ? 'bg-indigo-400 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700'
-                } transition-colors`}
+                className="w-full flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isSending ? (
                   <>
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
+                    <FaSpinner className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
                     Sending...
                   </>
                 ) : (
@@ -288,23 +254,15 @@ const SMSComponent = () => {
         <h2 className="text-xl font-semibold mb-4">SMS Preview</h2>
         <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
           <p className="text-gray-300 mb-4">
-            <span className="font-medium">To:</span> {formData.customerPhone || '[Customer Phone]'}
+            Hi {formData.customerName || 'there'}, we'd love your feedback! Please take a moment to leave us a review: [Review Link]
           </p>
-          <div className="bg-gray-700 p-4 rounded-lg">
-            <p className="text-white">
-              Hi {formData.customerName || 'there'},<br /><br />
-              We'd love to hear your feedback about your recent experience with us. Could you take a moment to leave us a review?
-              <br /><br />
-              <a href="#" className="text-indigo-400 hover:underline">
-                Click here to leave your review
-              </a>
-              <br /><br />
-              Thank you for being a valued customer!
-              <br /><br />
-              Best regards,<br />
-              {businesses.find(b => b.name === formData.businessId)?.title || 'Our Team'}
-            </p>
-          </div>
+          <p className="text-sm text-gray-400">
+            Sent from: {businesses.find(b => b.id === formData.businessId)?.name || 'Our Business'}
+          </p>
+          <p className="mt-2 text-sm text-gray-400">
+            Best regards,<br />
+            {businesses.find(b => b.id === formData.businessId)?.name || 'Our Team'}
+          </p>
         </div>
       </div>
     </div>

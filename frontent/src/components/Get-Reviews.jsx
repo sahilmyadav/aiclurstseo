@@ -1,7 +1,19 @@
-import React, { useState } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import QRCodeComponent from "./QRCodeComponent";
+import { FaSpinner } from "react-icons/fa";
 
-const InboxMessage = () => {
+// Lazy load components for better performance
+const SMSComponent = lazy(() => import("./SMSComponent"));
+const EmailComponent = lazy(() => import("./EmailComponent"));
+
+// Loading component for suspense fallback
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center h-64">
+    <FaSpinner className="animate-spin text-2xl text-purple-500" />
+  </div>
+);
+
+const GetReviews = () => {
   const [activeTab, setActiveTab] = useState('sms');
 
   return (
@@ -44,20 +56,18 @@ const InboxMessage = () => {
 
         <main className="flex-1 px-2 sm:px-6 pb-2 sm:pb-6 overflow-y-auto">
           <div className="h-full">
-            {activeTab === 'sms' && (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center p-8 bg-[#1a1433] rounded-lg">
-                  <h3 className="text-2xl font-bold mb-2">Coming Soon</h3>
+            <Suspense fallback={<LoadingSpinner />}>
+              {activeTab === 'sms' && (
+                <div className="h-full">
+                  <SMSComponent />
                 </div>
-              </div>
-            )}
-            {activeTab === 'email' && (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center p-8 bg-[#1a1433] rounded-lg">
-                  <h3 className="text-2xl font-bold mb-2">Coming Soon</h3>
+              )}
+              {activeTab === 'email' && (
+                <div className="h-full">
+                  <EmailComponent />
                 </div>
-              </div>
-            )}
+              )}
+            </Suspense>
             {activeTab === 'qrcode' && <QRCodeComponent />}
           </div>
         </main>
@@ -66,4 +76,4 @@ const InboxMessage = () => {
   );
 };
 
-export default InboxMessage;
+export default GetReviews;

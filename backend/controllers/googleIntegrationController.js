@@ -5,10 +5,10 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // OAuth2 Client Configuration
-console.log('🔧 Google OAuth Configuration:');
-console.log('   └─ Client ID:', process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Missing');
-console.log('   └─ Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Missing');
-console.log('   └─ Redirect URI:', process.env.GOOGLE_REDIRECT_URI || 'http://localhost:8000/auth/google/google-callback');
+// console.log('🔧 Google OAuth Configuration:');
+// console.log('   └─ Client ID:', process.env.GOOGLE_CLIENT_ID ? 'Set' : 'Missing');
+// console.log('   └─ Client Secret:', process.env.GOOGLE_CLIENT_SECRET ? 'Set' : 'Missing');
+// console.log('   └─ Redirect URI:', process.env.GOOGLE_REDIRECT_URI || 'http://localhost:8000/auth/google/google-callback');
 
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
@@ -18,10 +18,10 @@ const oauth2Client = new OAuth2Client(
 
 // Helper function to get valid bearer token
 async function getBearerToken() {
-  console.log('🔑 Retrieving Google access token...');
+  // console.log('🔑 Retrieving Google access token...');
   
   if (!global.googleTokens) {
-    console.error('❌ No Google tokens available');
+    // console.error('❌ No Google tokens available');
     throw new Error("No tokens available");
   }
   
@@ -29,15 +29,15 @@ async function getBearerToken() {
   const expiryDate = global.googleTokens.expiry_date;
   
   if (expiryDate && Date.now() >= expiryDate) {
-    console.warn('⚠️  Access token has expired');
-    console.log('   └─ Expired at:', new Date(expiryDate).toISOString());
+    // console.warn('⚠️  Access token has expired');
+    // console.log('   └─ Expired at:', new Date(expiryDate).toISOString());
     
     if (global.googleTokens.refresh_token) {
-      console.log('🔄 Attempting to refresh token...');
+      // console.log('🔄 Attempting to refresh token...');
       try {
         const { credentials } = await oauth2Client.refreshAccessToken();
         global.googleTokens = credentials;
-        console.log('✅ Token refreshed successfully');
+        // console.log('✅ Token refreshed successfully');
         return credentials.access_token;
       } catch (refreshError) {
         console.error('❌ Failed to refresh token:', refreshError.message);
@@ -56,9 +56,9 @@ async function getBearerToken() {
 // 🚀 Initiate Google OAuth Login
 export const initiateGoogleLogin = async (req, res) => {
   const requestId = req.requestId || Date.now().toString(36);
-  console.log(`🚀 [${requestId}] Google OAuth Login initiated`);
-  console.log(`   └─ IP: ${req.ip}`);
-  console.log(`   └─ User-Agent: ${req.get('User-Agent')?.substring(0, 100) || 'Unknown'}`);
+  // console.log(`🚀 [${requestId}] Google OAuth Login initiated`);
+  // console.log(`   └─ IP: ${req.ip}`);
+  // console.log(`   └─ User-Agent: ${req.get('User-Agent')?.substring(0, 100) || 'Unknown'}`);
   
   const scopes = [
     "https://www.googleapis.com/auth/business.manage",
@@ -75,8 +75,8 @@ export const initiateGoogleLogin = async (req, res) => {
     scope: scopes,
   });
   
-  console.log(`🔗 [${requestId}] Generated auth URL (length: ${authUrl.length})`);
-  console.log(`   └─ Redirecting to Google OAuth...`);
+  // console.log(`🔗 [${requestId}] Generated auth URL (length: ${authUrl.length})`);
+  // console.log(`   └─ Redirecting to Google OAuth...`);
   
   res.redirect(authUrl);
 };
@@ -92,9 +92,9 @@ export const handleGoogleCallback = async (req, res) => {
     const { code, error: oauthError, error_description } = req.query;
     
     if (oauthError) {
-      console.error(`❌ [${requestId}] OAuth error from Google:`);
-      console.error(`   └─ Error: ${oauthError}`);
-      console.error(`   └─ Description: ${error_description || 'No description'}`);
+      // console.error(`❌ [${requestId}] OAuth error from Google:`);
+      // console.error(`   └─ Error: ${oauthError}`);
+      // console.error(`   └─ Description: ${error_description || 'No description'}`);
       throw new Error(`OAuth error: ${oauthError} - ${error_description}`);
     }
     
@@ -103,14 +103,14 @@ export const handleGoogleCallback = async (req, res) => {
       throw new Error("No authorization code received");
     }
     
-    console.log(`✅ [${requestId}] Authorization code received (length: ${code.length})`);
-    console.log(`🔄 [${requestId}] Exchanging code for tokens...`);
+    // console.log(`✅ [${requestId}] Authorization code received (length: ${code.length})`);
+    // console.log(`🔄 [${requestId}] Exchanging code for tokens...`);
 
     const { tokens } = await oauth2Client.getToken(code);
-    console.log(`✅ [${requestId}] Tokens received:`);
-    console.log(`   └─ Access token: ${tokens.access_token ? 'Present' : 'Missing'}`);
-    console.log(`   └─ Refresh token: ${tokens.refresh_token ? 'Present' : 'Missing'}`);
-    console.log(`   └─ Expires in: ${tokens.expiry_date ? new Date(tokens.expiry_date).toISOString() : 'Unknown'}`);
+    // console.log(`✅ [${requestId}] Tokens received:`);
+    // console.log(`   └─ Access token: ${tokens.access_token ? 'Present' : 'Missing'}`);
+    // console.log(`   └─ Refresh token: ${tokens.refresh_token ? 'Present' : 'Missing'}`);
+    // console.log(`   └─ Expires in: ${tokens.expiry_date ? new Date(tokens.expiry_date).toISOString() : 'Unknown'}`);
     
     oauth2Client.setCredentials(tokens);
 
@@ -118,11 +118,11 @@ export const handleGoogleCallback = async (req, res) => {
     const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
     const userInfo = await oauth2.userinfo.get();
     
-    console.log(`👤 [${requestId}] User information retrieved:`);
-    console.log(`   └─ Email: ${userInfo.data.email}`);
-    console.log(`   └─ Name: ${userInfo.data.name}`);
-    console.log(`   └─ ID: ${userInfo.data.id}`);
-    console.log(`   └─ Verified email: ${userInfo.data.verified_email}`);
+    // console.log(`👤 [${requestId}] User information retrieved:`);
+    // console.log(`   └─ Email: ${userInfo.data.email}`);
+    // console.log(`   └─ Name: ${userInfo.data.name}`);
+    // console.log(`   └─ ID: ${userInfo.data.id}`);
+    // console.log(`   └─ Verified email: ${userInfo.data.verified_email}`);
 
     global.googleTokens = tokens;
     global.googleUser = userInfo.data;
@@ -132,8 +132,8 @@ export const handleGoogleCallback = async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL;
     const redirectUrl = `${frontendUrl}/dashboard/integrations?success=true&user=${encodeURIComponent(userInfo.data.email)}`;
     
-    console.log(`🔗 [${requestId}] Redirecting to frontend:`);
-    console.log(`   └─ URL: ${redirectUrl}`);
+    // console.log(`🔗 [${requestId}] Redirecting to frontend:`);
+    // console.log(`   └─ URL: ${redirectUrl}`);
     
     res.redirect(redirectUrl);
   } catch (error) {
@@ -146,8 +146,8 @@ export const handleGoogleCallback = async (req, res) => {
     const frontendUrl = process.env.FRONTEND_URL;
     const errorRedirectUrl = `${frontendUrl}/integrations?error=true&message=${encodeURIComponent(error.message)}`;
     
-    console.log(`🔗 [${requestId}] Redirecting to frontend with error:`);
-    console.log(`   └─ URL: ${errorRedirectUrl}`);
+    // console.log(`🔗 [${requestId}] Redirecting to frontend with error:`);
+    // console.log(`   └─ URL: ${errorRedirectUrl}`);
     
     res.redirect(errorRedirectUrl);
   }
@@ -166,14 +166,14 @@ export const getGoogleBusinesses = async (req, res) => {
     }
 
     const token = await getBearerToken();
-    console.log(`🔑 [${requestId}] Token retrieved successfully`);
+    // console.log(`🔑 [${requestId}] Token retrieved successfully`);
 
-    console.log(`📡 [${requestId}] Fetching Google My Business accounts...`);
+    // console.log(`📡 [${requestId}] Fetching Google My Business accounts...`);
     const accountsRes = await axios.get("https://mybusinessaccountmanagement.googleapis.com/v1/accounts", {
       headers: { Authorization: `Bearer ${token}` },
     });
     const accounts = accountsRes.data.accounts || [];
-    console.log(`✅ [${requestId}] Found ${accounts.length} accounts`);
+    // console.log(`✅ [${requestId}] Found ${accounts.length} accounts`);
 
     let allLocations = [];
     for (const account of accounts) {
@@ -191,7 +191,7 @@ export const getGoogleBusinesses = async (req, res) => {
           }
         );
         const locations = locationsRes.data.locations || [];
-        console.log(`✅ [${requestId}] Found ${locations.length} locations for account ${accountId}`);
+        // console.log(`✅ [${requestId}] Found ${locations.length} locations for account ${accountId}`);
         allLocations.push(...locations.map(loc => ({ ...loc, accountId })));
       } catch (locErr) {
         console.warn(`⚠️ [${requestId}] Failed to fetch locations for account ${accountId}:`, locErr.response?.data || locErr.message);
@@ -218,7 +218,7 @@ export const getGoogleReviews = async (req, res) => {
   const requestId = req.requestId || Date.now().toString(36);
   
   try {
-    console.log(`⭐ [${requestId}] Fetching Google reviews...`);
+    // console.log(`⭐ [${requestId}] Fetching Google reviews...`);
     
     if (!global.googleTokens) {
       console.error(`❌ [${requestId}] Not authenticated with Google`);
@@ -254,24 +254,24 @@ export const getGoogleReviews = async (req, res) => {
 // 📊 Check Google Integration Status
 export const getGoogleStatus = async (req, res) => {
   const requestId = req.requestId || Date.now().toString(36);
-  console.log(`📊 [${requestId}] Google auth status check`);
+  // console.log(`📊 [${requestId}] Google auth status check`);
   
   const isAuthenticated = !!global.googleTokens;
   const hasUser = !!global.googleUser;
   
-  console.log(`   └─ Authenticated: ${isAuthenticated}`);
-  console.log(`   └─ User data: ${hasUser ? 'Present' : 'Missing'}`);
+  // console.log(`   └─ Authenticated: ${isAuthenticated}`);
+  // console.log(`   └─ User data: ${hasUser ? 'Present' : 'Missing'}`);
   
   if (isAuthenticated && global.googleTokens.expiry_date) {
     const expiresAt = new Date(global.googleTokens.expiry_date);
     const isExpired = Date.now() >= global.googleTokens.expiry_date;
-    console.log(`   └─ Token expires: ${expiresAt.toISOString()}`);
-    console.log(`   └─ Token expired: ${isExpired}`);
+    // console.log(`   └─ Token expires: ${expiresAt.toISOString()}`);
+    // console.log(`   └─ Token expired: ${isExpired}`);
   }
   
-  if (hasUser) {
-    console.log(`   └─ User email: ${global.googleUser.email}`);
-  }
+  // if (hasUser) {
+  //   console.log(`   └─ User email: ${global.googleUser.email}`);
+  // }
   
   res.json({
     authenticated: isAuthenticated,

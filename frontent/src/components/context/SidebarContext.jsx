@@ -12,6 +12,7 @@ export const SidebarProvider = ({ children }) => {
   const closeMobileSidebar = useCallback(() => setMobileOpen(false), []);
 
   const value = {
+    
     isCollapsed,
     mobileOpen,
     toggleSidebar,

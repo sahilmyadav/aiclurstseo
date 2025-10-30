@@ -15,12 +15,14 @@ import AnalyticsDashboard from './components/Analytics-Dashboard'
 import Integrations from './components/Integrations'
 import Audit from './components/Audit'
 import ReviewLink from './components/ReviewLink'
-import Widgets from './components/Widgets'
 import SocialSharing from './components/SocialSharing'
 import Notifications from './components/Notifications'
-import { GoogleBusinessProvider } from './components/context/GoogleBusinessContext'
+// import { GoogleBusinessProvider } from './components/context/GoogleBusinessContext'
 import InboxMessage from './components/Get-Reviews'
 import MakeReview from './pages/MakeReview'
+import Posts from './components/Posts'
+import WebsiteWidgets from './components/Widget'
+import Features from './components/Features'
 
 const AppContent = () => {
   const location = useLocation()
@@ -33,7 +35,12 @@ const AppContent = () => {
       <Toaster richColors position="top-center" />
 
       <Routes>
-        <Route path="/" element={<Home />} />
+         <Route path="/" element={
+          <>
+            <Home />
+            <Features />
+          </>
+        } />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/review/:locationId" element={<MakeReview />} />
@@ -42,19 +49,14 @@ const AppContent = () => {
           <Route path="/reviews" element={<Allreviews />} />
 
 
-        <Route path='/dashboard' element={
-          <GoogleBusinessProvider>
-            <DashboardLayout />
-          </GoogleBusinessProvider>
-        }
-        >
+        <Route path='/dashboard' element={<DashboardLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="reviews" element={<InboxMessage />} />
           <Route path="audit" element={<Audit />} />
           <Route path="review-link" element={<ReviewLink />} />
-          <Route path="widgets" element={<Widgets />} />
+          <Route path="widgets" element={<WebsiteWidgets />} />
           <Route path="integrations" element={<Integrations />} />
-          <Route path="social-sharing" element={<SocialSharing />} />
+          <Route path="social-sharing" element={<Posts/>} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="settings" element={<Settings />} />
         </Route>
