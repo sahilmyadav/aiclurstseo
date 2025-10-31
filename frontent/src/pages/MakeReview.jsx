@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
+import { generateReviewSuggestions } from '../utils/suggestion';
 
 function MakeReview() {
   const { locationId } = useParams();
@@ -10,6 +11,8 @@ function MakeReview() {
   const [hoveredRating, setHoveredRating] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [showGoogleButton, setShowGoogleButton] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   
   // Feedback form state
   const [formData, setFormData] = useState({
@@ -19,17 +22,43 @@ function MakeReview() {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const handleStarClick = (rating) => {
+  const handleStarClick = async (rating) => {
     setSelectedRating(rating);
     
     if (rating >= 1 && rating <= 3) {
       // Low rating: show feedback form
       setShowForm(true);
       setShowGoogleButton(false);
+      setSuggestions([]);
     } else if (rating >= 4 && rating <= 5) {
-      // High rating: show Google review button
+      // High rating: show Google review button and generate suggestions
       setShowForm(false);
       setShowGoogleButton(true);
+      setIsLoading(true);
+      
+      try {
+        const businessData = {
+          name: businessName,
+          primaryCategory: searchParams.get('category') || 'business',
+          location: {
+            address: {
+              locality: searchParams.get('city') || '',
+              regionCode: searchParams.get('state') || ''
+            }
+          },
+          websiteUri: searchParams.get('website') || '',
+          priceInfo: {
+            priceLevel: searchParams.get('priceLevel') || ''
+          }
+        };
+        
+        const generatedSuggestions = await generateReviewSuggestions(businessData, rating);
+        setSuggestions(generatedSuggestions);
+      } catch (error) {
+        console.error('Error generating suggestions:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -41,18 +70,36 @@ function MakeReview() {
     }));
   };
 
-  const handleSubmitFeedback = (e) => {
+  const handleSubmitFeedback = async (e) => {
     e.preventDefault();
     
-    // Here you can send the feedback to your backend
-    console.log('Feedback submitted:', {
-      locationId,
-      businessName,
-      rating: selectedRating,
-      ...formData
-    });
-    
-    setSubmitted(true);
+    try {
+      const reviewData = {
+        locationId,
+        businessName,
+        rating: selectedRating,
+        ...formData
+      };
+
+      const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:8000'}/api/reviews/create`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(reviewData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit feedback');
+      }
+
+      const result = await response.json();
+      console.log('Feedback saved successfully:', result);
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to submit feedback. Please try again.');
+    }
   };
 
   const handleGoogleReview = () => {
@@ -217,18 +264,51 @@ function MakeReview() {
 
         {/* Google Review Button (for 4-5 stars) */}
         {showGoogleButton && (
-          <div className="animate-fadeIn text-center">
-            <div className="mb-6">
+          <div className="animate-fadeIn">
+            <div className="text-center mb-6">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-500/20 rounded-full mb-4">
                 <svg className="w-8 h-8 text-green-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-white mb-2">
-                Awesome! Thank you!
+                Awesome! Thank you for the {selectedRating}-star rating!
               </h3>
               <p className="text-gray-300 mb-6">
-                Would you mind sharing your experience on Google?
+                Would you like some suggestions for your review?
+              </p>
+            </div>
+
+            {/* AI Suggestions */}
+            <div className="mb-8">
+              <h4 className="text-sm font-medium text-gray-300 mb-3">
+                {isLoading ? 'Generating suggestions...' : 'Here are some suggestions for your review:'}
+              </h4>
+              
+              {isLoading ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-4 bg-gray-700/50 rounded animate-pulse"></div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {suggestions.map((suggestion, index) => (
+                    <div 
+                      key={index}
+                      className="p-3 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-gray-200 cursor-pointer hover:bg-gray-700/70 transition-colors"
+                      onClick={() => setFormData(prev => ({ ...prev, feedback: suggestion }))}
+                    >
+                      "{suggestion}"
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="text-center mb-6">
+              <p className="text-gray-300 mb-4">
+                Ready to share your experience on Google?
               </p>
             </div>
             

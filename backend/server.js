@@ -10,6 +10,7 @@ import { authLimiter } from './middleware/rateLimiter.js';
 import googleRoutes from './routes/googleRoutes.js';
 import authRoutes from './routes/auth.js';
 import auditRoutes from './routes/auditRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
 
 dotenv.config();
 
@@ -53,6 +54,7 @@ app.use("/auth/google", googleRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Test routes
 app.get('/', (req, res) => {

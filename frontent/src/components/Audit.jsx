@@ -176,7 +176,7 @@ const Audit = () => {
 
     if (!isConnected) {
       toast.error('Please connect your Google Business account first');
-      navigate('/integrations');
+      navigate('/dashboard/integrations');
       return;
     }
 
@@ -308,7 +308,7 @@ const Audit = () => {
                     Connect your Google Business Profile to access performance insights and AI-powered audit features.
                   </p>
                   <button
-                    onClick={() => navigate('/integrations')}
+                    onClick={() => navigate('/dashboard/integrations')}
                     className="px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 rounded-lg text-white font-medium transition-all duration-200"
                   >
                     Go to Integrations

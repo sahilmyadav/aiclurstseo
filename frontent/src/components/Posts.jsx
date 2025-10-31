@@ -236,7 +236,7 @@ const Posts = () => {
     setIsCreatingPost(true);
     
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth') ? JSON.parse(localStorage.getItem('auth')).token : null;
       if (!token) {
         throw new Error('No authentication token found. Please log in again.');
       }
@@ -291,7 +291,7 @@ const Posts = () => {
       const responseData = await response.json().catch(() => ({}));
       
       if (!response.ok) {
-        console.error('❌ Server error response:', {
+        console.error(' Server error response:', {
           status: response.status,
           statusText: response.statusText,
           response: responseData
@@ -311,7 +311,7 @@ const Posts = () => {
         throw new Error(errorMessage);
       }
 
-      console.log('✅ Post created successfully:', responseData);
+      console.log(' Post created successfully:', responseData);
       
       // Create the new post object from the response
       const newPost = {
@@ -364,7 +364,7 @@ const Posts = () => {
       }
       
     } catch (error) {
-      console.error("❌ Error creating post:", error);
+      console.error(" Error creating post:", error);
       toast.error(`Failed to create post: ${error.message}`);
     } finally {
       setIsCreatingPost(false);
@@ -467,7 +467,7 @@ const Posts = () => {
                 {!isGoogleConnected && (
                   <p className="text-xs text-red-400 mt-1 text-center sm:text-right">
                     <a 
-                      href="/integrations" 
+                      href="/dashboard/integrations" 
                       className="hover:text-red-300 underline transition-colors"
                     >
                       Connect to Google
@@ -514,7 +514,7 @@ const Posts = () => {
                     Connect your Google My Business account to create, schedule, and manage posts directly from here.
                   </p>
                   <a 
-                    href="/integrations"
+                    href="/dashboard/integrations"
                     className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                   >
                     <FaGoogle /> Connect Google Business

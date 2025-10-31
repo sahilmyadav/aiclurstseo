@@ -49,6 +49,22 @@ const SMSComponent = () => {
   const handleSendSMS = async (e) => {
     e.preventDefault();
     
+    // Show coming soon message in toast
+    toast.info('SMS invitation feature is coming soon!', {
+      description: 'We are working hard to bring you this feature.',
+      duration: 5000,
+    });
+    
+    // Reset form
+    setFormData(prev => ({
+      ...prev,
+      customerName: '',
+      customerPhone: ''
+    }));
+    
+    return;
+    
+    // The following code is kept for future implementation
     if (!formData.businessId) {
       toast.error("Please select a business");
       return;
@@ -178,8 +194,8 @@ const SMSComponent = () => {
                   required
                 >
                   <option value="">Select a business</option>
-                  {businesses.map((business) => (
-                    <option key={business.id} value={business.id}>
+                  {businesses.map((business, index) => (
+                    <option key={`${business.id}-${index}`} value={business.id}>
                       {getBusinessDisplayName(business)}
                     </option>
                   ))}

@@ -47,6 +47,22 @@ const EmailComponent = () => {
   const handleSendInvitation = async (e) => {
     e.preventDefault();
     
+    // Show coming soon message in toast
+    toast.info('Email invitation feature is coming soon!', {
+      description: 'We are working hard to bring you this feature.',
+      duration: 5000,
+    });
+    
+    // Reset form
+    setFormData(prev => ({
+      ...prev,
+      customerName: '',
+      customerEmail: ''
+    }));
+    
+    return;
+    
+    // The following code is kept for future implementation
     if (!formData.businessId) {
       toast.error("Please select a business");
       return;
