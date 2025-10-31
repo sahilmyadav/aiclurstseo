@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { generateReviewSuggestions } from '../utils/suggestion';
+import { FiCopy, FiCheck } from 'react-icons/fi';
 
 function MakeReview() {
   const { locationId } = useParams();
@@ -13,6 +14,7 @@ function MakeReview() {
   const [showGoogleButton, setShowGoogleButton] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [copiedIndex, setCopiedIndex] = useState(null);
   
   // Feedback form state
   const [formData, setFormData] = useState({
@@ -296,10 +298,32 @@ function MakeReview() {
                   {suggestions.map((suggestion, index) => (
                     <div 
                       key={index}
-                      className="p-3 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-gray-200 cursor-pointer hover:bg-gray-700/70 transition-colors"
-                      onClick={() => setFormData(prev => ({ ...prev, feedback: suggestion }))}
+                      className="p-3 bg-gray-800/50 border border-gray-700 rounded-lg text-sm text-gray-200 transition-colors group"
                     >
-                      "{suggestion}"
+                      <div className="flex justify-between items-start">
+                        <div 
+                          className="flex-1 cursor-pointer"
+                          onClick={() => setFormData(prev => ({ ...prev, feedback: suggestion }))}
+                        >
+                          "{suggestion}"
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(suggestion);
+                            setCopiedIndex(index);
+                            setTimeout(() => setCopiedIndex(null), 2000);
+                          }}
+                          className="ml-2 p-1 text-gray-400 hover:text-white rounded-full hover:bg-gray-700/50 transition-colors"
+                          title="Copy to clipboard"
+                        >
+                          {copiedIndex === index ? (
+                            <FiCheck className="w-4 h-4 text-green-400" />
+                          ) : (
+                            <FiCopy className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
