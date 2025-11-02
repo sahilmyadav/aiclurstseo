@@ -50,7 +50,7 @@ connectDB();
 initializeFirebase();
 
 // Routes
-app.use("/api/auth/google", googleRoutes);
+app.use("/auth/google", authRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
