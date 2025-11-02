@@ -41,38 +41,42 @@ jobs:
 ${{ secrets.PROD_BACKEND_ENV }}
 EOF
 
-     - name: Restart backend with PM2
-  run: |
-    export HOME=/root
-    cd /root/backend
-    pm2 start server.js --name backend || pm2 restart backend --update-env
-
+      - name: Restart backend with PM2
+        shell: bash
+        run: |
+          export HOME=/root
+          cd /root/backend
+          pm2 start server.js --name backend || pm2 restart backend --update-env
+          pm2 save
 
       # ------------------------------
       # FRONTEND SETUP
       # ------------------------------
       - name: Clean npm cache & remove existing dependencies
-        working-directory: ./frontent
+        working-directory: ./frontend
         run: |
           rm -rf node_modules package-lock.json
           npm cache clean --force
 
       - name: Install frontend dependencies
-        working-directory: ./frontent
+        working-directory: ./frontend
         run: npm install
 
       - name: Create frontend .env file
-        working-directory: ./frontent
+        working-directory: ./frontend
         shell: bash
         run: |
-          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+          cat <<'EOF' > .env
+${{ secrets.PROD_FRONTEND_ENV }}
+EOF
 
-      - name: Build frontent
-        working-directory: ./frontent
+      - name: Build frontend
+        working-directory: ./frontend
         run: npm run build
 
-      - name: Deploy frontent to Nginx
+      - name: Deploy frontend to Nginx
+        shell: bash
         run: |
           sudo rm -rf /var/www/html/*
-          sudo cp -r ./frontent/dist/* /var/www/html/
+          sudo cp -r ./frontend/dist/* /var/www/html/
           sudo systemctl restart nginx
