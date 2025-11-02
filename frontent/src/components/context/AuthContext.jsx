@@ -101,6 +101,24 @@ export const AuthContextProvider = ({ children }) => {
     clearPersist();
   };
 
+  const fetchCurrentUser = async () => {
+    try {
+      const { data } = await api.get('/api/auth/me');
+      setUser(data);
+      return { success: true, user: data };
+    } catch (error) {
+      console.error('Failed to fetch user:', error);
+      // If token is invalid, clear local storage
+      if (error.response?.status === 401) {
+        clearPersist();
+        setUser(null);
+        setToken(null);
+        setIsAuthenticated(false);
+      }
+      return { success: false, error: error.response?.data?.message || 'Failed to fetch user' };
+    }
+  };
+
   const signupWithGoogle = async () => {
     setIsLoading(true);
     try {
@@ -130,7 +148,18 @@ export const AuthContextProvider = ({ children }) => {
   };
 
   return (
-    <userContext.Provider value={{ user, token, isAuthenticated, isLoading, signup, login, logout, signupWithGoogle, setUser }}>
+    <userContext.Provider value={{ 
+      user, 
+      token, 
+      isAuthenticated, 
+      isLoading, 
+      signup, 
+      login, 
+      logout, 
+      signupWithGoogle, 
+      fetchCurrentUser,
+      setUser 
+    }}>
       {children}
     </userContext.Provider>
   )
