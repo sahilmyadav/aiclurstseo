@@ -34,10 +34,10 @@ jobs:
         run: npm install
 
      - name: Create backend .env file
-        working-directory: ./backend
-      run: |
-        touch .env
-        echo "${{ secrets.PROD_BACKEND_ENV }}" | tr '\r' '\n' > .env
+  working-directory: ./backend
+  shell: bash
+  run: |
+    echo "${{ secrets.PROD_BACKEND_ENV }}" | awk '{printf "%s\n", $0}' > .env
 
 
       - name: Start backend with PM2
