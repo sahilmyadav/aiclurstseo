@@ -33,14 +33,13 @@ jobs:
         working-directory: ./backend
         run: npm install
 
-    - name: Create backend .env file safely
-  working-directory: ./backend
-  shell: bash
-  run: |
-    cat <<'EOF' > .env
+      - name: Create backend .env file safely
+        working-directory: ./backend
+        shell: bash
+        run: |
+          cat <<'EOF' > .env
 ${{ secrets.PROD_BACKEND_ENV }}
 EOF
-
 
       - name: Start backend with PM2
         working-directory: ./backend
@@ -49,7 +48,7 @@ EOF
           /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start server.js --name backend
 
       # ------------------------------
-      # FRONTENT SETUP (your actual folder)
+      # FRONTEND SETUP
       # ------------------------------
       - name: Clean npm cache & remove existing dependencies
         working-directory: ./frontent
@@ -61,11 +60,13 @@ EOF
         working-directory: ./frontent
         run: npm install
 
-      - name: Create frontent .env file
+      - name: Create frontent .env file safely
         working-directory: ./frontent
+        shell: bash
         run: |
-          touch .env
-          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+          cat <<'EOF' > .env
+${{ secrets.PROD_FRONTEND_ENV }}
+EOF
 
       - name: Build frontent
         working-directory: ./frontent
