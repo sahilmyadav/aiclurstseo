@@ -112,7 +112,7 @@ export const AuthContextProvider = ({ children }) => {
       const idToken = await user.getIdToken();
       
       // Send ID token to backend for verification and user creation
-      const { data } = await api.post('/api/auth/firebase/google-signup', { idToken });
+      const { data } = await api.post('/auth/firebase/google-signup', { idToken });
       
       setUser(data.user);
       setToken(data.token);
