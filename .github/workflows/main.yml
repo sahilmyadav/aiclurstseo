@@ -24,7 +24,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: |
             backend/package-lock.json
-            frontend/package-lock.json
+            frontent/package-lock.json
 
       # ------------------------------
       # BACKEND SETUP
@@ -42,33 +42,33 @@ jobs:
       - name: Start backend with PM2
         working-directory: ./backend
         run: |
-          /root/.nvm/versions/node/v23.11.1/bin/pm2 restart backend || /root/.nvm/versions/node/v23.11.1/bin/pm2 start server.js --name backend
+          /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start server.js --name backend
 
       # ------------------------------
       # FRONTEND SETUP
       # ------------------------------
       - name: Clean npm cache & remove existing dependencies
-        working-directory: ./frontend
+        working-directory: ./frontent
         run: |
           rm -rf node_modules package-lock.json
           npm cache clean --force
 
       - name: Install frontend dependencies
-        working-directory: ./frontend
+        working-directory: ./frontent
         run: npm install
 
       - name: Create frontend .env file
-        working-directory: ./frontend
+        working-directory: ./frontent
         run: |
           touch .env
           echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
       - name: Build frontend
-        working-directory: ./frontend
+        working-directory: ./frontent
         run: npm run build
 
       - name: Deploy frontend to Nginx
         run: |
           sudo rm -rf /var/www/html/*
-          sudo cp -r ./frontend/dist/* /var/www/html/
+          sudo cp -r ./frontent/dist/* /var/www/html/
           sudo systemctl reload nginx
