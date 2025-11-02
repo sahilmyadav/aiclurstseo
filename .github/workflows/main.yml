@@ -24,7 +24,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: |
             backend/package-lock.json
-            frontend/package-lock.json
+            frontent/package-lock.json
 
       # ------------------------------
       # BACKEND SETUP
@@ -36,46 +36,40 @@ jobs:
       - name: Create backend .env file
         working-directory: ./backend
         run: |
+          touch .env
           echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
-      - name: Restart backend with PM2
+      - name: Start backend with PM2
         working-directory: ./backend
         run: |
           export HOME=/root
-          if /usr/local/bin/pm2 list | grep -q "backend"; then
-            /usr/local/bin/pm2 restart backend
-          else
-            /usr/local/bin/pm2 start server.js --name backend
-          fi
-          /usr/local/bin/pm2 save
+          /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start server.js --name backend
 
       # ------------------------------
-      # FRONTEND SETUP
+      # FRONTENT SETUP (your actual folder)
       # ------------------------------
-      - name: Verify frontend folder
-        run: ls -la ./frontend
-
       - name: Clean npm cache & remove existing dependencies
-        working-directory: ./frontend
+        working-directory: ./frontent
         run: |
-          echo "Cleaning npm cache..."
-          rm -rf node_modules package-lock.json || true
-          npm cache clean --force || true
+          rm -rf node_modules package-lock.json
+          npm cache clean --force
 
-      - name: Install frontend dependencies
-        working-directory: ./frontend
+      - name: Install frontent dependencies
+        working-directory: ./frontent
         run: npm install
 
-      - name: Create frontend .env file
-        working-directory: ./frontend
-        run: echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+      - name: Create frontent .env file
+        working-directory: ./frontent
+        run: |
+          touch .env
+          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
-      - name: Build frontend
-        working-directory: ./frontend
+      - name: Build frontent
+        working-directory: ./frontent
         run: npm run build
 
-      - name: Deploy frontend to Nginx
+      - name: Deploy frontent to Nginx
         run: |
           sudo rm -rf /var/www/html/*
-          sudo cp -r ./frontend/build/* /var/www/html/
+          sudo cp -r ./frontent/dist/* /var/www/html/
           sudo systemctl restart nginx
