@@ -60,13 +60,10 @@ EOF
         working-directory: ./frontent
         run: npm install
 
-      - name: Create frontent .env file safely
-        working-directory: ./frontent
-        shell: bash
-        run: |
-          cat <<'EOF' > .env
-${{ secrets.PROD_FRONTEND_ENV }}
-EOF
+     - name: Create frontent .env file
+  working-directory: ./frontent
+  run: |
+    echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
       - name: Build frontent
         working-directory: ./frontent
