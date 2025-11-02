@@ -41,11 +41,12 @@ jobs:
 ${{ secrets.PROD_BACKEND_ENV }}
 EOF
 
-      - name: Start backend with PM2
-        working-directory: ./backend
-        run: |
-          export HOME=/root
-          /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start server.js --name backend
+     - name: Restart backend with PM2
+  run: |
+    export HOME=/root
+    cd /root/backend
+    pm2 start server.js --name backend || pm2 restart backend --update-env
+
 
       # ------------------------------
       # FRONTEND SETUP
