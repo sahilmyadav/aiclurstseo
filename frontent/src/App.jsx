@@ -23,43 +23,50 @@ import MakeReview from './pages/MakeReview'
 import Posts from './components/Posts'
 import WebsiteWidgets from './components/Widget'
 import Features from './components/Features'
+import { Navigate } from 'react-router-dom'
+import { useAuth } from './components/context/AuthContext'
 
 const AppContent = () => {
   const location = useLocation()
   const isDashboardRoute = location.pathname.startsWith('/dashboard')
-  // const isReviewRoute = location.pathname.startsWith('/review')
+  const { isAuthenticated } = useAuth()
 
   return (
     <>
-      {!isDashboardRoute  && <Navbar />}
+      {!isDashboardRoute && <Navbar />}
       <Toaster richColors position="top-center" />
 
       <Routes>
-         <Route path="/" element={
+        <Route path="/" element={
           <>
             <Home />
             <Features />
           </>
         } />
-        <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
+        <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />
         <Route path="/review/:locationId" element={<MakeReview />} />
-        <Route path="/analytics-dashboard" element={<AnalyticsDashboard />} />
-        <Route path="/seo-dashboard" element={<SeoDashboard />} />
-          <Route path="/reviews" element={<Allreviews />} />
+        <Route path="/analytics-dashboard" element={isAuthenticated ? <AnalyticsDashboard /> : <Navigate to="/login" />} />
+        <Route path="/seo-dashboard" element={isAuthenticated ? <SeoDashboard /> : <Navigate to="/login" />} />
+        <Route path="/reviews" element={isAuthenticated ? <Allreviews /> : <Navigate to="/login" />} />
 
-
-        <Route path='/dashboard' element={<DashboardLayout />}>
+        <Route 
+          path="/dashboard" 
+          element={isAuthenticated ? <DashboardLayout /> : <Navigate to="/login" />}
+        >
           <Route index element={<Dashboard />} />
           <Route path="reviews" element={<InboxMessage />} />
           <Route path="audit" element={<Audit />} />
           <Route path="review-link" element={<ReviewLink />} />
           <Route path="widgets" element={<WebsiteWidgets />} />
           <Route path="integrations" element={<Integrations />} />
-          <Route path="social-sharing" element={<Posts/>} />
+          <Route path="social-sharing" element={<Posts />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path="settings" element={<Settings />} />
         </Route>
+
+        {/* Catch-all route for non-existent paths */}
+        <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} />} />
       </Routes>
     </>
   )

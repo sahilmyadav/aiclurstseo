@@ -19,6 +19,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
+  const [reviewUri, setReviewUri] = useState('');
   
   const { user: authUser, token } = useAuth();
   const BACKEND_URL = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
@@ -67,6 +68,12 @@ export const GoogleBusinessProvider = ({ children }) => {
         if (data.businesses && data.businesses.length > 0 && !selectedBusiness) {
           const firstBusiness = data.businesses[0];
           setSelectedBusiness(firstBusiness);
+          
+          // Set review URI from first business metadata if available
+          if (firstBusiness.metadata?.newReviewUri) {
+            setReviewUri(firstBusiness.metadata.newReviewUri);
+          }
+          
           // Auto-fetch reviews for first business
           await fetchReviews(firstBusiness.accountId, firstBusiness.name.split("/")[1]);
         }
@@ -105,10 +112,7 @@ export const GoogleBusinessProvider = ({ children }) => {
 
   // Connect to Google
   const connectGoogle = async () => {
-    if (!authUser) {
-      toast.error("Please log in first");
-      return;
-    }
+   
     window.location.href = `${BACKEND_URL}/auth/google/login`;
   };
 
@@ -140,6 +144,12 @@ export const GoogleBusinessProvider = ({ children }) => {
     setSelectedBusiness(business);
     const accountId = business.accountId;
     const locationId = business.name.split("/")[1];
+    
+    // Set review URI from business metadata if available
+    if (business.metadata?.newReviewUri) {
+      setReviewUri(business.metadata.newReviewUri);
+    }
+    
     await fetchReviews(accountId, locationId);
   };
 
@@ -190,6 +200,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     reviews,
     loading,
     isConnected,
+    reviewUri,
     
     // Actions
     connectGoogle,

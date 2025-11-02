@@ -84,11 +84,7 @@ const Integrations = () => {
   }, [selectedBusiness]);
 
   const handleConnect = async () => {
-    if (!authUser) {
-      toast.error("Please log in first");
-      navigate("/login");
-      return;
-    }
+   
     await connectGoogle();
   };
 

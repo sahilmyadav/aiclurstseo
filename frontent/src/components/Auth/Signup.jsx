@@ -111,7 +111,7 @@ const Signup = () => {
               name="phone"
               value={formData.phone}
               onChange={handleChange}
-              placeholder="Phone (optional)"
+              placeholder="Phone"
               className="w-full px-4 py-3 rounded-lg bg-[#222] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
             />
           </div>

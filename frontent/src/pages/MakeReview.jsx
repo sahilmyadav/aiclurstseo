@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { generateReviewSuggestions } from '../utils/suggestion';
 import { FiCopy, FiCheck } from 'react-icons/fi';
+import { useGoogleBusiness } from '../components/context/GoogleBusinessContext';
 
 function MakeReview() {
   const { locationId } = useParams();
@@ -104,17 +105,20 @@ function MakeReview() {
     }
   };
 
+  // Get reviewUri from GoogleBusinessContext
+  const { reviewUri } = useGoogleBusiness();
+
   const handleGoogleReview = () => {
-    // Multiple fallback methods for Google review
-    // Method 1: Direct review URL (most reliable)
-    const googleReviewUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(businessName)}&query_place_id=${locationId}`;
+    // Use reviewUri from context if available, otherwise fall back to constructed URL
+    const googleReviewUrl = reviewUri || 
+      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(businessName)}&query_place_id=${locationId}`;
     
     // Open in new window
     const reviewWindow = window.open(googleReviewUrl, '_blank', 'noopener,noreferrer');
     
     // Fallback: If popup blocked, show alternative
     if (!reviewWindow || reviewWindow.closed || typeof reviewWindow.closed === 'undefined') {
-      // Show a message or redirect in same window
+      // Redirect in same window if popup is blocked
       window.location.href = googleReviewUrl;
     }
   };
