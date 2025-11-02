@@ -42,7 +42,7 @@ jobs:
       - name: Start backend with PM2
         working-directory: ./backend
         run: |
-           /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start index.js --name backend
+          /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start index.js --name backend
 
       # ------------------------------
       # FRONTEND SETUP
@@ -70,4 +70,5 @@ jobs:
       - name: Deploy frontend to Nginx
         run: |
           sudo rm -rf /var/www/html/*
-          sudo cp -r ./client/dist/* /var/www/html/
+          sudo cp -r ./frontend/dist/* /var/www/html/
+          sudo systemctl reload nginx
