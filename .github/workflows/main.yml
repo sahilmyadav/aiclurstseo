@@ -3,7 +3,7 @@ name: Deploy Fullstack App on VPS
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
   deploy:
