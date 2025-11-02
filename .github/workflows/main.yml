@@ -36,23 +36,31 @@ jobs:
       - name: Create backend .env file
         working-directory: ./backend
         run: |
-          touch .env
           echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
-      - name: Start backend with PM2
+      - name: Restart backend with PM2
         working-directory: ./backend
         run: |
           export HOME=/root
-          /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start server.js --name backend
+          if /usr/local/bin/pm2 list | grep -q "backend"; then
+            /usr/local/bin/pm2 restart backend
+          else
+            /usr/local/bin/pm2 start server.js --name backend
+          fi
+          /usr/local/bin/pm2 save
 
       # ------------------------------
       # FRONTEND SETUP
       # ------------------------------
+      - name: Verify frontend folder
+        run: ls -la ./frontend
+
       - name: Clean npm cache & remove existing dependencies
         working-directory: ./frontend
         run: |
-          rm -rf node_modules package-lock.json
-          npm cache clean --force
+          echo "Cleaning npm cache..."
+          rm -rf node_modules package-lock.json || true
+          npm cache clean --force || true
 
       - name: Install frontend dependencies
         working-directory: ./frontend
@@ -60,9 +68,7 @@ jobs:
 
       - name: Create frontend .env file
         working-directory: ./frontend
-        run: |
-          touch .env
-          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+        run: echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
       - name: Build frontend
         working-directory: ./frontend
@@ -71,5 +77,5 @@ jobs:
       - name: Deploy frontend to Nginx
         run: |
           sudo rm -rf /var/www/html/*
-          sudo cp -r ./frontend/dist/* /var/www/html/
+          sudo cp -r ./frontend/build/* /var/www/html/
           sudo systemctl restart nginx
