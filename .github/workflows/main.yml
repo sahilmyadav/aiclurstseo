@@ -14,11 +14,15 @@ jobs:
         node-version: [23.x]
 
     steps:
+      # ------------------------------
+      # CHECKOUT REPO
+      # ------------------------------
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          token: ${{ secrets.GH_PERSONAL_TOKEN }}
 
+      # ------------------------------
+      # SETUP NODE
+      # ------------------------------
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
@@ -37,8 +41,7 @@ jobs:
 
       - name: Create backend .env file
         working-directory: ./backend
-        run: |
-          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+        run: echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
       - name: Restart backend with PM2
         run: |
@@ -62,8 +65,7 @@ jobs:
 
       - name: Create frontend .env file
         working-directory: ./frontent
-        run: |
-          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+        run: echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
       - name: Build frontend
         working-directory: ./frontent
