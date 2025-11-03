@@ -1,9 +1,9 @@
-name: Deploy Fullstack App on VPS
+name: Deploy Fullstack MERN App on EC2
 
 on:
   push:
     branches:
-      - main
+      - main   # Change if you want to deploy from another branch
 
 jobs:
   deploy:
@@ -11,61 +11,70 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [23.x]
+        node-version: [23.x]   # Change Node version if needed
 
     steps:
+      # 1️⃣ Checkout repository
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2️⃣ Setup Node.js
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-          cache-dependency-path: |
-            backend/package-lock.json
-            frontent/package-lock.json
 
-      # ------------------------------
-      # BACKEND SETUP
-      # ------------------------------
-      - name: Install backend dependencies
-        working-directory: ./backend
-        run: npm install
-
+      # 3️⃣ Create Backend .env from Base64 secret
       - name: Create backend .env file
         working-directory: ./backend
+        shell: bash
         run: |
-          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+          echo "${{ secrets.PROD_BACKEND_ENV }}" | base64 --decode > .env
+          echo "✅ Backend .env file created"
 
+      # 4️⃣ Install Backend Dependencies
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: |
+          rm -rf node_modules package-lock.json
+          npm install
+
+      # 5️⃣ Start Backend with PM2
       - name: Start backend with PM2
         working-directory: ./backend
         run: |
-          /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start server.js --name backend
+          pm2 delete backend || true
+          pm2 start server.js --name backend
+          pm2 save
+          echo "✅ Backend started successfully"
 
-      # ------------------------------
-      # FRONTEND SETUP
-      # ------------------------------
-      - name: Clean npm cache & remove existing dependencies
-        working-directory: ./frontent
-        run: |
-          rm -rf node_modules package-lock.json
-          npm cache clean --force
-
-      - name: Install frontend dependencies
-        working-directory: ./frontent
-        run: npm install
-
+      # 6️⃣ Create Frontend .env file (if required)
       - name: Create frontend .env file
-        working-directory: ./frontent
+        if: secrets.PROD_FRONTEND_ENV != ''
+        working-directory: ./frontend
+        shell: bash
         run: |
-          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+          echo "${{ secrets.PROD_FRONTEND_ENV }}" | base64 --decode > .env
+          echo "✅ Frontend .env file created"
 
-      - name: Build frontend
-        working-directory: ./frontent
-        run: npm run build
+      # 7️⃣ Install Frontend Dependencies & Build
+      - name: Install frontend dependencies and build
+        working-directory: ./frontend
+        run: |
+          rm -rf node_modules package-lock.json dist
+          npm install
+          npm run build
 
+      # 8️⃣ Copy Build Files to Nginx (or your web directory)
       - name: Deploy frontend to Nginx
         run: |
-          sudo rm -rf /var/www/html/*
-          sudo cp -r ./frontent/dist/* /var/www/html/
+          rm -rf /var/www/html/*
+          cp -r ./frontend/dist/* /var/www/html/
+          systemctl restart nginx
+          echo "✅ Frontend deployed successfully"
+
+      # 9️⃣ Verify Deployment
+      - name: Verify services
+        run: |
+          pm2 list
+          systemctl status nginx | head -n 10
