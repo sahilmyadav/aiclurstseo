@@ -14,15 +14,9 @@ jobs:
         node-version: [23.x]
 
     steps:
-      # ------------------------------
-      # CHECKOUT CODE
-      # ------------------------------
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # ------------------------------
-      # SETUP NODE
-      # ------------------------------
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
@@ -30,10 +24,10 @@ jobs:
           cache: 'npm'
           cache-dependency-path: |
             backend/package-lock.json
-            frontent/package-lock.json
+            frontend/package-lock.json
 
       # ------------------------------
-      # BACKEND DEPLOYMENT
+      # BACKEND SETUP
       # ------------------------------
       - name: Install backend dependencies
         working-directory: ./backend
@@ -43,42 +37,35 @@ jobs:
         working-directory: ./backend
         run: |
           echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
-          echo "✅ Backend .env file created"
 
-      - name: Restart backend using PM2
+      - name: Start backend with PM2
+        working-directory: ./backend
         run: |
-          export HOME=/root
-          cd /root/actions-runner/_work/aiclurstseo/aiclurstseo/backend
-          /root/.nvm/versions/node/v23.11.1/bin/pm2 start server.js --name backend || /root/.nvm/versions/node/v23.11.1/bin/pm2 restart backend --update-env
-          /root/.nvm/versions/node/v23.11.1/bin/pm2 save
-          echo "🚀 Backend deployed successfully"
+          /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start index.js --name backend
 
       # ------------------------------
-      # FRONTEND DEPLOYMENT
+      # FRONTEND SETUP
       # ------------------------------
-      - name: Clean npm cache
-        working-directory: ./frontent
+      - name: Clean npm cache & remove existing dependencies
+        working-directory: ./frontend
         run: |
           rm -rf node_modules package-lock.json
           npm cache clean --force
 
       - name: Install frontend dependencies
-        working-directory: ./frontent
+        working-directory: ./frontend
         run: npm install
 
       - name: Create frontend .env file
-        working-directory: ./frontent
+        working-directory: ./frontend
         run: |
           echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
-          echo "✅ Frontend .env file created"
 
       - name: Build frontend
-        working-directory: ./frontent
+        working-directory: ./frontend
         run: npm run build
 
       - name: Deploy frontend to Nginx
         run: |
           sudo rm -rf /var/www/html/*
-          sudo cp -r ./frontent/dist/* /var/www/html/
-          sudo systemctl restart nginx
-          echo "🌐 Frontend deployed successfully"
+          sudo cp -r ./frontend/dist/* /var/www/html/
