@@ -15,9 +15,9 @@ jobs:
 
     steps:
       # ------------------------------
-      # CHECKOUT REPO
+      # CHECKOUT CODE
       # ------------------------------
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v3
 
       # ------------------------------
@@ -30,10 +30,10 @@ jobs:
           cache: 'npm'
           cache-dependency-path: |
             backend/package-lock.json
-            frontend/package-lock.json
+            frontent/package-lock.json
 
       # ------------------------------
-      # BACKEND SETUP
+      # BACKEND DEPLOYMENT
       # ------------------------------
       - name: Install backend dependencies
         working-directory: ./backend
@@ -41,19 +41,22 @@ jobs:
 
       - name: Create backend .env file
         working-directory: ./backend
-        run: echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+        run: |
+          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+          echo "✅ Backend .env file created"
 
-      - name: Restart backend with PM2
+      - name: Restart backend using PM2
         run: |
           export HOME=/root
-          cd /root/backend
-          pm2 start server.js --name backend || pm2 restart backend --update-env
-          pm2 save
+          cd /root/actions-runner/_work/aiclurstseo/aiclurstseo/backend
+          /root/.nvm/versions/node/v23.11.1/bin/pm2 start server.js --name backend || /root/.nvm/versions/node/v23.11.1/bin/pm2 restart backend --update-env
+          /root/.nvm/versions/node/v23.11.1/bin/pm2 save
+          echo "🚀 Backend deployed successfully"
 
       # ------------------------------
-      # FRONTEND SETUP
+      # FRONTEND DEPLOYMENT
       # ------------------------------
-      - name: Clean npm cache & remove existing dependencies
+      - name: Clean npm cache
         working-directory: ./frontent
         run: |
           rm -rf node_modules package-lock.json
@@ -65,7 +68,9 @@ jobs:
 
       - name: Create frontend .env file
         working-directory: ./frontent
-        run: echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+        run: |
+          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+          echo "✅ Frontend .env file created"
 
       - name: Build frontend
         working-directory: ./frontent
@@ -76,3 +81,4 @@ jobs:
           sudo rm -rf /var/www/html/*
           sudo cp -r ./frontent/dist/* /var/www/html/
           sudo systemctl restart nginx
+          echo "🌐 Frontend deployed successfully"
