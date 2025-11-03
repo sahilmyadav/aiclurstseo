@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GH_PERSONAL_TOKEN }}
 
       - name: Use Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v3
@@ -33,16 +35,12 @@ jobs:
         working-directory: ./backend
         run: npm install
 
-      - name: Create backend .env file safely
+      - name: Create backend .env file
         working-directory: ./backend
-        shell: bash
         run: |
-          cat <<'EOF' > .env
-${{ secrets.PROD_BACKEND_ENV }}
-EOF
+          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
 
       - name: Restart backend with PM2
-        shell: bash
         run: |
           export HOME=/root
           cd /root/backend
@@ -53,30 +51,26 @@ EOF
       # FRONTEND SETUP
       # ------------------------------
       - name: Clean npm cache & remove existing dependencies
-        working-directory: ./frontend
+        working-directory: ./frontent
         run: |
           rm -rf node_modules package-lock.json
           npm cache clean --force
 
       - name: Install frontend dependencies
-        working-directory: ./frontend
+        working-directory: ./frontent
         run: npm install
 
       - name: Create frontend .env file
-        working-directory: ./frontend
-        shell: bash
+        working-directory: ./frontent
         run: |
-          cat <<'EOF' > .env
-${{ secrets.PROD_FRONTEND_ENV }}
-EOF
+          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
 
       - name: Build frontend
-        working-directory: ./frontend
+        working-directory: ./frontent
         run: npm run build
 
       - name: Deploy frontend to Nginx
-        shell: bash
         run: |
           sudo rm -rf /var/www/html/*
-          sudo cp -r ./frontend/dist/* /var/www/html/
+          sudo cp -r ./frontent/dist/* /var/www/html/
           sudo systemctl restart nginx
