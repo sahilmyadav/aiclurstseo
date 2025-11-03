@@ -1,5 +1,6 @@
 import express from "express";
 import Reviews from "../models/Reviews.js";
+import { sendThanksEmail } from "../utilities/sendMail.js";
 
 export const createReview = async (req, res) => {
     console.log(req.body)
@@ -22,9 +23,15 @@ export const createReview = async (req, res) => {
         });
         await review.save();
         console.log(review)
+
         res.json({
             success: true,
             message: "Review created successfully"
+        });
+        const reviewLink = `${process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:5173'}/business/${review.locationId}`;
+        await sendThanksEmail(email, name, businessName, reviewLink)
+        .catch(err => {
+            console.error("Thank you email failed:", err.message || err);
         });
     } catch (error) {
         console.error("Error creating review:", error);
