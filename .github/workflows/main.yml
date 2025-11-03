@@ -24,7 +24,7 @@ jobs:
           cache: 'npm'
           cache-dependency-path: |
             backend/package-lock.json
-            frontend/package-lock.json
+            frontent/package-lock.json
 
       # ------------------------------
       # BACKEND SETUP
@@ -41,7 +41,7 @@ jobs:
       - name: Start backend with PM2
         working-directory: ./backend
         run: |
-          /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start index.js --name backend
+          /usr/local/bin/pm2 restart backend || /usr/local/bin/pm2 start server.js --name backend
 
       # ------------------------------
       # FRONTEND SETUP
