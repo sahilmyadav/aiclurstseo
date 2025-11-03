@@ -126,6 +126,7 @@ export const AuthContextProvider = ({ children }) => {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       
+      
       // Get Firebase ID token
       const idToken = await user.getIdToken();
       
