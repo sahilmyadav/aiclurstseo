@@ -11,6 +11,7 @@ import googleRoutes from './routes/googleRoutes.js';
 import authRoutes from './routes/auth.js';
 import auditRoutes from './routes/auditRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import invitationRoutes from './routes/invitationRoutes.js';
 
 dotenv.config();
 
@@ -55,6 +56,7 @@ app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/invitations', invitationRoutes);
 
 // Test routes
 app.get('/', (req, res) => {
