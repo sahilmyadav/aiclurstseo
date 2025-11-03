@@ -1,0 +1,84 @@
+name: Deploy Fullstack App on VPS
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    strategy:
+      matrix:
+        node-version: [23.x]
+
+    steps:
+      # ------------------------------
+      # CHECKOUT CODE
+      # ------------------------------
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # ------------------------------
+      # SETUP NODE
+      # ------------------------------
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: |
+            backend/package-lock.json
+            frontent/package-lock.json
+
+      # ------------------------------
+      # BACKEND DEPLOYMENT
+      # ------------------------------
+      - name: Install backend dependencies
+        working-directory: ./backend
+        run: npm install
+
+      - name: Create backend .env file
+        working-directory: ./backend
+        run: |
+          echo "${{ secrets.PROD_BACKEND_ENV }}" > .env
+          echo "✅ Backend .env file created"
+
+      - name: Restart backend using PM2
+        run: |
+          export HOME=/root
+          cd /root/actions-runner/_work/aiclurstseo/aiclurstseo/backend
+          /root/.nvm/versions/node/v23.11.1/bin/pm2 start server.js --name backend || /root/.nvm/versions/node/v23.11.1/bin/pm2 restart backend --update-env
+          /root/.nvm/versions/node/v23.11.1/bin/pm2 save
+          echo "🚀 Backend deployed successfully"
+
+      # ------------------------------
+      # FRONTEND DEPLOYMENT
+      # ------------------------------
+      - name: Clean npm cache
+        working-directory: ./frontent
+        run: |
+          rm -rf node_modules package-lock.json
+          npm cache clean --force
+
+      - name: Install frontend dependencies
+        working-directory: ./frontent
+        run: npm install
+
+      - name: Create frontend .env file
+        working-directory: ./frontent
+        run: |
+          echo "${{ secrets.PROD_FRONTEND_ENV }}" > .env
+          echo "✅ Frontend .env file created"
+
+      - name: Build frontend
+        working-directory: ./frontent
+        run: npm run build
+
+      - name: Deploy frontend to Nginx
+        run: |
+          sudo rm -rf /var/www/html/*
+          sudo cp -r ./frontent/dist/* /var/www/html/
+          sudo systemctl restart nginx
+          echo "🌐 Frontend deployed successfully"

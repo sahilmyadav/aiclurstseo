@@ -17,3 +17,5 @@ router.post('/firebase/google-signup', firebaseGoogleSignup);
 router.get('/me', auth, getCurrentUser);
 
 export default router;
+
+// ok
