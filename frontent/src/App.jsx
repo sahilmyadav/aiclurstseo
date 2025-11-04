@@ -32,7 +32,16 @@ import AllUsers from './components/admin/AllUsers'
 const AppContent = () => {
   const location = useLocation()
   const isDashboardRoute = location.pathname.startsWith('/dashboard')
-  const { isAuthenticated, user } = useAuth()
+  const { isAuthenticated, user, isLoading, isInitialized } = useAuth()
+
+  // Show loading state while checking authentication
+  if (isLoading || !isInitialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -93,7 +102,15 @@ const AppContent = () => {
 
       
         {/* Catch-all route for non-existent paths */}
-        <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} />} />
+        {/* Only handle 404 redirects after auth is initialized */}
+        <Route 
+          path="*" 
+          element={
+            isInitialized ? (
+              <Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />
+            ) : null
+          } 
+        />
       </Routes>
     </>
   )
