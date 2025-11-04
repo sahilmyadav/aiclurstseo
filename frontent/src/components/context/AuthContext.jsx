@@ -12,7 +12,8 @@ export const AuthContextProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // Start with true to indicate initial loading
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const API_BASE = import.meta.env.VITE_API_BASE ;
   console.log("Backend API Base",API_BASE)
@@ -36,17 +37,37 @@ export const AuthContextProvider = ({ children }) => {
   });
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('auth');
-      if (raw) {
-        const parsed = JSON.parse(raw);
-        if (parsed?.token && parsed?.user) {
-          setToken(parsed.token);
-          setUser(parsed.user);
-          setIsAuthenticated(true);
+    const initializeAuth = async () => {
+      try {
+        const raw = localStorage.getItem('auth');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed?.token) {
+            // Set token immediately for API calls
+            setToken(parsed.token);
+            
+            // Fetch fresh user data to validate token
+            const { success, user: userData } = await fetchCurrentUser();
+            if (success && userData) {
+              setUser(userData);
+              setIsAuthenticated(true);
+              persist({ user: userData, token: parsed.token });
+            } else {
+              // If token is invalid, clear auth data
+              clearPersist();
+            }
+          }
         }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        clearPersist();
+      } finally {
+        setIsLoading(false);
+        setIsInitialized(true);
       }
-    } catch (_) {}
+    };
+
+    initializeAuth();
   }, []);
 
   const persist = (data) => {
@@ -153,13 +174,14 @@ export const AuthContextProvider = ({ children }) => {
       user, 
       token, 
       isAuthenticated, 
-      isLoading, 
+      isLoading: isLoading || !isInitialized, // Consider loading true until initialized
       signup, 
       login, 
       logout, 
       signupWithGoogle, 
       fetchCurrentUser,
-      setUser 
+      setUser,
+      isInitialized
     }}>
       {children}
     </userContext.Provider>
