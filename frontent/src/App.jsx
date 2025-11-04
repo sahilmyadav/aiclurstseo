@@ -28,6 +28,7 @@ import { useAuth } from './components/context/AuthContext'
 import AdminDashboard from './components/admin/AdminDashboard'
 import { Users } from 'lucide-react'
 import AllUsers from './components/admin/AllUsers'
+import Reviews from './components/Reviews'
 
 const AppContent = () => {
   const location = useLocation()
@@ -71,6 +72,7 @@ const AppContent = () => {
           >
             <Route index element={<Dashboard />} />
             <Route path="reviews" element={<InboxMessage />} />
+            <Route path="handle-reviews" element={<Reviews />} />
             <Route path="audit" element={<Audit />} />
             <Route path="review-link" element={<ReviewLink />} />
             <Route path="widgets" element={<WebsiteWidgets />} />

@@ -85,9 +85,10 @@ const SideNav = () => {
   };
 
     const userNavItems = [
-    { name: 'Reviews', icon: Star, path: '/dashboard', active: location.pathname === '/dashboard' },
+    { name: 'Dashboard', icon: Home, path: '/dashboard', active: location.pathname === '/dashboard' },
     { name: 'Get Reviews', icon: Send, path: '/dashboard/reviews', active: location.pathname === '/dashboard/reviews' },
     { name: 'Audit', icon: BarChart3, path: '/dashboard/audit', active: location.pathname === '/dashboard/audit' },
+    { name: 'Reviews', icon: Star, path: '/dashboard/handle-reviews', active: location.pathname === '/dashboard/handle-reviews' },
     { name: 'Review Link', icon: LinkIcon, path: '/dashboard/review-link', active: location.pathname === '/dashboard/review-link' },
     { name: 'Widgets', icon: LayoutGrid, path: '/dashboard/widgets', active: location.pathname === '/dashboard/widgets' },
     { name: 'Integrations', icon: GitBranch, path: '/dashboard/integrations', active: location.pathname === '/dashboard/integrations' },
