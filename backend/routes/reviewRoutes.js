@@ -5,6 +5,6 @@ import { createReview,getAllReviewsByLocationId } from "../controllers/reviewCon
 import { replyToReview } from "../controllers/reviewReplyController.js";
 
 router.post("/create", createReview);
-router.get('allReviews/:locationId', getAllReviewsByLocationId)
+router.get("/allReviews/:locationId", getAllReviewsByLocationId);
 router.post("/reply", replyToReview);
 export default router;

@@ -43,6 +43,7 @@ export const createReview = async (req, res) => {
 };
 
 export const getAllReviewsByLocationId = async (req, res) => {
+    console.log("Getting all reviews by location ID");
 
     console.log(req.params.locationId)
     try {
