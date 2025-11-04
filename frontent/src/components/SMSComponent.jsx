@@ -1,85 +1,84 @@
-import { useEffect, useState } from 'react';
-import { FaPaperPlane, FaPhone, FaUpload, FaUser, FaSpinner } from 'react-icons/fa';
-import { toast } from 'sonner';
-import { useAuth } from './context/AuthContext';
-import { useGoogleBusiness } from './context/GoogleBusinessContext';
-import BulkUploadComponent from './BulkUploadComponent';
+import { useEffect, useState } from "react";
+import {
+  FaPaperPlane,
+  FaPhone,
+  FaUpload,
+  FaUser,
+  FaSpinner,
+} from "react-icons/fa";
+import { toast } from "sonner";
+import { useAuth } from "./context/AuthContext";
+import { useGoogleBusiness } from "./context/GoogleBusinessContext";
+import BulkUploadComponent from "./BulkUploadComponent";
 
 const SMSComponent = () => {
   const { user, token } = useAuth();
-  const { businesses, loading: businessesLoading, selectedBusiness, fetchBusinesses } = useGoogleBusiness();
-  
+  const {
+    businesses,
+    loading: businessesLoading,
+    selectedBusiness,
+    fetchBusinesses,
+  } = useGoogleBusiness();
+
   const [formData, setFormData] = useState({
-    businessId: '',
-    customerName: '',
-    customerPhone: ''
+    businessId: "",
+    businessName: "",
+    customerName: "",
+    customerPhone: "",
   });
   const [isSending, setIsSending] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
-  const BACKEND_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, '') || "http://localhost:8000";
-  
+  const BACKEND_URL =
+    import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ||
+    "http://localhost:8000";
+
   // Set the selected business when businesses are loaded or changed
   useEffect(() => {
     if (businesses.length > 0) {
       // If there's a selectedBusiness, use that, otherwise use the first business
       const businessToSelect = selectedBusiness || businesses[0];
       if (businessToSelect) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          businessId: businessToSelect.id || '',
-          businessName: businessToSelect.title || businessToSelect.locationName || 'Selected Business'
+          businessId: businessToSelect.id || "",
+          businessName:
+            businessToSelect.title ||
+            businessToSelect.locationName ||
+            "Selected Business",
         }));
       }
     }
   }, [businesses, selectedBusiness]);
-  
+
   // Format business name for display
   const getBusinessDisplayName = (business) => {
-    return business?.title || business?.locationName || 'Business Location';
+    return business?.title || business?.locationName || "Business Location";
   };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSendSMS = async (e) => {
+    console.log("handleSendSMS triggered");
     e.preventDefault();
-    
-    // Show coming soon message in toast
-    toast.info('SMS invitation feature is coming soon!', {
-      description: 'We are working hard to bring you this feature.',
-      duration: 5000,
-    });
-    
-    // Reset form
-    setFormData(prev => ({
-      ...prev,
-      customerName: '',
-      customerPhone: ''
-    }));
-    
-    return;
-    
-    // The following code is kept for future implementation
+
     if (!formData.businessId) {
       toast.error("Please select a business");
       return;
     }
-    
-    if (!formData.customerName?.trim()) {
-      toast.error("Please enter customer name");
-      return;
-    }
 
     const phoneRegex = /^\+?[1-9]\d{9,14}$/;
-    const phoneNumber = formData.customerPhone.replace(/[^\d+]/g, '');
-    
+    const phoneNumber = formData.customerPhone.replace(/[^\d+]/g, "");
+
     if (!phoneRegex.test(phoneNumber)) {
-      toast.error("Please enter a valid phone number with country code (e.g., +1 for US)");
+      toast.error(
+        "Please enter a valid phone number with country code (e.g., +1 for US)"
+      );
       return;
     }
 
@@ -90,14 +89,20 @@ const SMSComponent = () => {
 
     setIsSending(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/sms/invite`, {
-        method: 'POST',
+      console.log("Request payload:", {
+        businessName: formData.businessName,
+        customerName: formData.customerName.trim(),
+        customerPhone: phoneNumber,
+      });
+
+      const response = await fetch(`${BACKEND_URL}/api/invitations/sms`, {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          businessId: formData.businessId,
+          businessName: formData.businessName,
           customerName: formData.customerName.trim(),
           customerPhone: phoneNumber,
         }),
@@ -106,17 +111,17 @@ const SMSComponent = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to send SMS invitation');
+        throw new Error(data.error || "Failed to send SMS invitation");
       }
 
       toast.success(data.message || "SMS invitation sent successfully!");
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        customerName: '',
-        customerPhone: ''
+        customerName: "",
+        customerPhone: "",
       }));
     } catch (error) {
-      console.error('Error sending SMS invitation:', error);
+      console.error("Error sending SMS invitation:", error);
       toast.error(error.message);
     } finally {
       setIsSending(false);
@@ -136,7 +141,7 @@ const SMSComponent = () => {
       <div className="text-center p-8">
         <p className="text-gray-600 mb-4">No Google Business accounts found.</p>
         <button
-          onClick={() => window.open('/dashboard/integrations', '_blank')}
+          onClick={() => window.open("/dashboard/integrations", "_blank")}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
         >
           Connect Google Business
@@ -149,13 +154,15 @@ const SMSComponent = () => {
     <div className="max-w-4xl mx-auto p-6 bg-gray-900 text-white min-h-screen">
       <div className="mb-8">
         <h1 className="text-2xl font-bold mb-2">Send SMS Invitations</h1>
-        <p className="text-gray-400">Invite your customers to leave a review via SMS</p>
+        <p className="text-gray-400">
+          Invite your customers to leave a review via SMS
+        </p>
       </div>
 
       <div className="bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
-            {showBulkUpload ? 'Bulk Upload Contacts' : 'Single Invitation'}
+            {showBulkUpload ? "Bulk Upload Contacts" : "Single Invitation"}
           </h2>
           <button
             onClick={() => setShowBulkUpload(!showBulkUpload)}
@@ -181,7 +188,10 @@ const SMSComponent = () => {
           <form onSubmit={handleSendSMS} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="mb-4">
-                <label htmlFor="businessId" className="block text-sm font-medium text-gray-700 mb-1">
+                <label
+                  htmlFor="businessId"
+                  className="block text-sm font-medium text-gray-700 mb-1"
+                >
                   Select Business
                 </label>
                 <select
@@ -202,7 +212,10 @@ const SMSComponent = () => {
                 </select>
               </div>
               <div>
-                <label htmlFor="customerName" className="block text-sm font-medium text-gray-300 mb-1">
+                <label
+                  htmlFor="customerName"
+                  className="block text-sm font-medium text-gray-300 mb-1"
+                >
                   Customer Name (Optional)
                 </label>
                 <div className="relative">
@@ -221,7 +234,10 @@ const SMSComponent = () => {
                 </div>
               </div>
               <div className="md:col-span-2">
-                <label htmlFor="customerPhone" className="block text-sm font-medium text-gray-300 mb-1">
+                <label
+                  htmlFor="customerPhone"
+                  className="block text-sm font-medium text-gray-300 mb-1"
+                >
                   Phone Number <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -239,7 +255,9 @@ const SMSComponent = () => {
                     required
                   />
                 </div>
-                <p className="text-xs text-gray-400 mt-1">Include country code (e.g., +1 for US)</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Include country code (e.g., +1 for US)
+                </p>
               </div>
             </div>
 
@@ -270,14 +288,19 @@ const SMSComponent = () => {
         <h2 className="text-xl font-semibold mb-4">SMS Preview</h2>
         <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
           <p className="text-gray-300 mb-4">
-            Hi {formData.customerName || 'there'}, we'd love your feedback! Please take a moment to leave us a review: [Review Link]
+            Hi {formData.customerName || "there"}, we'd love your feedback!
+            Please take a moment to leave us a review: [Review Link]
           </p>
           <p className="text-sm text-gray-400">
-            Sent from: {businesses.find(b => b.id === formData.businessId)?.name || 'Our Business'}
+            Sent from:{" "}
+            {businesses.find((b) => b.id === formData.businessId)?.name ||
+              "Our Business"}
           </p>
           <p className="mt-2 text-sm text-gray-400">
-            Best regards,<br />
-            {businesses.find(b => b.id === formData.businessId)?.name || 'Our Team'}
+            Best regards,
+            <br />
+            {businesses.find((b) => b.id === formData.businessId)?.name ||
+              "Our Team"}
           </p>
         </div>
       </div>
