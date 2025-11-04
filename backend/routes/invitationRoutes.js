@@ -1,6 +1,6 @@
 import express from "express";
 import multer from "multer";
-import { sendInvitationEmail } from "../controllers/invitationController.js";
+import { sendInvitationEmail, sendBulkEmailInvitations, handleBulkEmailUpload } from "../controllers/invitationController.js";
 import { sendSmsInvitation, sendBulkSmsInvitations, handleBulkSmsUpload } from '../controllers/smsController.js';
 
 const router = express.Router();
@@ -22,6 +22,12 @@ const upload = multer({
 
 // POST /api/invitations/email
 router.post("/email", sendInvitationEmail);
+
+// POST /api/invitations/email/bulk
+router.post("/email/bulk", sendBulkEmailInvitations);
+
+// POST /api/invitations/email/upload
+router.post("/email/upload", upload.single('file'), handleBulkEmailUpload);
 
 // POST /api/invitations/sms
 router.post("/sms", sendSmsInvitation);
