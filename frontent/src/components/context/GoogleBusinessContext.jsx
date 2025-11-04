@@ -17,6 +17,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   const [businesses, setBusinesses] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [localReviews, setLocalReviews] = useState([]); // New state for local reviews
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [reviewUri, setReviewUri] = useState('');
@@ -76,6 +77,8 @@ export const GoogleBusinessProvider = ({ children }) => {
           
           // Auto-fetch reviews for first business
           await fetchReviews(firstBusiness.accountId, firstBusiness.name.split("/")[1]);
+          // Also fetch local reviews
+          await fetchLocalReviews(firstBusiness.name.split("/")[1]);
         }
       }
     } catch (err) {
@@ -110,6 +113,31 @@ export const GoogleBusinessProvider = ({ children }) => {
     }
   };
 
+  // Fetch local reviews from database by locationId
+  const fetchLocalReviews = async (locationId) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${BACKEND_URL}/api/reviews/allReviews/${locationId}`, {
+        headers: authHeaders(),
+        credentials: 'include',
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setLocalReviews(data || []);
+      } else {
+        throw new Error('Failed to fetch local reviews');
+      }
+    } catch (err) {
+      console.error('Error fetching local reviews:', err);
+      // Don't show toast error for local reviews as it might not be implemented yet
+      // toast.error("Failed to fetch local reviews");
+      setLocalReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Connect to Google
   const connectGoogle = async () => {
    
@@ -131,6 +159,7 @@ export const GoogleBusinessProvider = ({ children }) => {
       setBusinesses([]);
       setSelectedBusiness(null);
       setReviews([]);
+      setLocalReviews([]); // Reset local reviews
       setIsConnected(false);
       
       toast.success("Disconnected successfully");
@@ -152,6 +181,8 @@ export const GoogleBusinessProvider = ({ children }) => {
     }
     
     await fetchReviews(accountId, locationId);
+    // Also fetch local reviews when business is selected
+    await fetchLocalReviews(locationId);
   };
 
   // Calculate review statistics
@@ -189,6 +220,15 @@ export const GoogleBusinessProvider = ({ children }) => {
     };
   };
 
+  // Refresh all data when needed
+  const refreshData = async () => {
+    if (isConnected && selectedBusiness) {
+      const locationId = selectedBusiness.name.split("/")[1];
+      await fetchReviews(selectedBusiness.accountId, locationId);
+      await fetchLocalReviews(locationId);
+    }
+  };
+
   useEffect(() => {
     checkAuthStatus();
   }, [authUser]);
@@ -199,6 +239,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     businesses,
     selectedBusiness,
     reviews,
+    localReviews, // Include localReviews in the context value
     loading,
     isConnected,
     reviewUri,
@@ -208,8 +249,10 @@ export const GoogleBusinessProvider = ({ children }) => {
     disconnectGoogle,
     fetchBusinesses,
     fetchReviews,
+    fetchLocalReviews, // Include the new function
     selectBusiness,
     checkAuthStatus,
+    refreshData, // Include refresh function
     
     // Computed values
     reviewStats: getReviewStats()
