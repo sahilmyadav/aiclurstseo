@@ -113,6 +113,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   // Connect to Google
   const connectGoogle = async () => {
    
+   
     window.location.href = `${BACKEND_URL}/auth/google/login`;
   };
 
