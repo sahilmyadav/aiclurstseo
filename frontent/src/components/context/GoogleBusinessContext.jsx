@@ -84,6 +84,7 @@ export const GoogleBusinessProvider = ({ children }) => {
           if (data.tokenDetails) {
             setTokenDetails({
               accessToken: data.tokenDetails.access_token,
+              refreshToken: data.tokenDetails.refresh_token,
               expiryDate: data.tokenDetails.expiry_date ? new Date(data.tokenDetails.expiry_date) : null,
               scopes: data.tokenDetails.scope ? data.tokenDetails.scope.split(' ') : []
             });

@@ -97,10 +97,12 @@ const SocialSharing = () => {
         createdBy: authData?.user?.id,  // Include the user ID in the request
         tokenDetails: tokenDetails ? {
           accessToken: tokenDetails.accessToken,
+          refreshToken: tokenDetails.refreshToken,
           expiryDate: tokenDetails.expiryDate,
           scopes: tokenDetails.scopes
         } : null
       };
+      console.log("postData",postData)
       
       // Make the API call
       const response = await axios.post(

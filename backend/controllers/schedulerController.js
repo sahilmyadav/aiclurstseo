@@ -18,7 +18,7 @@ export const schedulePost = async (req, res) => {
             createdBy,
             tokenDetails
         } = req.body;
-
+          console.log("tokenDetails",tokenDetails)
         // Validate required fields
         if (!content || !accountId || !locationId) {
             await session.abortTransaction();
