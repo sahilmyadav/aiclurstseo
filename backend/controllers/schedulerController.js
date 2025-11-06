@@ -59,11 +59,17 @@ export const schedulePost = async (req, res) => {
             });
         }
 
-        // Convert local scheduled time to UTC for storage
+        // Parse the scheduled time (already in UTC from frontend)
         const scheduledForUTC = isScheduled ? new Date(scheduledFor) : null;
-        if (scheduledForUTC) {
-            // Adjust for timezone offset to store as UTC
-            scheduledForUTC.setMinutes(scheduledForUTC.getMinutes() - scheduledForUTC.getTimezoneOffset());
+        
+        // No need to adjust timezone offset since the time is already in UTC
+        if (scheduledForUTC && isNaN(scheduledForUTC.getTime())) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid scheduled time format'
+            });
         }
 
         console.log(`⏰ Scheduling post for:`, {
