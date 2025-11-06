@@ -48,7 +48,7 @@ export const getAllReviewsByLocationId = async (req, res) => {
     // console.log(req.params.locationId)
     try {
         const reviews = await Reviews.find({ locationId: req.params.locationId });
-        console.log(reviews,"reviews")
+        // console.log(reviews,"reviews")
         res.json(reviews);
     } catch (error) {
         console.error("Error fetching reviews:", error);

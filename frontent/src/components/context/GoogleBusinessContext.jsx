@@ -269,7 +269,6 @@ export const GoogleBusinessProvider = ({ children }) => {
     selectBusiness,
     checkAuthStatus,
     refreshData,
-    refreshData, // Include refresh function
     
     // Computed values
     reviewStats: getReviewStats()

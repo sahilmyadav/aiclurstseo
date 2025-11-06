@@ -53,7 +53,11 @@ connectDB();
 initializeFirebase();
 
 // Start the post scheduler (runs every 5 minutes)
-
+if (process.env.NODE_ENV !== 'test') {
+  import('./services/postScheduler.js')
+    .then(({ startScheduler }) => startScheduler(5)) // Check every 5 minutes
+    .catch(err => console.error('Failed to start post scheduler:', err));
+}
 
 // Routes
 app.use("/auth/google", googleRoutes);
