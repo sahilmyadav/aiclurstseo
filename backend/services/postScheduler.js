@@ -124,30 +124,31 @@ function localToUTC(date) {
  */
 async function checkScheduledPosts() {
   try {
+    // Get current time in IST (UTC+5:30)
     const now = new Date();
-    const nowUTC = localToUTC(now);
+    const nowIST = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
     
-    console.log(`🔍 Checking for posts to process (Local: ${now.toISOString()}, UTC: ${nowUTC.toISOString()})`);
+    console.log(`🔍 Checking for posts to process (Current time in IST: ${nowIST.toISOString()})`);
     
     // Find posts that need to be processed
     const posts = await ScheduledPost.find({
       status: { $in: ['pending', 'failed'] }, // Include failed posts for retry
       $or: [
-        // Posts with nextRun in the past (UTC)
-        { nextRun: { $lte: nowUTC } },
-        // Scheduled posts with scheduledFor in the past (UTC)
+        // Posts with nextRun in the past (IST)
+        { nextRun: { $lte: nowIST } },
+        // Scheduled posts with scheduledFor in the past (IST)
         { 
           isScheduled: true, 
-          scheduledFor: { $lte: nowUTC },
+          scheduledFor: { $lte: nowIST },
           nextRun: { $exists: false },
           status: { $ne: 'posted' }
         },
-        // Any unposted posts that are due (UTC)
+        // Any unposted posts that are due (IST)
         {
           status: { $ne: 'posted' },
           $or: [
             { scheduledFor: { $exists: false } },
-            { scheduledFor: { $lte: nowUTC } }
+            { scheduledFor: { $lte: nowIST } }
           ]
         }
       ]
