@@ -3,7 +3,20 @@ import { useNavigate } from "react-router-dom";
 import SideNav from "./SideNav";
 import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
-import { FaGoogle, FaCalendarAlt, FaClock, FaHistory, FaPlus, FaTrash, FaEdit, FaSpinner } from "react-icons/fa";
+import { 
+  FaGoogle, 
+  FaCalendarAlt, 
+  FaClock, 
+  FaHistory, 
+  FaPlus, 
+  FaTrash, 
+  FaEdit, 
+  FaSpinner, 
+  FaClock as FaScheduled,
+  FaCheckCircle,
+  FaSync,
+  FaInfoCircle 
+} from "react-icons/fa";
 import { toast } from 'sonner';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -31,7 +44,12 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
   };
 
   const getDisplayStatus = (status) => {
-    if (status === 'scheduled') return `Scheduled for ${formatDate(post.scheduledFor)}`;
+    if (status === 'scheduled') {
+      if (post.isRecurring) {
+        return `Recurring - ${post.repeatType}`;
+      }
+      return `Scheduled for ${formatDate(post.scheduledFor)}`;
+    }
     if (status === 'published' && post.statusFromApi === 'processing') return `Status: Processing`;
     if (status === 'published') return `Posted on ${formatDate(post.postedAt)}`;
     return 'Draft';
@@ -85,20 +103,40 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
             </span>
           </div>
         )}
-        <div className="mt-3 pt-2 border-t border-white/5 text-xs text-white/50">
+        <div className="mt-3 pt-2 border-t border-white/5 text-xs text-white/50 space-y-1.5">
           {post.status === 'scheduled' ? (
-            <div className="flex items-center gap-1">
-              <FaCalendarAlt className="text-blue-400/80" />
-              <span>Scheduled for {formatDate(post.scheduledFor)}</span>
-            </div>
+            <>
+              <div className="flex items-center gap-1.5">
+                <FaCalendarAlt className="text-blue-400/80 flex-shrink-0" />
+                <span>
+                  {post.isRecurring ? 'Next run: ' : 'Scheduled for: '}
+                  {formatDate(post.nextRun || post.scheduledFor)}
+                </span>
+              </div>
+              {post.isRecurring && (
+                <div className="flex items-start gap-1.5">
+                  <FaSync className="text-blue-400/80 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <div>Recurring: {post.repeatType}</div>
+                    {post.lastRun && (
+                      <div className="text-white/60">Last run: {formatDate(post.lastRun)}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 text-blue-300/80">
+                <FaInfoCircle className="flex-shrink-0" />
+                <span>{post.statusFromApi === 'pending' ? 'Pending' : 'Scheduled'}</span>
+              </div>
+            </>
           ) : post.status === 'published' ? (
-            <div className="flex items-center gap-1">
-              <FaClock className="text-green-400/80" />
+            <div className="flex items-center gap-1.5">
+              <FaCheckCircle className="text-green-400/80 flex-shrink-0" />
               <span>Posted on {formatDate(post.postedAt)}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 text-amber-400/80">
-              <FaEdit />
+            <div className="flex items-center gap-1.5 text-amber-400/80">
+              <FaEdit className="flex-shrink-0" />
               <span>Draft - Not published</span>
             </div>
           )}
@@ -110,10 +148,24 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
 
 const Posts = () => {
   const { isCollapsed } = useSidebar();
-  const { isConnected: isGoogleConnected, businesses, selectedBusiness, selectBusiness } = useGoogleBusiness();
+  const { 
+    isConnected: isGoogleConnected, 
+    businesses, 
+    selectedBusiness, 
+    selectBusiness,
+    scheduledPosts,
+    loadingScheduled
+  } = useGoogleBusiness();
+  
   const [activeTab, setActiveTab] = useState('published'); 
   const [showEditor, setShowEditor] = useState(false);
   const [posts, setPosts] = useState([]);
+  const [pagination, setPagination] = useState({
+    hasMore: false,
+    nextPageToken: null,
+    loadingMore: false,
+    pageSize: 20 // Default page size
+  });
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   
@@ -132,16 +184,28 @@ const Posts = () => {
 
   const [businessDetails, setBusinessDetails] = useState(null);
   
-  const fetchPosts = async (accountId, locationId) => {
-    setIsLoadingPosts(true);
+  const fetchPosts = async (accountId, locationId, loadMore = false) => {
+    if (loadMore) {
+      setPagination(prev => ({ ...prev, loadingMore: true }));
+    } else {
+      setIsLoadingPosts(true);
+    }
+    
     try {
       // Ensure BACKEND_URL is defined and doesn't end with a slash
       if (!BACKEND_URL) {
         throw new Error('BACKEND_URL is not defined');
       }
+      
       const baseUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
-      // Remove /api from the URL path since the backend route is mounted at /auth/google
-      const url = `${baseUrl}/auth/google/accounts/${accountId}/locations/${locationId}/localPosts`;
+      
+      // Build URL with pagination parameters
+      const params = new URLSearchParams({
+        pageSize: pagination.pageSize,
+        ...(loadMore && pagination.nextPageToken && { pageToken: pagination.nextPageToken })
+      });
+      
+      const url = `${baseUrl}/auth/google/accounts/${accountId}/locations/${locationId}/localPosts?${params}`;
       
       console.log(`🔄 Fetching posts from:`, url);
       
@@ -149,7 +213,7 @@ const Posts = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // Add auth token if needed
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       
@@ -204,8 +268,22 @@ const Posts = () => {
         };
       });
       
-      console.log(`📊 Formatted ${formattedPosts.length} posts`);
-      setPosts(formattedPosts);
+      // Update posts state based on whether we're loading more or refreshing
+      if (loadMore) {
+        setPosts(prevPosts => [...prevPosts, ...formattedPosts]);
+      } else {
+        setPosts(formattedPosts);
+      }
+      
+      // Update pagination state
+      setPagination(prev => ({
+        ...prev,
+        hasMore: responseData.pagination?.hasMore || false,
+        nextPageToken: responseData.pagination?.nextPageToken || null,
+        loadingMore: false
+      }));
+      
+      console.log(`📊 ${loadMore ? 'Added' : 'Loaded'} ${formattedPosts.length} posts`);
       return formattedPosts;
     } catch (error) {
       console.error("❌ Error fetching posts:", error);
@@ -394,7 +472,39 @@ const Posts = () => {
     setShowEditor(true);
   };
 
-  const filteredPosts = posts.filter(post => post.status === activeTab);
+  // Format scheduled posts to match the PostCard component's expected format
+  const formattedScheduledPosts = (scheduledPosts || []).map(post => ({
+    id: post._id || post.id,
+    content: post.content,
+    status: 'scheduled',
+    statusFromApi: post.status,
+    scheduledFor: post.scheduledFor || post.nextRun,
+    postedAt: post.createdAt,
+    platform: 'google',
+    isRecurring: post.isRecurring,
+    repeatType: post.repeatType,
+    repeatDays: post.repeatDays,
+    lastRun: post.lastRun,
+    nextRun: post.nextRun
+  }));
+
+  // Filter posts based on active tab
+  const filteredPosts = activeTab === 'scheduled' 
+    ? formattedScheduledPosts 
+    : posts.filter(post => post.status === activeTab);
+    
+  // Handle loading more posts
+  const handleLoadMore = async () => {
+    if (!selectedBusiness || !pagination.hasMore || pagination.loadingMore) return;
+    
+    try {
+      const locationId = selectedBusiness.name.split('/')[1];
+      await fetchPosts(selectedBusiness.accountId, locationId, true);
+    } catch (error) {
+      console.error('Error loading more posts:', error);
+      toast.error('Failed to load more posts');
+    }
+  };
 
   const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
 
@@ -484,7 +594,7 @@ const Posts = () => {
           {/* Tabs */}
           <div className="border-b border-white/10 mb-6 bg-[#1a1b2e]/50 backdrop-blur-sm rounded-t-lg">
             <div className="flex overflow-x-auto scrollbar-hide px-2 py-2">
-              {['scheduled', 'published', 'drafts'].map((tab) => (
+              {['published', 'scheduled', 'drafts'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -536,21 +646,40 @@ const Posts = () => {
                   </div>
                 </div>
               </div>
-            ) : filteredPosts.length > 0 ? (
-              filteredPosts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onEdit={handleEditPost}
-                  onDelete={handleDeletePost}
-                  selectedBusiness={selectedBusiness}
-                />
-              ))
-            ) : (
-              <div className="text-center py-12 text-white/50">
-                <FaHistory className="mx-auto text-4xl mb-3 opacity-30" />
-                <p>No {activeTab} posts found</p>
+            ) : filteredPosts.length === 0 ? (
+              <div className="text-center py-8 text-gray-400">
+                No {activeTab} posts found.
               </div>
+            ) : (
+              <>
+                {filteredPosts.map((post) => (
+                  <PostCard
+                    key={post.id}
+                    post={post}
+                    onEdit={handleEditPost}
+                    onDelete={handleDeletePost}
+                    selectedBusiness={selectedBusiness}
+                  />
+                ))}
+                {pagination.hasMore && (
+                  <div className="flex justify-end mt-4 mb-8 pr-4">
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={pagination.loadingMore}
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                    >
+                      {pagination.loadingMore ? (
+                        <>
+                          <FaSpinner className="animate-spin" />
+                          Loading...
+                        </>
+                      ) : (
+                        'Load More Posts'
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>

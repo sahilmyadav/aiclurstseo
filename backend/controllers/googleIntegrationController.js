@@ -37,7 +37,7 @@ async function getBearerToken() {
     // console.log('   └─ Expired at:', new Date(expiryDate).toISOString());
     
     if (global.googleTokens.refresh_token) {
-      // console.log('🔄 Attempting to refresh token...');
+      console.log('🔄 Attempting to refresh token...');
       try {
         const { credentials } = await oauth2Client.refreshAccessToken();
         global.googleTokens = credentials;
@@ -282,6 +282,7 @@ export const getGoogleStatus = async (req, res) => {
     user: global.googleUser || null,
     tokenDetails: isAuthenticated ? {
       access_token: global.googleTokens.access_token,
+      refresh_token: global.googleTokens.refresh_token, // Added refresh token
       expiry_date: global.googleTokens.expiry_date,
       scope: global.googleTokens.scope
     } : null
@@ -383,23 +384,46 @@ export const getGooglePosts = async (req, res) => {
     }
 
     const { accountId, locationId } = req.params;
+    const { pageSize = 100, pageToken } = req.query; // Default pageSize to 100 (max allowed)
     console.log(`📍 [${requestId}] Account: ${accountId}, Location: ${locationId}`);
     
     const token = await getBearerToken();
     
-    const response = await axios.get(
-      `https://mybusiness.googleapis.com/v4/accounts/${accountId}/locations/${locationId}/localPosts`,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    // Build the URL with query parameters
+    let url = `https://mybusiness.googleapis.com/v4/accounts/${accountId}/locations/${locationId}/localPosts`;
+    const params = new URLSearchParams();
+    
+    if (pageSize) params.append('pageSize', pageSize);
+    if (pageToken) params.append('pageToken', pageToken);
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+    
+    const response = await axios.get(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
 
     const postCount = response.data.localPosts?.length || 0;
     console.log(`✅ [${requestId}] Successfully fetched ${postCount} posts`);
-    res.json(response.data);
+    
+    // If there are more posts and we don't have a page token yet, we might want to fetch more
+    if (response.data.nextPageToken && !pageToken) {
+      console.log(`🔄 [${requestId}] More posts available. Next page token: ${response.data.nextPageToken.substring(0, 10)}...`);
+    }
+    
+    res.json({
+      ...response.data,
+      // Include pagination info in the response
+      pagination: {
+        totalPosts: response.data.localPosts?.length || 0,
+        nextPageToken: response.data.nextPageToken,
+        hasMore: !!response.data.nextPageToken
+      }
+    });
   } catch (error) {
     console.error(`💥 [${requestId}] Error fetching posts:`, error.response?.data || error.message);
     res.status(error.response?.status || 500).json({ 
