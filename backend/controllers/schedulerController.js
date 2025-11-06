@@ -59,19 +59,34 @@ export const schedulePost = async (req, res) => {
             });
         }
 
+        // Convert local scheduled time to UTC for storage
+        const scheduledForUTC = isScheduled ? new Date(scheduledFor) : null;
+        if (scheduledForUTC) {
+            // Adjust for timezone offset to store as UTC
+            scheduledForUTC.setMinutes(scheduledForUTC.getMinutes() - scheduledForUTC.getTimezoneOffset());
+        }
+
+        console.log(`⏰ Scheduling post for:`, {
+            localTime: scheduledFor,
+            storedAsUTC: scheduledForUTC?.toISOString(),
+            isRecurring,
+            repeatType
+        });
+
         // Create the scheduled post
         const scheduledPost = new ScheduledPost({
             content,
             accountId,
             locationId,
             isScheduled,
-            scheduledFor: isScheduled ? new Date(scheduledFor) : null,
+            scheduledFor: scheduledForUTC,
             isRecurring,
             repeatType: isRecurring ? repeatType : null,
             repeatDays: isRecurring && repeatType === 'weekly' ? repeatDays : [],
             createdBy,
             tokenDetails: tokenDetails || null,
-            status: isScheduled ? 'pending' : 'posted'
+            status: isScheduled ? 'pending' : 'posted',
+            nextRun: isScheduled ? scheduledForUTC : null
         });
 
         // Save the scheduled post
