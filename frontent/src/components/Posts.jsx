@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import SideNav from "./SideNav";
 import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
@@ -116,6 +117,8 @@ const Posts = () => {
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   
+  const navigate = useNavigate();
+
   const [currentPost, setCurrentPost] = useState({
     id: null,
     content: '',
@@ -610,11 +613,16 @@ const Posts = () => {
                         type="checkbox" 
                         checked={currentPost.scheduledFor !== null}
                         onChange={(e) => {
-                          setCurrentPost({
-                            ...currentPost, 
-                            scheduledFor: e.target.checked ? new Date() : null,
-                            isRecurring: e.target.checked ? currentPost.isRecurring : false,
-                          });
+                          if (e.target.checked) {
+                            // Navigate to schedule post page when checked
+                            navigate('/dashboard/schedule-post');
+                          } else {
+                            setCurrentPost({
+                              ...currentPost,
+                              scheduledFor: null,
+                              isRecurring: false,
+                            });
+                          }
                         }}
                         className="rounded border-white/20"
                       />

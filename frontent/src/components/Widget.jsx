@@ -1,5 +1,5 @@
 import { Copy, Filter, RefreshCw, Star } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 import { useSidebar } from "./context/SidebarContext";
 
@@ -24,6 +24,55 @@ const ReviewCard = ({ review, darkMode }) => {
         <span>{review.reviewer.displayName}</span>
         <span>{new Date(review.createTime).toLocaleDateString()}</span>
       </div>
+    </div>
+  );
+};
+
+// Carousel component for reviews
+const ReviewCarousel = ({ reviews, darkMode }) => {
+  const reviewsToShow = 3; // Number of reviews to show at once
+
+  if (!reviews || reviews.length === 0) {
+    return (
+      <div className={`border rounded-lg p-10 text-center ${darkMode ? 'border-gray-600' : 'border-purple-800'}`}>
+        <Star className={`w-10 h-10 mx-auto mb-4 text-yellow-400`} />
+        <p className="mb-4">No reviews available yet</p>
+      </div>
+    );
+  }
+
+  // For a smooth infinite scroll, we need many duplicates
+  const duplicatedReviews = [];
+  for (let i = 0; i < 10; i++) {
+    duplicatedReviews.push(...reviews);
+  }
+
+  return (
+    <div className="relative overflow-hidden">
+      <style>{`
+        @keyframes scroll {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-${(reviews.length * 100) / reviewsToShow}%); }
+        }
+        .carousel-track {
+          display: flex;
+          animation: scroll ${reviews.length * 5}s linear infinite;
+          width: max-content;
+        }
+        .carousel-track:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+      
+      <div className="carousel-track">
+        {duplicatedReviews.map((review, index) => (
+          <div key={index} className="min-w-[33.33%] px-2">
+            <ReviewCard review={review} darkMode={darkMode} />
+          </div>
+        ))}
+      </div>
+      
+      {/* Removed pagination dots for continuous scrolling */}
     </div>
   );
 };
@@ -106,9 +155,7 @@ export default function WebsiteWidgets() {
     selectedBusiness, 
     reviews = [], 
     loading, 
-    fetchReviews,
-    businesses = [],
-    selectBusiness
+    businesses = []
   } = useGoogleBusiness();
   
   const [activeTab, setActiveTab] = useState("Carousel");
@@ -123,18 +170,6 @@ export default function WebsiteWidgets() {
 
   // State for copied status
   const [copied, setCopied] = useState(false);
-
-  // Fetch reviews when a business is selected
-  useEffect(() => {
-    if (selectedBusiness) {
-      const accountId = selectedBusiness.accountId;
-      const locationId = selectedBusiness.name.split("/")[1];
-      fetchReviews(accountId, locationId);
-    } else if (businesses.length > 0) {
-      // Auto-select first business if none selected
-      selectBusiness(businesses[0]);
-    }
-  }, [selectedBusiness, businesses]);
 
   const handleToggle = (key) => {
     setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -209,6 +244,203 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // Carousel component for reviews
+  const CarouselComponent = () => {
+    if (!reviews || reviews.length === 0) {
+      return (
+        <div className="border border-purple-800 rounded-lg p-10 text-center">
+          <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
+          <p className="mb-4">No reviews available for {selectedBusiness?.locationName || 'this business'}</p>
+        </div>
+      );
+    }
+
+    // For a smooth infinite scroll, we need many duplicates
+    const duplicatedReviews = [];
+    for (let i = 0; i < 10; i++) {
+      duplicatedReviews.push(...reviews);
+    }
+
+    return (
+      <div className="relative overflow-hidden">
+        <style>{`
+          @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-${(reviews.length * 100) / 3}%); }
+          }
+          .carousel-track {
+            display: flex;
+            animation: scroll ${reviews.length * 35}s linear infinite;
+            width: max-content;
+          }
+          .carousel-track:hover {
+            animation-play-state: paused;
+          }
+          .carousel-card {
+            min-width: 350px;
+            width: 350px;
+            margin: 0 5px;
+          }
+          @media (max-width: 768px) {
+            .carousel-card {
+              min-width: 300px;
+              width: 300px;
+            }
+          }
+          @media (max-width: 480px) {
+            .carousel-card {
+              min-width: 250px;
+              width: 250px;
+            }
+          }
+        `}</style>
+        
+        <div className="carousel-track">
+          {duplicatedReviews.map((review, index) => (
+            <div key={index} className="carousel-card">
+              <ReviewCard review={review} darkMode={toggles.darkMode} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // New improved Carousel component with better design
+  const ImprovedCarousel = () => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    
+    if (!reviews || reviews.length === 0) {
+      return (
+        <div className="border border-purple-800 rounded-lg p-10 text-center">
+          <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
+          <p className="mb-4">No reviews available for {selectedBusiness?.locationName || 'this business'}</p>
+        </div>
+      );
+    }
+
+    // For a smooth infinite scroll, we need many duplicates
+    const duplicatedReviews = [];
+    for (let i = 0; i < 10; i++) {
+      duplicatedReviews.push(...reviews);
+    }
+
+    // Auto-rotate reviews
+    useEffect(() => {
+      if (reviews.length <= 3) return;
+      
+      const interval = setInterval(() => {
+        setCurrentIndex(prevIndex => prevIndex + 1);
+      }, 4000); // Change review every 4 seconds
+
+      return () => clearInterval(interval);
+    }, [reviews.length]);
+
+    return (
+      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-900/30 to-indigo-900/30 p-6">
+        <style>{`
+          @keyframes scroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-${(reviews.length * 100) / 3}%); }
+          }
+          .improved-carousel-track {
+            display: flex;
+            animation: scroll ${reviews.length * 50}s linear infinite;
+            width: max-content;
+          }
+          .improved-carousel-track:hover {
+            animation-play-state: paused;
+          }
+          .improved-carousel-card {
+            min-width: 350px;
+            width: 350px;
+            margin: 0 10px;
+            background: rgba(30, 30, 58, 0.7);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            transition: all 0.3s ease;
+          }
+          .improved-carousel-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(139, 92, 246, 0.4);
+            border-color: rgba(139, 92, 246, 0.6);
+          }
+          .improved-star {
+            color: #fbbf24;
+          }
+          .improved-reviewer {
+            color: #c084fc;
+          }
+          @media (max-width: 768px) {
+            .improved-carousel-card {
+              min-width: 300px;
+              width: 300px;
+            }
+          }
+          @media (max-width: 480px) {
+            .improved-carousel-card {
+              min-width: 250px;
+              width: 250px;
+            }
+          }
+        `}</style>
+        
+        <div className="improved-carousel-track">
+          {duplicatedReviews.map((review, index) => {
+            // Define ratingMap inside the map function to ensure it's in scope
+            const ratingMap = { 'ONE': 1, 'TWO': 2, 'THREE': 3, 'FOUR': 4, 'FIVE': 5 };
+            const rating = ratingMap[review.starRating] || 5;
+            
+            return (
+              <div key={index} className="improved-carousel-card">
+                <div className="flex items-center mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      className={`w-5 h-5 ${i < rating ? 'improved-star fill-current' : 'text-gray-600'}`} 
+                    />
+                  ))}
+                  <span className="ml-2 text-lg font-bold text-white">
+                    {rating}.0
+                  </span>
+                </div>
+                <p className="text-gray-200 mb-4 text-sm leading-relaxed">
+                  {review.comment || "No comment provided"}
+                </p>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="improved-reviewer font-medium">
+                    {review.reviewer?.displayName || "Anonymous"}
+                  </span>
+                  <span className="text-gray-400">
+                    {review.createTime ? new Date(review.createTime).toLocaleDateString() : ""}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        
+        {/* Navigation dots */}
+        <div className="flex justify-center mt-6 space-x-2">
+          {reviews.slice(0, Math.min(reviews.length, 10)).map((_, index) => (
+            <button
+              key={index}
+              onClick={() => setCurrentIndex(index)}
+              className={`w-2.5 h-2.5 rounded-full transition-all ${
+                index === (currentIndex % reviews.length) 
+                  ? 'bg-purple-500 w-6' 
+                  : 'bg-gray-600'
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1b1730] to-[#120f25] text-white w-full">
       <div className="w-full mx-auto max-w-[2000px] px-0 sm:px-2 md:px-4 lg:px-6">
@@ -229,7 +461,49 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
             ))}
           </div>
 
-          {activeTab === "All Reviews" ? (
+          {activeTab === "Carousel" ? (
+            <div>
+              {loading ? (
+                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                  <p>Loading reviews...</p>
+                </div>
+              ) : !selectedBusiness ? (
+                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                  <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
+                  <p className="mb-4">No business selected</p>
+                </div>
+              ) : reviews && reviews.length > 0 ? (
+                // Show the improved carousel in Carousel tab
+                <ImprovedCarousel />
+              ) : (
+                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                  <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
+                  <p className="mb-4">No reviews available for {selectedBusiness?.locationName || 'this business'}</p>
+                </div>
+              )}
+            </div>
+          ) : activeTab === "Video" ? (
+            <div>
+              {loading ? (
+                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500 mx-auto mb-4"></div>
+                  <p>Loading reviews...</p>
+                </div>
+              ) : !selectedBusiness ? (
+                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                  <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
+                  <p className="mb-4">No business selected</p>
+                </div>
+              ) : (
+                // Show a simple message in Video tab instead of carousel
+                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                  <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
+                  <p className="mb-4">Video content will be displayed here</p>
+                </div>
+              )}
+            </div>
+          ) : activeTab === "All Reviews" ? (
             <div>
               {loading ? (
                 <div className="border border-purple-800 rounded-lg p-10 text-center">
@@ -254,18 +528,6 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                 <div className="border border-purple-800 rounded-lg p-10 text-center">
                   <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
                   <p className="mb-4">No reviews available for {selectedBusiness?.locationName || 'this business'}</p>
-                  <button 
-                    onClick={() => {
-                      if (selectedBusiness) {
-                        const accountId = selectedBusiness.accountId;
-                        const locationId = selectedBusiness.name.split("/")[1];
-                        fetchReviews(accountId, locationId);
-                      }
-                    }}
-                    className="px-6 py-2 rounded-lg bg-[#1e1e3a] hover:bg-purple-700 transition flex items-center gap-2 mx-auto"
-                  >
-                    <RefreshCw className="w-4 h-4" /> Reload
-                  </button>
                 </div>
               )}
             </div>
@@ -273,9 +535,6 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
             <div className="border border-purple-800 rounded-lg p-10 text-center">
               <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
               <p className="mb-4">No Review Are Currently Available</p>
-              <button className="px-6 py-2 rounded-lg bg-[#1e1e3a] hover:bg-purple-700 transition flex items-center gap-2 mx-auto">
-                <RefreshCw className="w-4 h-4" /> Reload
-              </button>
             </div>
           )}
 
