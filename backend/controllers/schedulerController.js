@@ -79,6 +79,12 @@ export const schedulePost = async (req, res) => {
             repeatType
         });
 
+        // Ensure tokenDetails includes refresh_token if available
+        const enhancedTokenDetails = tokenDetails ? {
+            ...tokenDetails,
+            refresh_token: tokenDetails.refresh_token || global.googleTokens?.refresh_token
+        } : null;
+
         // Create the scheduled post
         const scheduledPost = new ScheduledPost({
             content,
@@ -90,7 +96,7 @@ export const schedulePost = async (req, res) => {
             repeatType: isRecurring ? repeatType : null,
             repeatDays: isRecurring && repeatType === 'weekly' ? repeatDays : [],
             createdBy,
-            tokenDetails: tokenDetails || null,
+            tokenDetails: enhancedTokenDetails,
             status: isScheduled ? 'pending' : 'posted',
             nextRun: isScheduled ? scheduledForUTC : null
         });
@@ -143,6 +149,42 @@ export const schedulePost = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to schedule post',
+            error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message
+        });
+    }
+};
+
+// Get scheduled posts by user ID
+export const getScheduledPostsByUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid user ID format'
+            });
+        }
+
+        const posts = await ScheduledPost.find({ 
+            createdBy: userId,
+            status: { $in: ['pending', 'failed'] },
+            $or: [
+                { scheduledFor: { $exists: true } },
+                { nextRun: { $exists: true } }
+            ]
+        }).sort({ scheduledFor: 1, nextRun: 1 });
+
+        res.status(200).json({
+            success: true,
+            count: posts.length,
+            data: posts
+        });
+    } catch (error) {
+        console.error('Error fetching scheduled posts:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching scheduled posts',
             error: process.env.NODE_ENV === 'production' ? 'Internal server error' : error.message
         });
     }

@@ -27,6 +27,9 @@ export const GoogleBusinessProvider = ({ children }) => {
     scopes: []
   });
   
+  const [scheduledPosts, setScheduledPosts] = useState([]);
+  const [loadingScheduled, setLoadingScheduled] = useState(false);
+  
   const { user: authUser, token } = useAuth();
   const BACKEND_URL = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
 
@@ -34,6 +37,31 @@ export const GoogleBusinessProvider = ({ children }) => {
     Authorization: token ? `Bearer ${token}` : undefined,
     'Content-Type': 'application/json',
   });
+
+  // Fetch scheduled posts for the current user
+  const fetchScheduledPosts = async () => {
+    if (!authUser?.id) return;
+    
+    setLoadingScheduled(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/post/user/${authUser.id}`, {
+        headers: authHeaders(),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setScheduledPosts(data.data || []);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch scheduled posts');
+      }
+    } catch (error) {
+      console.error('Error fetching scheduled posts:', error);
+      toast.error(error.message || 'Failed to load scheduled posts');
+    } finally {
+      setLoadingScheduled(false);
+    }
+  };
 
   // Check Google authentication status
   const checkAuthStatus = async () => {
@@ -48,6 +76,8 @@ export const GoogleBusinessProvider = ({ children }) => {
         if (data.authenticated) {
           setUser(data.user);
           setIsConnected(true);
+          // Fetch scheduled posts when user is authenticated
+          fetchScheduledPosts();
           
           console.log("data.tokenDetails",data)
           // Update token details if available
@@ -259,17 +289,24 @@ export const GoogleBusinessProvider = ({ children }) => {
     loading,
     isConnected,
     reviewUri,
-    tokenDetails, // Include token details in the context value
+    tokenDetails,
+    scheduledPosts,
+    loadingScheduled,
     // Actions
+    setBusinesses,
+    setSelectedBusiness,
+    setReviews,
+    setLocalReviews,
+    setLoading,
+    checkAuthStatus,
     connectGoogle,
     disconnectGoogle,
     fetchBusinesses,
     fetchReviews,
     fetchLocalReviews,
     selectBusiness,
-    checkAuthStatus,
     refreshData,
-    
+    fetchScheduledPosts,
     // Computed values
     reviewStats: getReviewStats()
   };
