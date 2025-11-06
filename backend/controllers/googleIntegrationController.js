@@ -28,6 +28,10 @@ async function getBearerToken() {
   const token = global.googleTokens.access_token;
   const expiryDate = global.googleTokens.expiry_date;
   
+  // Log token and expiry date
+  console.log('🔑 Google Access Token:', token);
+  console.log('📅 Token Expiry:', new Date(expiryDate).toLocaleString());
+  
   if (expiryDate && Date.now() >= expiryDate) {
     // console.warn('⚠️  Access token has expired');
     // console.log('   └─ Expired at:', new Date(expiryDate).toISOString());
@@ -158,7 +162,7 @@ export const getGoogleBusinesses = async (req, res) => {
   const requestId = req.requestId || Date.now().toString(36);
   
   try {
-    console.log(`🏢 [${requestId}] Fetching Google businesses...`);
+    // console.log(`🏢 [${requestId}] Fetching Google businesses...`);
     
     if (!global.googleTokens) {
       console.error(`❌ [${requestId}] Not authenticated with Google`);
@@ -178,7 +182,7 @@ export const getGoogleBusinesses = async (req, res) => {
     let allLocations = [];
     for (const account of accounts) {
       const accountId = account.name.split("/")[1]; 
-      console.log(`📍 [${requestId}] Fetching locations for account: ${accountId}`);
+      // console.log(`📍 [${requestId}] Fetching locations for account: ${accountId}`);
       
       try {
         const locationsRes = await axios.get(
@@ -198,7 +202,7 @@ export const getGoogleBusinesses = async (req, res) => {
       }
     }
 
-    console.log(`🎉 [${requestId}] Total locations found: ${allLocations.length}`);
+    // console.log(`🎉 [${requestId}] Total locations found: ${allLocations.length}`);
     res.json({
       user: global.googleUser,
       businesses: allLocations,
@@ -276,6 +280,11 @@ export const getGoogleStatus = async (req, res) => {
   res.json({
     authenticated: isAuthenticated,
     user: global.googleUser || null,
+    tokenDetails: isAuthenticated ? {
+      access_token: global.googleTokens.access_token,
+      expiry_date: global.googleTokens.expiry_date,
+      scope: global.googleTokens.scope
+    } : null
   });
 };
 

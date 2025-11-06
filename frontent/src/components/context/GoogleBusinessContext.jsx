@@ -21,6 +21,11 @@ export const GoogleBusinessProvider = ({ children }) => {
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [reviewUri, setReviewUri] = useState('');
+  const [tokenDetails, setTokenDetails] = useState({
+    accessToken: null,
+    expiryDate: null,
+    scopes: []
+  });
   
   const { user: authUser, token } = useAuth();
   const BACKEND_URL = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
@@ -43,6 +48,17 @@ export const GoogleBusinessProvider = ({ children }) => {
         if (data.authenticated) {
           setUser(data.user);
           setIsConnected(true);
+          
+          console.log("data.tokenDetails",data)
+          // Update token details if available
+          if (data.tokenDetails) {
+            setTokenDetails({
+              accessToken: data.tokenDetails.access_token,
+              expiryDate: data.tokenDetails.expiry_date ? new Date(data.tokenDetails.expiry_date) : null,
+              scopes: data.tokenDetails.scope ? data.tokenDetails.scope.split(' ') : []
+            });
+          }
+          
           await fetchBusinesses();
         }
       }
@@ -60,7 +76,7 @@ export const GoogleBusinessProvider = ({ children }) => {
         credentials: 'include',
       });
       const data = await res.json();
-      // console.log("data",data)
+      console.log("data",data)
       if (res.ok) {
         setUser(data.user || {});
         setBusinesses(data.businesses || []);
@@ -239,19 +255,20 @@ export const GoogleBusinessProvider = ({ children }) => {
     businesses,
     selectedBusiness,
     reviews,
-    localReviews, // Include localReviews in the context value
+    localReviews,
     loading,
     isConnected,
     reviewUri,
-    
+    tokenDetails, // Include token details in the context value
     // Actions
     connectGoogle,
     disconnectGoogle,
     fetchBusinesses,
     fetchReviews,
-    fetchLocalReviews, // Include the new function
+    fetchLocalReviews,
     selectBusiness,
     checkAuthStatus,
+    refreshData,
     refreshData, // Include refresh function
     
     // Computed values

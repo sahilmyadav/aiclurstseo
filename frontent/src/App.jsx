@@ -78,6 +78,8 @@ const AppContent = () => {
             <Route path="widgets" element={<WebsiteWidgets />} />
             <Route path="integrations" element={<Integrations />} />
             <Route path="social-sharing" element={<Posts />} />
+            <Route path="schedule-post" element={<SocialSharing />} />
+
             <Route path="notifications" element={<Notifications />} />
             <Route path="settings" element={<Settings />} />
           </Route>
