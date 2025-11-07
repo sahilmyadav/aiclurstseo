@@ -29,6 +29,8 @@ import AdminDashboard from './components/admin/AdminDashboard'
 import { Users } from 'lucide-react'
 import AllUsers from './components/admin/AllUsers'
 import Reviews from './components/Reviews'
+import SubscriptionPage from './components/subscription/SubscriptionPage'
+
 
 const AppContent = () => {
   const location = useLocation()
@@ -79,7 +81,8 @@ const AppContent = () => {
             <Route path="integrations" element={<Integrations />} />
             <Route path="social-sharing" element={<Posts />} />
             <Route path="schedule-post" element={<SocialSharing />} />
-
+            <Route path="subscription" element={<SubscriptionPage />} />
+            
             <Route path="notifications" element={<Notifications />} />
             <Route path="settings" element={<Settings />} />
           </Route>
