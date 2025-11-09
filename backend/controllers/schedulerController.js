@@ -59,10 +59,16 @@ export const schedulePost = async (req, res) => {
             });
         }
 
-        // Parse the scheduled time (already in UTC from frontend)
-        const scheduledForUTC = isScheduled ? new Date(scheduledFor) : null;
+        // Parse the scheduled time (convert from IST to UTC)
+        let scheduledForUTC = null;
+        if (isScheduled && scheduledFor) {
+          // The frontend sends time in IST, so we need to convert it to UTC
+          scheduledForUTC = new Date(scheduledFor);
+          // Convert from IST (UTC+5:30) to UTC by subtracting 5 hours and 30 minutes
+          scheduledForUTC.setHours(scheduledForUTC.getHours() - 5);
+          scheduledForUTC.setMinutes(scheduledForUTC.getMinutes() - 30);
+        }
         
-        // No need to adjust timezone offset since the time is already in UTC
         if (scheduledForUTC && isNaN(scheduledForUTC.getTime())) {
             await session.abortTransaction();
             session.endSession();
