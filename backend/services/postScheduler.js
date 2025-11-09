@@ -77,10 +77,25 @@ async function processPost(post) {
     post.status = 'posted';
     post.postedAt = new Date();
     
-    // If it's a recurring post, calculate next run time
+    // If it's a recurring post, update both scheduledFor and nextRun
     if (post.isRecurring) {
+      // Calculate next run time
       post.nextRun = post.calculateNextRun();
+      
+      // For recurring posts, update scheduledFor to the next run time
+      // This ensures the next post will be scheduled correctly
+      post.scheduledFor = new Date(post.nextRun);
+      
+      // Log the update for debugging
+      console.log(`🔄 Recurring post scheduled for next run at: ${post.nextRun.toISOString()}`);
+      
+      // Reset status to pending for the next run
       post.status = 'pending';
+      
+      // Mark fields as modified to ensure they're saved
+      post.markModified('nextRun');
+      post.markModified('scheduledFor');
+      post.markModified('status');
     }
 
     await post.save({ session });
@@ -124,31 +139,50 @@ function localToUTC(date) {
  */
 async function checkScheduledPosts() {
   try {
-    // Get current time in IST (UTC+5:30)
+    // Get current time in UTC
     const now = new Date();
-    const nowIST = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
     
+    // Convert to IST (UTC+5:30) for logging
+    const nowIST = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
     console.log(`🔍 Checking for posts to process (Current time in IST: ${nowIST.toISOString()})`);
     
     // Find posts that need to be processed
+    // Note: We store and compare all times in UTC, but the scheduled times are in IST
     const posts = await ScheduledPost.find({
-      status: { $in: ['pending', 'failed'] }, // Include failed posts for retry
-      $or: [
-        // Posts with nextRun in the past (IST)
-        { nextRun: { $lte: nowIST } },
-        // Scheduled posts with scheduledFor in the past (IST)
-        { 
-          isScheduled: true, 
-          scheduledFor: { $lte: nowIST },
-          nextRun: { $exists: false },
-          status: { $ne: 'posted' }
-        },
-        // Any unposted posts that are due (IST)
+      $and: [
         {
-          status: { $ne: 'posted' },
           $or: [
-            { scheduledFor: { $exists: false } },
-            { scheduledFor: { $lte: nowIST } }
+            { status: 'pending' },
+            { 
+              status: 'failed',
+              lastRun: { $lt: new Date(Date.now() - 5 * 60 * 1000) } // Only retry failed posts after 5 minutes
+            }
+          ]
+        },
+        {
+          $or: [
+            // Posts with nextRun in the past (converted to IST for comparison)
+            { 
+              $expr: {
+                $lte: [
+                  "$nextRun",
+                  { $dateAdd: { startDate: new Date(0), unit: "millisecond", amount: now.getTime() + (5.5 * 60 * 60 * 1000) } }
+                ]
+              },
+              nextRun: { $ne: null }
+            },
+            // New scheduled posts that haven't been processed yet
+            { 
+              isScheduled: true,
+              $expr: {
+                $lte: [
+                  "$scheduledFor",
+                  { $dateAdd: { startDate: new Date(0), unit: "millisecond", amount: now.getTime() + (5.5 * 60 * 60 * 1000) } }
+                ]
+              },
+              nextRun: { $exists: false },
+              lastRun: { $exists: false }
+            }
           ]
         }
       ]
@@ -159,10 +193,14 @@ async function checkScheduledPosts() {
     // Process each post
     for (const post of posts) {
       const scheduledTime = post.scheduledFor || post.nextRun;
+      // Convert times to IST for logging
+      const scheduledTimeIST = scheduledTime ? new Date(scheduledTime.getTime() + (5.5 * 60 * 60 * 1000)) : null;
+      const nowIST = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
+      
       console.log(`📅 Processing post ${post._id}...`);
       console.log(`   - Status: ${post.status}`);
-      console.log(`   - Scheduled for: ${scheduledTime ? scheduledTime.toISOString() : 'ASAP'}`);
-      console.log(`   - Current time: ${now.toISOString()}`);
+      console.log(`   - Scheduled for (IST): ${scheduledTime ? scheduledTimeIST.toISOString() : 'ASAP'}`);
+      console.log(`   - Current time (IST): ${nowIST.toISOString()}`);
       
       await processPost(post);
     }

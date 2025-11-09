@@ -13,6 +13,7 @@ import auditRoutes from './routes/auditRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
 import invitationRoutes from './routes/invitationRoutes.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
 
 
 dotenv.config();
@@ -67,6 +68,7 @@ app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/post', scheduleRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Test routes
 app.get('/', (req, res) => {

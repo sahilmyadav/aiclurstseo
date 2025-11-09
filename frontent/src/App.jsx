@@ -28,6 +28,7 @@ import { useAuth } from './components/context/AuthContext'
 import AdminDashboard from './components/admin/AdminDashboard'
 import { Users } from 'lucide-react'
 import AllUsers from './components/admin/AllUsers'
+import { AdminProvider } from './context/AdminContext'
 import Reviews from './components/Reviews'
 import SubscriptionPage from './components/subscription/SubscriptionPage'
 
@@ -49,8 +50,6 @@ const AppContent = () => {
   return (
     <>
       {!isDashboardRoute && <Navbar />}
-      <Toaster richColors position="top-center" />
-
       <Routes>
         <Route path="/" element={
           <>
@@ -91,18 +90,21 @@ const AppContent = () => {
 
 
         {
-          isAuthenticated && user.role === 'admin' &&
-          <Route
-            path='/dashboard'
-            element={<DashboardLayout />}
-          >
-            <Route index element={<AdminDashboard />} />
-            <Route path="settings" element={<Settings />} />
-            <Route path="users" element={<AllUsers />} />
-            <Route path="analytics" element={<AnalyticsDashboard />} />
-
-
-          </Route>
+          isAuthenticated && user.role === 'admin' && (
+            <Route
+              path='/dashboard'
+              element={
+                <AdminProvider>
+                  <DashboardLayout />
+                </AdminProvider>
+              }
+            >
+              <Route index element={<AdminDashboard />} />
+              <Route path="settings" element={<Settings />} />
+              <Route path="users" element={<AllUsers />} />
+              <Route path="analytics" element={<AnalyticsDashboard />} />
+            </Route>
+          )
         }
         {/* 
 
@@ -126,7 +128,10 @@ const AppContent = () => {
 const App = () => {
   return (
     <AuthContextProvider>
-      <AppContent />
+      <AdminProvider>
+        <Toaster position="top-center" richColors />
+        <AppContent />
+      </AdminProvider>
     </AuthContextProvider>
   )
 }
