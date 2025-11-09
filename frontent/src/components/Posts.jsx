@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import SideNav from "./SideNav";
 import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
+import ScheduledPosts from "./ScheduledPosts";
 import { 
   FaGoogle, 
   FaCalendarAlt, 
@@ -486,10 +487,8 @@ const Posts = () => {
     nextRun: post.nextRun
   }));
 
-  // Filter posts based on active tab
-  const filteredPosts = activeTab === 'scheduled' 
-    ? formattedScheduledPosts 
-    : posts.filter(post => post.status === activeTab);
+  // Filter posts based on active tab (excluding scheduled posts which are handled separately)
+  const filteredPosts = posts.filter(post => post.status === activeTab);
     
   // Handle loading more posts
   const handleLoadMore = async () => {
@@ -655,41 +654,42 @@ const Posts = () => {
                   </div>
                 </div>
               </div>
-            ) : filteredPosts.length === 0 ? (
-              <div className="text-center py-8 text-gray-400">
-                No {activeTab} posts found.
-              </div>
-            ) : (
-              <>
-                {filteredPosts.map((post) => (
-                  <PostCard
-                    key={post.id}
-                    post={post}
-                    onEdit={handleEditPost}
-                    onDelete={handleDeletePost}
-                    selectedBusiness={selectedBusiness}
-                  />
-                ))}
-                {activeTab === 'published' && pagination.hasMore && (
-                  <div className="flex justify-end mt-4 mb-8 pr-4">
-                    <button
-                      onClick={handleLoadMore}
-                      disabled={pagination.loadingMore}
-                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                    >
-                      {pagination.loadingMore ? (
-                        <>
-                          <FaSpinner className="animate-spin" />
-                          Loading...
-                        </>
-                      ) : (
-                        'Load More Posts'
-                      )}
-                    </button>
-                  </div>
+            ) : activeTab === 'scheduled' ? (
+              <ScheduledPosts 
+                scheduledPosts={scheduledPosts} 
+                loadingScheduled={loadingScheduled}
+                onEdit={handleEditPost}
+                onDelete={handleDeletePost}
+              />
+            ) : filteredPosts.length > 0 ? (
+            filteredPosts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onEdit={handleEditPost}
+                onDelete={handleDeletePost}
+                selectedBusiness={selectedBusiness}
+              />
+            ))
+          ) : (
+            <div className="text-center py-12">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-500/10 rounded-full mb-4">
+                {activeTab === 'published' ? (
+                  <FaGoogle className="text-indigo-400 text-2xl" />
+                ) : (
+                  <FaEdit className="text-indigo-400 text-2xl" />
                 )}
-              </>
-            )}
+              </div>
+              <h3 className="text-lg font-medium text-white mb-1">
+                {activeTab === 'published' ? 'No published posts' : 'No drafts'}
+              </h3>
+              <p className="text-white/60 max-w-md mx-auto">
+                {activeTab === 'published' 
+                  ? 'Create your first post to get started.' 
+                  : 'Create a draft to get started.'}
+              </p>
+            </div>
+          )}
           </div>
         </div>
 
