@@ -82,6 +82,12 @@ const SocialSharing = () => {
       const accountId = selectedBusiness.accountId;
       const locationId = selectedBusiness.name.split('/')[1];
       
+      // Get business name from selectedBusiness
+      const businessName = selectedBusiness?.title || 
+                         selectedBusiness?.locationName || 
+                         selectedBusiness?.name?.split('/').pop() || 
+                         'Business';
+      
       // Prepare the data for the API
       const postData = {
         content: formData.postText,
@@ -94,6 +100,7 @@ const SocialSharing = () => {
         repeatDays: formData.repeat && formData.repeatDays.length ? formData.repeatDays : null,
         accountId,
         locationId,
+        businessName, // Include the business name
         createdBy: authData?.user?.id,  // Include the user ID in the request
         tokenDetails: tokenDetails ? {
           accessToken: tokenDetails.accessToken,

@@ -14,6 +14,11 @@ const scheduledPostSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  businessName: {
+    type: String,
+    required: true,
+    trim: true
+  },
   isScheduled: {
     type: Boolean,
     default: false
