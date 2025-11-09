@@ -11,7 +11,7 @@ const SocialSharing = () => {
 
   const [formData, setFormData] = useState({
     postText: '',
-    scheduleType: 'now', // 'now' or 'later'
+    scheduleType: 'later', // 'now' or 'later'
     scheduleDate: '',
     scheduleTime: '',
     repeat: false,
@@ -182,17 +182,7 @@ const SocialSharing = () => {
             </h3>
             
             <div className="flex flex-col space-y-4">
-              <label className="inline-flex items-center">
-                <input
-                  type="radio"
-                  name="scheduleType"
-                  value="now"
-                  checked={formData.scheduleType === 'now'}
-                  onChange={handleChange}
-                  className="form-radio text-blue-500"
-                />
-                <span className="ml-2 text-white">Post Now</span>
-              </label>
+            
               
               <label className="inline-flex items-center">
                 <input
@@ -291,7 +281,7 @@ const SocialSharing = () => {
             )}
           </div>
 
-{/* Submit Button */}
+          {/* Submit Button */}
           <div className="flex justify-end">
             <button
               type="submit"
