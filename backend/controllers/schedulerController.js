@@ -15,17 +15,18 @@ export const schedulePost = async (req, res) => {
             repeatDays = [],
             accountId,
             locationId,
+            businessName,
             createdBy,
             tokenDetails
         } = req.body;
           console.log("tokenDetails",tokenDetails)
         // Validate required fields
-        if (!content || !accountId || !locationId) {
+        if (!content || !accountId || !locationId ) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({
                 success: false,
-                message: 'Content, accountId, and locationId are required fields'
+                message: 'Content, accountId, locationId, and businessName are required fields'
             });
         }
 
@@ -96,6 +97,7 @@ export const schedulePost = async (req, res) => {
             content,
             accountId,
             locationId,
+            businessName,
             isScheduled,
             scheduledFor: scheduledForUTC,
             isRecurring,
