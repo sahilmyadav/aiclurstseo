@@ -18,6 +18,7 @@ const Reviews = () => {
     const [replyText, setReplyText] = useState('');
     const [currentReview, setCurrentReview] = useState(null);
     const [replyLoading, setReplyLoading] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
     const { reviews, selectedBusiness, businesses, loading, selectBusiness, tokenDetails } = useGoogleBusiness();
     
     // Initialize expanded rows when reviews are loaded
@@ -109,15 +110,26 @@ const Reviews = () => {
     const handleReply = (review) => {
         setCurrentReview(review);
         setReplyText('');
-        setReplyLoading(false); // Reset loading state when opening dialog
+        setIsEditMode(false);
+        setReplyLoading(false);
         setReplyDialogOpen(true);
     };
 
-    // Submit reply to backend
+    // Handle edit button click
+    const handleEditReply = (review) => {
+        setCurrentReview(review);
+        setReplyText(review.reply || '');
+        setIsEditMode(true);
+        setReplyLoading(false);
+        setReplyDialogOpen(true);
+    };
+
+    // Submit reply/update to backend
     const submitReply = async () => {
         if (!replyText.trim() || !currentReview || !selectedBusiness) return;
 
         setReplyLoading(true);
+        const isEdit = isEditMode; // Capture the edit mode before async operations
         try {
             // Extract account ID and location ID from selected business
             const accountId = selectedBusiness.accountId;
@@ -135,6 +147,7 @@ const Reviews = () => {
                 timeout: 10000 // 10 seconds timeout
             });
 
+            // Use the same endpoint for both create and update
             const response = await api.post('/api/reviews/reply', {
                 comment: replyText,
                 accountId,
@@ -145,8 +158,12 @@ const Reviews = () => {
             
             console.log('Response:', response.data);
 
-            // Show success toast
-            toast.success('Reply sent successfully!');
+            // Show success message based on action
+            if (isEditMode) {
+                toast.success('Reply updated successfully!');
+            } else {
+                toast.success('Reply sent successfully!');
+            }
             
             // Always reset UI state regardless of response
             setReplyLoading(false);
@@ -305,7 +322,7 @@ const Reviews = () => {
                                     className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        // handleEditReply(review.id);
+                                        handleEditReply(review);
                                     }}
                                 >
                                     <MessageSquare className="w-3.5 h-3.5 mr-1" />
@@ -494,19 +511,20 @@ const Reviews = () => {
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
                         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                             <div className="flex justify-between items-center">
-                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">Reply to Review</h3>
-                                <button 
+                                <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                                    {isEditMode ? 'Edit Reply' : 'Reply to Review'}
+                                </div>
+                                <button
+                                    type="button"
+                                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-500"
                                     onClick={() => setReplyDialogOpen(false)}
-                                    className="text-gray-400 hover:text-gray-500 dark:text-gray-300 dark:hover:text-gray-200"
                                 >
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
-                        </div>
-                        <div className="px-6 py-4">
-                            <div className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                    Your Response
+                            <div className="mt-4">
+                                <label htmlFor="reply-text" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                    {isEditMode ? 'Edit your reply' : 'Your Reply'}
                                 </label>
                                 <textarea
                                     value={replyText}
@@ -537,7 +555,7 @@ const Reviews = () => {
                                         Sending...
                                     </span>
                                 ) : (
-                                    'Send Reply'
+                                    isEditMode ? 'Update Reply' : 'Send Reply'
                                 )}
                             </button>
                         </div>
