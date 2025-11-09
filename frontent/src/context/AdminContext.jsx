@@ -5,6 +5,7 @@ export const AdminContext = createContext();
 
 export const AdminProvider = ({ children }) => {
   const [metrics, setMetrics] = useState(null);
+  
   const [users, setUsers] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState({
@@ -147,7 +148,7 @@ export const AdminProvider = ({ children }) => {
     fetchMetrics();
     // fetchUsers();
     // fetchReviews();
-  }, []);
+  }, [users.role === 'admin']);
 
   // Context value
   const value = {

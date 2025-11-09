@@ -75,22 +75,6 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
             </div>
           </div>
         </div>
-        <div className="flex gap-1.5" style={{ display: 'none' }}>
-          <button 
-            onClick={() => onEdit(post)}
-            className="p-2 hover:bg-white/10 rounded-lg transition-all hover:scale-105"
-            aria-label="Edit post"
-          >
-            <FaEdit className="text-blue-300 hover:text-blue-200" />
-          </button>
-          <button 
-            onClick={() => onDelete(post.id)}
-            className="p-2 hover:bg-red-500/20 rounded-lg transition-all hover:scale-105"
-            aria-label="Delete post"
-          >
-            <FaTrash className="text-red-400 hover:text-red-300" />
-          </button>
-        </div>
       </div>
       <div className="pl-1">
         <p className="text-sm text-white/90 leading-relaxed mb-3 line-clamp-3">{post.content}</p>
@@ -163,7 +147,9 @@ const Posts = () => {
     hasMore: false,
     nextPageToken: null,
     loadingMore: false,
-    pageSize: 20 // Default page size
+    pageSize: 20, // Default page size
+    totalItems: 0,
+    currentPage: 1
   });
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
@@ -236,6 +222,18 @@ const Posts = () => {
       
       // Handle both response formats
       const postsList = responseData.localPosts || responseData.posts || [];
+      const nextPageToken = responseData.nextPageToken || null;
+      const totalItems = responseData.totalItems || 0;
+      
+      // Update pagination state
+      setPagination(prev => ({
+        ...prev,
+        hasMore: !!nextPageToken,
+        nextPageToken,
+        loadingMore: false,
+        totalItems,
+        currentPage: loadMore ? prev.currentPage + 1 : 1
+      }));
       
       const formattedPosts = postsList.map((post) => {
         const statusFromApi = (post.state || post.status || 'published').toLowerCase();
@@ -273,14 +271,6 @@ const Posts = () => {
       } else {
         setPosts(formattedPosts);
       }
-      
-      // Update pagination state
-      setPagination(prev => ({
-        ...prev,
-        hasMore: responseData.pagination?.hasMore || false,
-        nextPageToken: responseData.pagination?.nextPageToken || null,
-        loadingMore: false
-      }));
       
       console.log(`📊 ${loadMore ? 'Added' : 'Loaded'} ${formattedPosts.length} posts`);
       return formattedPosts;
@@ -489,17 +479,11 @@ const Posts = () => {
 
   // Filter posts based on active tab (excluding scheduled posts which are handled separately)
   const filteredPosts = posts.filter(post => post.status === activeTab);
-    
   // Handle loading more posts
-  const handleLoadMore = async () => {
-    if (!selectedBusiness || !pagination.hasMore || pagination.loadingMore) return;
-    
-    try {
+  const handleLoadMore = () => {
+    if (selectedBusiness?.accountId && selectedBusiness?.name && pagination.hasMore && !pagination.loadingMore) {
       const locationId = selectedBusiness.name.split('/')[1];
-      await fetchPosts(selectedBusiness.accountId, locationId, true);
-    } catch (error) {
-      console.error('Error loading more posts:', error);
-      toast.error('Failed to load more posts');
+      fetchPosts(selectedBusiness.accountId, locationId, true);
     }
   };
 
@@ -625,7 +609,7 @@ const Posts = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             {!isGoogleConnected ? (
               <div className="text-center py-12">
                 <div className="bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border border-blue-500/30 rounded-xl p-8">
@@ -662,34 +646,55 @@ const Posts = () => {
                 onDelete={handleDeletePost}
               />
             ) : filteredPosts.length > 0 ? (
-            filteredPosts.map((post) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onEdit={handleEditPost}
-                onDelete={handleDeletePost}
-                selectedBusiness={selectedBusiness}
-              />
-            ))
-          ) : (
-            <div className="text-center py-12">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-500/10 rounded-full mb-4">
-                {activeTab === 'published' ? (
-                  <FaGoogle className="text-indigo-400 text-2xl" />
-                ) : (
-                  <FaEdit className="text-indigo-400 text-2xl" />
+              <>
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredPosts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onEdit={handleEditPost}
+                      onDelete={handleDeletePost}
+                      selectedBusiness={selectedBusiness}
+                    />
+                  ))}
+                </div>
+                {pagination.hasMore && (
+                  <div className="col-span-full flex justify-center mt-6">
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={pagination.loadingMore}
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {pagination.loadingMore ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Loading...
+                        </>
+                      ) : (
+                        'Load More'
+                      )}
+                    </button>
+                  </div>
                 )}
+              </>
+            ) : (
+              <div className="col-span-full text-center py-12">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-500/10 rounded-full mb-4">
+                  <FaEdit className="text-indigo-400 text-2xl" />
+                </div>
+                <h3 className="text-lg font-medium text-white mb-1">
+                  {activeTab === 'published' ? 'No published posts' : 'No drafts'}
+                </h3>
+                <p className="text-white/60 max-w-md mx-auto">
+                  {activeTab === 'published' 
+                    ? 'Create your first post to get started.' 
+                    : 'Create a draft to get started.'}
+                </p>
               </div>
-              <h3 className="text-lg font-medium text-white mb-1">
-                {activeTab === 'published' ? 'No published posts' : 'No drafts'}
-              </h3>
-              <p className="text-white/60 max-w-md mx-auto">
-                {activeTab === 'published' 
-                  ? 'Create your first post to get started.' 
-                  : 'Create a draft to get started.'}
-              </p>
-            </div>
-          )}
+            )}
           </div>
         </div>
 
