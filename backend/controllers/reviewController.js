@@ -59,3 +59,17 @@ export const getAllReviewsByLocationId = async (req, res) => {
     }
 }
 
+export const deleteReview = async (req, res) => {
+    console.log("Deleting review");
+    try {
+        const review = await Reviews.findByIdAndDelete(req.params.id);
+        res.json(review);
+    } catch (error) {
+        console.error("Error deleting review:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to delete review"
+        });
+    }
+}
+
