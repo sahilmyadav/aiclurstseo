@@ -7,7 +7,7 @@ import {
 import { useState, useEffect } from 'react';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import React from 'react';
-import fetchWithAuth from '../utils/fetchWithAuth';
+import axios from 'axios';
 import { toast } from 'sonner';
 
 const Reviews = () => {
@@ -18,7 +18,7 @@ const Reviews = () => {
     const [replyText, setReplyText] = useState('');
     const [currentReview, setCurrentReview] = useState(null);
     const [replyLoading, setReplyLoading] = useState(false);
-    const { reviews, selectedBusiness, businesses, loading, selectBusiness } = useGoogleBusiness();
+    const { reviews, selectedBusiness, businesses, loading, selectBusiness, tokenDetails } = useGoogleBusiness();
     
     // Initialize expanded rows when reviews are loaded
     useEffect(() => {
@@ -122,17 +122,28 @@ const Reviews = () => {
             // Extract account ID and location ID from selected business
             const accountId = selectedBusiness.accountId;
             const locationId = selectedBusiness.name.split("/")[1];
-            const reviewId = currentReview.reviewData.name.split("/").pop(); // Extract review ID from full name
+            const reviewId = currentReview.reviewData.name.split("/").pop();
             
-            const response = await fetchWithAuth('/api/reviews/reply', {
-                method: 'POST',
-                body: JSON.stringify({
-                    comment: replyText,
-                    accountId: accountId,
-                    locationId: locationId,
-                    reviewId: reviewId
-                })
+            // Create axios instance with base URL and default headers
+            const api = axios.create({
+                baseURL: 'http://localhost:8000', // Replace with your actual backend URL
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${tokenDetails?.accessToken}`
+                },
+                withCredentials: true,
+                timeout: 10000 // 10 seconds timeout
             });
+
+            const response = await api.post('/api/reviews/reply', {
+                comment: replyText,
+                accountId,
+                locationId,
+                reviewId,
+                accessToken: tokenDetails?.accessToken
+            });
+            
+            console.log('Response:', response.data);
 
             // Show success toast
             toast.success('Reply sent successfully!');
