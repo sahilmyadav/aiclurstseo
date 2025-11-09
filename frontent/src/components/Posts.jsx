@@ -7,17 +7,15 @@ import {
   FaGoogle, 
   FaCalendarAlt, 
   FaClock, 
-  FaHistory, 
   FaPlus, 
   FaTrash, 
   FaEdit, 
   FaSpinner, 
-  FaClock as FaScheduled,
   FaCheckCircle,
   FaSync,
   FaInfoCircle 
 } from "react-icons/fa";
-import { toast } from 'sonner';
+import { toast } from 'sonner';     
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -76,7 +74,7 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
             </div>
           </div>
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5" style={{ display: 'none' }}>
           <button 
             onClick={() => onEdit(post)}
             className="p-2 hover:bg-white/10 rounded-lg transition-all hover:scale-105"
@@ -563,20 +561,31 @@ const Posts = () => {
                   </div>
                 )}
               </div>
-              <div className="flex-shrink-0">
-                <button
-                  onClick={() => {
-                    setCurrentPost({
-                      id: null, content: '', scheduledFor: null, media: null, isRecurring: false, 
-                      frequency: 'daily', time: '09:00', days: [1, 2, 3, 4, 5]
-                    });
-                    setShowEditor(true);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
-                  disabled={!isGoogleConnected}
-                >
-                  <FaPlus /> New Post
-                </button>
+              <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3">
+                <div>
+                  <button
+                    onClick={() => {
+                      setCurrentPost({
+                        id: null, content: '', scheduledFor: null, media: null, isRecurring: false, 
+                        frequency: 'daily', time: '09:00', days: [1, 2, 3, 4, 5]
+                      });
+                      setShowEditor(true);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+                    disabled={!isGoogleConnected}
+                  >
+                    <FaPlus /> New Post
+                  </button>
+                </div>
+                <div>
+                  <button
+                    onClick={() => navigate('/dashboard/schedule-post')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+                    disabled={!isGoogleConnected}
+                  >
+                    <FaCalendarAlt /> Schedule Post
+                  </button>
+                </div>
                 {!isGoogleConnected && (
                   <p className="text-xs text-red-400 mt-1 text-center sm:text-right">
                     <a 
@@ -610,7 +619,7 @@ const Posts = () => {
                       ? 'bg-white/20 text-white' 
                       : 'bg-white/10 text-white/60'
                   }`}>
-                    {posts.filter(p => p.status === tab).length}
+                    {tab === 'scheduled' ? formattedScheduledPosts.length : posts.filter(p => p.status === tab).length}
                   </span>
                 </button>
               ))}
@@ -661,7 +670,7 @@ const Posts = () => {
                     selectedBusiness={selectedBusiness}
                   />
                 ))}
-                {pagination.hasMore && (
+                {activeTab === 'published' && pagination.hasMore && (
                   <div className="flex justify-end mt-4 mb-8 pr-4">
                     <button
                       onClick={handleLoadMore}
@@ -737,27 +746,6 @@ const Posts = () => {
                   </div>
 
                   <div className="mb-6">
-                    <label className="flex items-center gap-2 mb-4">
-                      <input 
-                        type="checkbox" 
-                        checked={currentPost.scheduledFor !== null}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            // Navigate to schedule post page when checked
-                            navigate('/dashboard/schedule-post');
-                          } else {
-                            setCurrentPost({
-                              ...currentPost,
-                              scheduledFor: null,
-                              isRecurring: false,
-                            });
-                          }
-                        }}
-                        className="rounded border-white/20"
-                      />
-                      <span className="text-sm font-medium">Schedule for later</span>
-                    </label>
-
                     {currentPost.scheduledFor && (
                       <div className="pl-6 space-y-4">
                         <div>
