@@ -1,7 +1,7 @@
-import { useContext, useState } from "react";
-import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import {  useSidebar } from "./context/SidebarContext";
-
+import { useContext, useState, useEffect } from "react";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from "recharts";
+import { useSidebar } from "./context/SidebarContext";
+import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 
 function Card({ children, className }) {
   return <div className={`rounded-xl shadow-md ${className}`}>{children}</div>;
@@ -24,49 +24,80 @@ function Button({ children, className, ...props }) {
 
 export default function ReviewPage() {
   const [rating, setRating] = useState(0);
+  const { localReviews, selectedBusiness, isConnected, reviewUri } = useGoogleBusiness();
 
-  const reviews = [
-    {
-      id: 1,
-      name: "Abhishek Thakur",
-      text: "Effortlessly boost your online reputation and search rankings with AI-powered reviews and SEO recommendations. This tool makes it super easy to collect reviews and reply instantly with AI.",
-      stars: 5,
-    },
-    {
-      id: 2,
-      name: "Riya Mehta",
-      text: "Great platform! It helped me manage my customer feedback more effectively. The AI-generated responses are a lifesaver.",
-      stars: 4,
-    },
-    {
-      id: 3,
-      name: "Arjun Kapoor",
-      text: "Amazing dashboard and very clean UI. Tracking reviews and ratings has never been easier for my business.",
-      stars: 5,
-    },
-    {
-      id: 4,
-      name: "Sneha Patel",
-      text: "It's good overall, but I would love to see more customization options for the reports.",
-      stars: 3,
-    },
-    {
-      id: 5,
-      name: "Vikram Singh",
-      text: "This platform has simplified review collection and response management for us. Highly recommend it!",
-      stars: 5,
-    },
-  ];
+  // Use local reviews if available, otherwise use hardcoded reviews
+  const reviews = localReviews && localReviews.length > 0 
+    ? localReviews.map(review => ({
+        id: review._id,
+        name: review.name,
+        text: review.feedback,
+        stars: review.rating,
+      }))
+    : [
+        {
+          id: 1,
+          name: "Abhishek Thakur",
+          text: "Effortlessly boost your online reputation and search rankings with AI-powered reviews and SEO recommendations. This tool makes it super easy to collect reviews and reply instantly with AI.",
+          stars: 5,
+        },
+        {
+          id: 2,
+          name: "Riya Mehta",
+          text: "Great platform! It helped me manage my customer feedback more effectively. The AI-generated responses are a lifesaver.",
+          stars: 4,
+        },
+        {
+          id: 3,
+          name: "Arjun Kapoor",
+          text: "Amazing dashboard and very clean UI. Tracking reviews and ratings has never been easier for my business.",
+          stars: 5,
+        },
+        {
+          id: 4,
+          name: "Sneha Patel",
+          text: "It's good overall, but I would love to see more customization options for the reports.",
+          stars: 3,
+        },
+        {
+          id: 5,
+          name: "Vikram Singh",
+          text: "This platform has simplified review collection and response management for us. Highly recommend it!",
+          stars: 5,
+        },
+      ];
 
-  const ratings = [
-    { stars: "Five ", count: 999 },
-    { stars: "Four ", count: 678 },
-    { stars: "Three ", count: 45 },
-    { stars: "Two ", count: 22 },
-    { stars: "One ", count: 10 },
-  ];
+  // Calculate ratings summary from local reviews
+  const ratings = localReviews && localReviews.length > 0
+    ? [5, 4, 3, 2, 1].map(starCount => {
+        const count = localReviews.filter(review => review.rating === starCount).length;
+        return {
+          stars: `${starCount} ${starCount === 1 ? 'Star' : 'Stars'}`,
+          count: count
+        };
+      })
+    : [
+        { stars: "Five Stars", count: 999 },
+        { stars: "Four Stars", count: 678 },
+        { stars: "Three Stars", count: 45 },
+        { stars: "Two Stars", count: 22 },
+        { stars: "One Star", count: 10 },
+      ];
+
+  // Define colors for the bars (purple, blue, pink gradient)
+  const barColors = ["#a855f7", "#8b5cf6", "#6366f1", "#ec4899", "#f472b6"];
 
   const { isCollapsed } = useSidebar();
+
+  // Determine which URL to display
+  const displayUrl = isConnected && reviewUri 
+    ? reviewUri 
+    : "https://reviewlink.com";
+
+  // Function to copy URL to clipboard
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(displayUrl);
+  };
 
   return (
     <div className="min-h-screen w-full text-white">
@@ -83,10 +114,16 @@ export default function ReviewPage() {
                 <div className="flex flex-col sm:flex-row items-center mt-4 bg-[#111] rounded-lg p-2 gap-2">
                   <input
                     type="text"
-                    defaultValue="https://reviewlink.com"
+                    value={displayUrl}
+                    readOnly
                     className="bg-transparent flex-1 text-xs sm:text-sm px-2 outline-none w-full"
                   />
-                  <Button className="bg-purple-600 hover:bg-purple-700 text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2">Edit</Button>
+                  <Button 
+                    className="bg-purple-600 hover:bg-purple-700 text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2"
+                    onClick={copyToClipboard}
+                  >
+                    Copy
+                  </Button>
                 </div>
               </div>
 
@@ -118,11 +155,31 @@ export default function ReviewPage() {
                 <CardContent className="h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)]">
                   <h2 className="text-lg sm:text-xl font-bold mb-4">Ratings Summary</h2>
                   <ResponsiveContainer width="100%" height="90%">
-                    <BarChart data={ratings} layout="vertical">
+                    <BarChart data={ratings} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
                       <XAxis type="number" hide />
-                      <YAxis dataKey="stars" type="category" width={60} />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#facc15" radius={[0, 8, 8, 0]} />
+                      <YAxis 
+                        dataKey="stars" 
+                        type="category" 
+                        width={80} 
+                        tick={{ fill: '#e2e8f0', fontSize: 12 }}
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: '#1e293b', 
+                          borderColor: '#334155', 
+                          borderRadius: '0.5rem',
+                          color: '#f8fafc'
+                        }}
+                        itemStyle={{ color: '#f8fafc' }}
+                        labelStyle={{ color: '#e2e8f0', fontWeight: 'bold' }}
+                      />
+                      <Bar dataKey="count" radius={[0, 8, 8, 0]}>
+                        {ratings.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} />
+                        ))}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>

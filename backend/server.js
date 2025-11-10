@@ -11,6 +11,10 @@ import googleRoutes from './routes/googleRoutes.js';
 import authRoutes from './routes/auth.js';
 import auditRoutes from './routes/auditRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
+import invitationRoutes from './routes/invitationRoutes.js';
+import scheduleRoutes from './routes/scheduleRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+
 
 dotenv.config();
 
@@ -49,12 +53,22 @@ app.use(bodyParser.json({ limit: '200kb' }));
 connectDB();
 initializeFirebase();
 
+// Start the post scheduler (runs every 5 minutes)
+if (process.env.NODE_ENV !== 'test') {
+  import('./services/postScheduler.js')
+    .then(({ startScheduler }) => startScheduler(5)) // Check every 5 minutes
+    .catch(err => console.error('Failed to start post scheduler:', err));
+}
+
 // Routes
 app.use("/auth/google", googleRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/invitations', invitationRoutes);
+app.use('/api/post', scheduleRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Test routes
 app.get('/', (req, res) => {

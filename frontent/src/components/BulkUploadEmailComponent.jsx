@@ -11,7 +11,7 @@ import { useAuth } from "./context/AuthContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 import PropTypes from "prop-types";
 
-const BulkUploadComponent = ({ onUploadComplete }) => {
+const BulkUploadEmailComponent = ({ onUploadComplete }) => {
   const { token } = useAuth();
   const { businesses, loading: businessesLoading } = useGoogleBusiness();
   const [isUploading, setIsUploading] = useState(false);
@@ -67,7 +67,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
         const lines = content.split("\n");
         const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
 
-        const requiredFields = ["phone"];
+        const requiredFields = ["email"];
 
         const missingFields = requiredFields.filter(
           (field) => !headers.includes(field)
@@ -94,12 +94,11 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
             rowData[header] = values[i] || "";
           });
 
-          if (rowData.phone) {
-            const phoneRegex = /^\+?[1-9]\d{9,14}$/;
-            const phoneNumber = rowData.phone.replace(/[^\d+]/g, "");
-            if (!phoneRegex.test(phoneNumber)) {
+          if (rowData.email) {
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(rowData.email)) {
               errors.push(
-                `Row ${index + 2}: Invalid phone number (${rowData.phone})`
+                `Row ${index + 2}: Invalid email format (${rowData.email})`
               );
             }
           }
@@ -148,7 +147,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
 
     try {
       const response = await fetch(
-        `${BACKEND_URL}/api/invitations/sms/upload`,
+        `${BACKEND_URL}/api/invitations/email/upload`,
         {
           method: "POST",
           headers: {
@@ -166,7 +165,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
 
       setUploadResult(result);
       toast.success(
-        `Successfully sent ${result.successCount} SMS invitation(s)`
+        `Successfully sent ${result.successCount} email invitation(s)`
       );
 
       if (onUploadComplete) {
@@ -190,16 +189,16 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
 
   const handleDownloadTemplate = () => {
     const csvContent = [
-      "name,phone",
-      "John Doe,+1234567890",
-      "Jane Smith,+919876543210",
+      "name,email",
+      "John Doe,john@example.com",
+      "Jane Smith,jane@example.com",
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", "sms-template.csv");
+    link.setAttribute("download", "email-template.csv");
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -230,7 +229,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
   return (
     <div className="bg-gray-800 p-6 rounded-lg shadow mb-4 border border-gray-700">
       <h3 className="text-lg font-medium text-white mb-4">
-        Bulk Upload SMS Contacts
+        Bulk Upload Email Contacts
       </h3>
 
       <div className="space-y-4">
@@ -281,7 +280,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
             <p className="text-xs text-gray-500">
               {selectedFile
                 ? `Selected: ${selectedFile.name}`
-                : "CSV up to 5MB with columns: name,phone"}
+                : "CSV up to 5MB with columns: name,email"}
             </p>
             <p
               className="text-xs text-indigo-400 cursor-pointer hover:text-indigo-300 mt-2"
@@ -311,7 +310,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
               <FaCheckCircle className="h-5 w-5 text-green-400 mr-2" />
               <p className="text-sm text-green-300">
                 Successfully sent {uploadResult.successCount} out of{" "}
-                {uploadResult.totalCount} SMS invitations.
+                {uploadResult.totalCount} email invitations.
                 {uploadResult.failedCount > 0 &&
                   ` ${uploadResult.failedCount} failed.`}
               </p>
@@ -346,7 +345,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
             ) : (
               <>
                 <FaUpload className="-ml-1 mr-2 h-4 w-4" />
-                Upload & Send SMS
+                Upload & Send Emails
               </>
             )}
           </button>
@@ -356,8 +355,8 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
   );
 };
 
-BulkUploadComponent.propTypes = {
+BulkUploadEmailComponent.propTypes = {
   onUploadComplete: PropTypes.func,
 };
 
-export default BulkUploadComponent;
+export default BulkUploadEmailComponent;
