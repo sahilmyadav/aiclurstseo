@@ -495,39 +495,308 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                   <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
                   <p className="mb-4">No business selected</p>
                 </div>
-              ) : (
-                // Show a simple message in Video tab instead of carousel
-                <div className="border border-purple-800 rounded-lg p-10 text-center">
-                  <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
-                  <p className="mb-4">Video content will be displayed here</p>
+) : reviews && reviews.length > 0 ? (
+                <div className="relative h-[600px] overflow-hidden rounded-xl bg-gradient-to-br from-[#1e1e3a] to-[#2a2a4a] p-1">
+                  <style>{`
+                    @keyframes scroll {
+                      0% { transform: translateY(0); }
+                      100% { transform: translateY(calc(-100% + 600px)); }
+                    }
+                    .video-track {
+                      display: flex;
+                      flex-direction: column;
+                      gap: 1rem;
+                      animation: scroll ${reviews.length * 20}s linear infinite;
+                      padding: 1rem;
+                    }
+                    .video-track:hover {
+                      animation-play-state: paused;
+                    }
+                    .video-review {
+                      background: rgba(255, 255, 255, 0.03);
+                      backdrop-filter: blur(10px);
+                      border-radius: 12px;
+                      padding: 1.5rem;
+                      transition: all 0.3s ease;
+                      border: 1px solid rgba(255, 255, 255, 0.1);
+                    }
+                    .video-review:hover {
+                      transform: scale(1.02);
+                      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+                      border-color: rgba(168, 85, 247, 0.5);
+                    }
+                    .video-review-header {
+                      display: flex;
+                      align-items: center;
+                      margin-bottom: 1rem;
+                    }
+                    .video-review-avatar {
+                      width: 40px;
+                      height: 40px;
+                      border-radius: 50%;
+                      background: linear-gradient(135deg, #8b5cf6, #ec4899);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      margin-right: 12px;
+                      font-weight: bold;
+                      color: white;
+                    }
+                    .video-review-rating {
+                      display: flex;
+                      margin-left: auto;
+                    }
+                    .video-review-content {
+                      padding: 0.5rem 0;
+                      line-height: 1.6;
+                    }
+                    .video-review-date {
+                      font-size: 0.75rem;
+                      color: rgba(255, 255, 255, 0.6);
+                      text-align: right;
+                      margin-top: 0.5rem;
+                    }
+                  `}</style>
+                  
+                  <div className="video-track">
+                    {[...reviews, ...reviews].map((review, index) => {
+                      const ratingMap = { 'ONE': 1, 'TWO': 2, 'THREE': 3, 'FOUR': 4, 'FIVE': 5 };
+                      const rating = ratingMap[review.starRating] || 5;
+                      const initials = review.reviewer?.displayName
+                        ? review.reviewer.displayName.split(' ').map(n => n[0]).join('').toUpperCase()
+                        : '??';
+                      
+                      return (
+                        <div key={index} className="video-review">
+                          <div className="video-review-header">
+                            <div className="video-review-avatar">
+                              {initials}
+                            </div>
+                            <div>
+                              <div className="font-medium">{review.reviewer?.displayName || 'Anonymous'}</div>
+                              <div className="video-review-rating">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star 
+                                    key={i} 
+                                    className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-600'}`} 
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="video-review-content">
+                            {review.comment || "No comment provided"}
+                          </div>
+                          <div className="video-review-date">
+                            {review.createTime ? new Date(review.createTime).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'short', 
+                              day: 'numeric' 
+                            }) : ''}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              )}
-            </div>
-          ) : activeTab === "All Reviews" ? (
-            <div>
-              {loading ? (
-                <div className="border border-purple-800 rounded-lg p-10 text-center">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500 mx-auto mb-4"></div>
-                  <p>Loading reviews...</p>
-                </div>
-              ) : !selectedBusiness ? (
-                <div className="border border-purple-800 rounded-lg p-10 text-center">
-                  <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
-                  <p className="mb-4">No business selected</p>
-                </div>
-              ) : reviews && reviews.length > 0 ? (
-                <AllReviewsWidget 
-                  reviews={reviews} 
-                  darkMode={toggles.darkMode} 
-                  filters={{
-                    showOnlyHighRatings: toggles.showOnlyHighRatings
-                  }}
-                  businessName={selectedBusiness?.locationName || selectedBusiness?.title || 'Business'}
-                />
               ) : (
                 <div className="border border-purple-800 rounded-lg p-10 text-center">
                   <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
                   <p className="mb-4">No reviews available for {selectedBusiness?.locationName || 'this business'}</p>
+                </div>
+              )}
+            </div>
+          ) : activeTab === "Feed" ? (
+            <div className="w-full h-[600px] overflow-y-auto p-4">
+              <style>{`
+                .feed-grid {
+                  display: grid;
+                  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                  gap: 1.5rem;
+                  padding: 1rem;
+                }
+                .feed-card {
+                  background: rgba(30, 30, 58, 0.9);
+                  border-radius: 12px;
+                  overflow: hidden;
+                  transition: all 0.3s ease;
+                  border: 1px solid rgba(139, 92, 246, 0.2);
+                  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                }
+                .feed-card:hover {
+                  transform: translateY(-5px);
+                  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+                  border-color: #8b5cf6;
+                }
+                .card-header {
+                  padding: 1.25rem;
+                  background: rgba(139, 92, 246, 0.1);
+                  border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+                  display: flex;
+                  align-items: center;
+                  gap: 0.75rem;
+                }
+                .avatar {
+                  width: 40px;
+                  height: 40px;
+                  border-radius: 50%;
+                  background: linear-gradient(135deg, #8b5cf6, #4f46e5);
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  color: white;
+                  font-weight: 600;
+                  flex-shrink: 0;
+                }
+                .user-info h4 {
+                  font-weight: 600;
+                  margin: 0;
+                  font-size: 0.95rem;
+                }
+                .user-info p {
+                  color: #a78bfa;
+                  font-size: 0.8rem;
+                  margin: 0.1rem 0 0;
+                }
+                .card-body {
+                  padding: 1.25rem;
+                }
+                .review-text {
+                  color: #e2e8f0;
+                  line-height: 1.6;
+                  margin-bottom: 1rem;
+                  font-size: 0.95rem;
+                }
+                .rating {
+                  display: flex;
+                  align-items: center;
+                  margin-bottom: 0.75rem;
+                }
+                .rating-stars {
+                  display: flex;
+                  margin-right: 0.5rem;
+                }
+                .rating-value {
+                  font-size: 0.9rem;
+                  font-weight: 600;
+                  color: #fbbf24;
+                }
+                .card-footer {
+                  padding: 0.75rem 1.25rem;
+                  border-top: 1px solid rgba(139, 92, 246, 0.1);
+                  display: flex;
+                  justify-content: space-between;
+                  align-items: center;
+                  font-size: 0.8rem;
+                  color: #94a3b8;
+                }
+                .review-date {
+                  display: flex;
+                  align-items: center;
+                  gap: 0.25rem;
+                }
+                .review-actions {
+                  display: flex;
+                  gap: 1rem;
+                }
+                .action-btn {
+                  display: flex;
+                  align-items: center;
+                  gap: 0.25rem;
+                  color: #94a3b8;
+                  transition: color 0.2s;
+                  background: none;
+                  border: none;
+                  cursor: pointer;
+                  font-size: 0.8rem;
+                }
+                .action-btn:hover {
+                  color: #8b5cf6;
+                }
+                .action-btn svg {
+                  width: 16px;
+                  height: 16px;
+                }
+              `}</style>
+              
+              {reviews && reviews.length > 0 ? (
+                <div className="feed-grid">
+                  {reviews.map((review, index) => {
+                    const ratingMap = { 'ONE': 1, 'TWO': 2, 'THREE': 3, 'FOUR': 4, 'FIVE': 5 };
+                    const rating = ratingMap[review.starRating] || 5;
+                    const initials = review.reviewer?.displayName
+                      ? review.reviewer.displayName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+                      : '??';
+                    const reviewDate = review.createTime ? new Date(review.createTime) : new Date();
+                    const formattedDate = reviewDate.toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    });
+                    
+                    return (
+                      <div key={index} className="feed-card">
+                        <div className="card-header">
+                          <div className="avatar">
+                            {initials}
+                          </div>
+                          <div className="user-info">
+                            <h4>{review.reviewer?.displayName || 'Anonymous User'}</h4>
+                            <p>Verified Customer</p>
+                          </div>
+                        </div>
+                        <div className="card-body">
+                          <div className="rating">
+                            <div className="rating-stars">
+                              {[...Array(5)].map((_, i) => (
+                                <Star 
+                                  key={i}
+                                  className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-600'}`}
+                                />
+                              ))}
+                            </div>
+                            <span className="rating-value">{rating}.0</span>
+                          </div>
+                          <p className="review-text">
+                            {review.comment || 'No review text provided.'}
+                          </p>
+                        </div>
+                        <div className="card-footer">
+                          <div className="review-date">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                              <line x1="16" y1="2" x2="16" y2="6"></line>
+                              <line x1="8" y1="2" x2="8" y2="6"></line>
+                              <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                            {formattedDate}
+                          </div>
+                          {/* <div className="review-actions">
+                            <button className="action-btn">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                              </svg>
+                              Reply
+                            </button>
+                            <button className="action-btn">
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path>
+                              </svg>
+                              Like
+                            </button>
+                          </div> */}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <Star className="w-16 h-16 text-yellow-400 mb-4" />
+                  <h3 className="text-xl font-semibold mb-2">No Reviews Yet</h3>
+                  <p className="text-gray-400 text-center max-w-md">
+                    Be the first to leave a review for {selectedBusiness?.locationName || 'this business'}!
+                  </p>
                 </div>
               )}
             </div>
