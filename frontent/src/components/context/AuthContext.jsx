@@ -79,7 +79,7 @@ export const AuthContextProvider = ({ children }) => {
   };
 
   const signup = async ({ username, email, password, phone }) => {
-    setIsLoading(true);
+    // setIsLoading(true);
     try {
       const { data } = await api.post('/api/auth/register', { name: username, email, password, phone });
       console.log(data)
@@ -92,12 +92,12 @@ export const AuthContextProvider = ({ children }) => {
       const msg = e?.response?.data?.message || e.message || 'Signup failed';
       return { success: false, error: msg };
     } finally {
-      setIsLoading(false);
+      // setIsLoading(false);
     }
   };
 
   const login = async (emailOrPhone, password) => {
-    setIsLoading(true);
+    // setIsLoading(true);
     try {
       const payload = emailOrPhone.includes('@') ? { email: emailOrPhone, password } : { phone: emailOrPhone, password };
       const { data } = await api.post('/api/auth/login', payload);
@@ -106,12 +106,12 @@ export const AuthContextProvider = ({ children }) => {
       setToken(data.token);
       setIsAuthenticated(true);
       persist({ user: data.user, token: data.token });
-      return { success: true, message: data?.message || 'Login successful' };
+      return { success: true, message: data?.message || 'Login successful', user: data.user };
     } catch (e) {
       const msg = e?.response?.data?.message || e.message || 'Login failed';
       return { success: false, error: msg };
     } finally {
-      setIsLoading(false);
+      // setIsLoading(false);
     }
   };
 
@@ -146,9 +146,6 @@ export const AuthContextProvider = ({ children }) => {
       // Sign in with Google using Firebase
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
-      
-      
-      // Get Firebase ID token
       const idToken = await user.getIdToken();
       
       // Send ID token to backend for verification and user creation

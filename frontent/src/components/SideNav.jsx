@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import {
   BellRing,
   ChevronDown,
@@ -36,7 +36,22 @@ const SideNav = () => {
     setMobileOpen,
   } = useSidebar();
   const { user, logout } = useAuth();
-  const [activeDropdown, setActiveDropdown] = useState('');
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+
+  // Close profile dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (profileRef.current && !profileRef.current.contains(event.target)) {
+        setIsProfileOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const getUserInitials = () => {
     if (!user?.name) return 'GU';
@@ -95,23 +110,21 @@ const SideNav = () => {
     { name: 'Integrations', icon: GitBranch, path: '/dashboard/integrations', active: location.pathname === '/dashboard/integrations' },
     { name: 'Social Sharing', icon: Share2, path: '/dashboard/social-sharing', active: location.pathname === '/dashboard/social-sharing' },
     { name: 'Notifications', icon: BellRing, path: '/dashboard/notifications', active: location.pathname === '/dashboard/notifications' },
-    { name: 'Subscription', icon: CreditCard, path: '/dashboard/subscription', active: location.pathname === '/dashboard/subscription' },
-    { name: 'Billing', icon: CreditCard, path: '/dashboard/billing', active: location.pathname === '/dashboard/billing' },
+    { name: 'Settings', icon: Settings, path: '/dashboard/settings', active: location.pathname === '/dashboard/settings' },
+    // { name: 'Subscription', icon: CreditCard, path: '/dashboard/subscription', active: location.pathname === '/dashboard/subscription' },
+    // { name: 'Billing', icon: CreditCard, path: '/dashboard/billing', active: location.pathname === '/dashboard/billing' },
   ];
 
   const adminNavItems = [
-    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', active: location.pathname === '/dashboard' },
-    { name: 'Settings', icon: Settings, path: '/dashboard/settings', active: location.pathname === '/dashboard/settings' },
-    { name: 'Users', icon: Users, path: '/dashboard/users', active: location.pathname === '/dashboard/users' },
-    { name: 'Analytics', icon: BarChart2, path: '/dashboard/analytics', active: location.pathname === '/dashboard/analytics' },
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/ad-dashboard', active: location.pathname === '/ad-dashboard' },
+    { name: 'Settings', icon: Settings, path: '/ad-dashboard/settings', active: location.pathname === '/ad-dashboard/settings' },
+    { name: 'Users', icon: Users, path: '/ad-dashboard/users', active: location.pathname === '/ad-dashboard/users' },
+    { name: 'Analytics', icon: BarChart2, path: '/ad-dashboard/analytics', active: location.pathname === '/ad-dashboard/analytics' },
   ];
 
   const navItems = user?.role === 'admin' ? adminNavItems : userNavItems;
 
-  const otherItems = [
-    { name: 'Home', icon: Home, path: '/' },
-    { name: 'Logout', icon: LogOut, path: '#' },
-  ];
+  // Removed otherItems as we'll handle these directly
 
   const isMobileView = () => typeof window !== 'undefined' && window.innerWidth < 1024;
 
@@ -179,49 +192,54 @@ const SideNav = () => {
             </ul>
           </nav>
 
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-              <div className="pt-4">
-                <div className={!isCollapsed ? 'px-4' : 'px-2'}>
-                  {!isCollapsed || (mobileOpen && isMobileView()) ? (
-                    <div className="text-xs uppercase text-gray-500 font-medium mb-3 px-4">Others</div>
-                  ) : null}
-                  <div className="space-y-1 mb-4">
-                    {otherItems.map((item) => (
-                      <Link
-                        key={item.name}
-                        to={item.path}
-                        onClick={(e) => handleNavClick(e, item)}
-                        className={`flex items-center gap-3 rounded-lg text-sm text-gray-300 hover:bg-[#1a1b2e] transition-colors ${
-                          isCollapsed && !(mobileOpen && isMobileView()) ? 'justify-center p-3' : 'px-4 py-3'
-                        }`}
-                        title={item.name}
-                      >
-                        <item.icon size={18} className="text-gray-400 flex-shrink-0" />
-                        {!isCollapsed || (mobileOpen && isMobileView()) ? (
-                          <span className="truncate">{item.name}</span>
-                        ) : null}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+          <div className="mt-auto border-t border-white/10 p-4 bg-[#0f1020]" ref={profileRef}>
+            <div 
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#1a1b2e] cursor-pointer"
+            >
+              <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                {getUserInitials()}
               </div>
+              {!isCollapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{user?.name}</p>
+                  <p className="text-xs text-gray-400 truncate">{user?.email}</p>
+                </div>
+              )}
+              {!isCollapsed && (
+                <ChevronDown 
+                  className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${isProfileOpen ? 'transform rotate-180' : ''}`} 
+                />
+              )}
             </div>
 
-            <div className="border-t border-white/10 p-4 bg-[#0f1020]">
-              <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#1a1b2e] cursor-pointer">
-                <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                  {getUserInitials()}
-                </div>
-                {!isCollapsed && (
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{user?.name}</p>
-                    <p className="text-xs text-gray-400 truncate">{user?.email}</p>
-                  </div>
-                )}
-                {!isCollapsed && <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+            {/* Profile Dropdown */}
+            {isProfileOpen && (
+              <div className="mt-1 bg-[#1a1b2e] rounded-lg overflow-hidden">
+                <Link
+                  to="/"
+                  onClick={() => {
+                    setIsProfileOpen(false);
+                    if (window.innerWidth < 1024) closeMobileSidebar();
+                  }}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#2d2d47] transition-colors"
+                >
+                  <Home size={16} className="text-gray-400" />
+                  <span>Home</span>
+                </Link>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setIsProfileOpen(false);
+                    handleNavClick(e, { name: 'Logout' });
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left text-red-400 hover:bg-[#2d2d47] transition-colors"
+                >
+                  <LogOut size={16} className="text-red-400" />
+                  <span>Logout</span>
+                </button>
               </div>
-            </div>
+            )}
           </div>
         </div>
       </div>

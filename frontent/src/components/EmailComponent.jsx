@@ -18,7 +18,7 @@ const EmailComponent = () => {
   const [isSending, setIsSending] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const BACKEND_URL =
-    import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ||
+    import.meta.env.VITE_API_BASE?.replace(/\/$/, "") ||
     "http://localhost:8000";
 
   const FRONTEND_URL =

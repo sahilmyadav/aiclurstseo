@@ -138,7 +138,7 @@ const Reviews = () => {
             
             // Create axios instance with base URL and default headers
             const api = axios.create({
-                baseURL: 'http://localhost:8000', // Replace with your actual backend URL
+                baseURL:  import.meta.env.VITE_API_BASE , // Replace with your actual backend URL
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${tokenDetails?.accessToken}`
