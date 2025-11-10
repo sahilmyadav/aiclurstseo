@@ -92,7 +92,7 @@ const AppContent = () => {
         {
           isAuthenticated && user.role === 'admin' && (
             <Route
-              path='/dashboard'
+              path='/ad-dashboard'
               element={
                 <AdminProvider>
                   <DashboardLayout />
@@ -116,7 +116,7 @@ const AppContent = () => {
           path="*" 
           element={
             isInitialized ? (
-              <Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />
+              <Navigate to={isAuthenticated ? "/" : "/"} replace />
             ) : null
           } 
         />
