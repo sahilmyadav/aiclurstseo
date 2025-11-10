@@ -13,6 +13,11 @@ import {
   Star,
   ChevronLeft,
   ChevronRight,
+  LayoutDashboard,
+  Users,
+  Settings,
+  BarChart2,
+  CreditCard,
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSidebar } from './context/SidebarContext';
@@ -80,16 +85,28 @@ const SideNav = () => {
     }
   };
 
-  const navItems = [
-    { name: 'Reviews', icon: Star, path: '/dashboard', active: location.pathname === '/dashboard' },
+    const userNavItems = [
+    { name: 'Dashboard', icon: Home, path: '/dashboard', active: location.pathname === '/dashboard' },
     { name: 'Get Reviews', icon: Send, path: '/dashboard/reviews', active: location.pathname === '/dashboard/reviews' },
     { name: 'Audit', icon: BarChart3, path: '/dashboard/audit', active: location.pathname === '/dashboard/audit' },
+    { name: 'Reviews', icon: Star, path: '/dashboard/handle-reviews', active: location.pathname === '/dashboard/handle-reviews' },
     { name: 'Review Link', icon: LinkIcon, path: '/dashboard/review-link', active: location.pathname === '/dashboard/review-link' },
     { name: 'Widgets', icon: LayoutGrid, path: '/dashboard/widgets', active: location.pathname === '/dashboard/widgets' },
     { name: 'Integrations', icon: GitBranch, path: '/dashboard/integrations', active: location.pathname === '/dashboard/integrations' },
     { name: 'Social Sharing', icon: Share2, path: '/dashboard/social-sharing', active: location.pathname === '/dashboard/social-sharing' },
     { name: 'Notifications', icon: BellRing, path: '/dashboard/notifications', active: location.pathname === '/dashboard/notifications' },
+    { name: 'Subscription', icon: CreditCard, path: '/dashboard/subscription', active: location.pathname === '/dashboard/subscription' },
+    { name: 'Billing', icon: CreditCard, path: '/dashboard/billing', active: location.pathname === '/dashboard/billing' },
   ];
+
+  const adminNavItems = [
+    { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard', active: location.pathname === '/dashboard' },
+    { name: 'Settings', icon: Settings, path: '/dashboard/settings', active: location.pathname === '/dashboard/settings' },
+    { name: 'Users', icon: Users, path: '/dashboard/users', active: location.pathname === '/dashboard/users' },
+    { name: 'Analytics', icon: BarChart2, path: '/dashboard/analytics', active: location.pathname === '/dashboard/analytics' },
+  ];
+
+  const navItems = user?.role === 'admin' ? adminNavItems : userNavItems;
 
   const otherItems = [
     { name: 'Home', icon: Home, path: '/' },

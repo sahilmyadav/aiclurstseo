@@ -1,9 +1,22 @@
 import React, { useState, useContext, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import SideNav from "./SideNav";
 import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
-import { FaGoogle, FaCalendarAlt, FaClock, FaHistory, FaPlus, FaTrash, FaEdit, FaSpinner } from "react-icons/fa";
-import { toast } from 'sonner';
+import ScheduledPosts from "./ScheduledPosts";
+import { 
+  FaGoogle, 
+  FaCalendarAlt, 
+  FaClock, 
+  FaPlus, 
+  FaTrash, 
+  FaEdit, 
+  FaSpinner, 
+  FaCheckCircle,
+  FaSync,
+  FaInfoCircle 
+} from "react-icons/fa";
+import { toast } from 'sonner';     
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -30,7 +43,12 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
   };
 
   const getDisplayStatus = (status) => {
-    if (status === 'scheduled') return `Scheduled for ${formatDate(post.scheduledFor)}`;
+    if (status === 'scheduled') {
+      if (post.isRecurring) {
+        return `Recurring - ${post.repeatType}`;
+      }
+      return `Scheduled for ${formatDate(post.scheduledFor)}`;
+    }
     if (status === 'published' && post.statusFromApi === 'processing') return `Status: Processing`;
     if (status === 'published') return `Posted on ${formatDate(post.postedAt)}`;
     return 'Draft';
@@ -57,22 +75,6 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
             </div>
           </div>
         </div>
-        <div className="flex gap-1.5">
-          <button 
-            onClick={() => onEdit(post)}
-            className="p-2 hover:bg-white/10 rounded-lg transition-all hover:scale-105"
-            aria-label="Edit post"
-          >
-            <FaEdit className="text-blue-300 hover:text-blue-200" />
-          </button>
-          <button 
-            onClick={() => onDelete(post.id)}
-            className="p-2 hover:bg-red-500/20 rounded-lg transition-all hover:scale-105"
-            aria-label="Delete post"
-          >
-            <FaTrash className="text-red-400 hover:text-red-300" />
-          </button>
-        </div>
       </div>
       <div className="pl-1">
         <p className="text-sm text-white/90 leading-relaxed mb-3 line-clamp-3">{post.content}</p>
@@ -84,20 +86,40 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
             </span>
           </div>
         )}
-        <div className="mt-3 pt-2 border-t border-white/5 text-xs text-white/50">
+        <div className="mt-3 pt-2 border-t border-white/5 text-xs text-white/50 space-y-1.5">
           {post.status === 'scheduled' ? (
-            <div className="flex items-center gap-1">
-              <FaCalendarAlt className="text-blue-400/80" />
-              <span>Scheduled for {formatDate(post.scheduledFor)}</span>
-            </div>
+            <>
+              <div className="flex items-center gap-1.5">
+                <FaCalendarAlt className="text-blue-400/80 flex-shrink-0" />
+                <span>
+                  {post.isRecurring ? 'Next run: ' : 'Scheduled for: '}
+                  {formatDate(post.nextRun || post.scheduledFor)}
+                </span>
+              </div>
+              {post.isRecurring && (
+                <div className="flex items-start gap-1.5">
+                  <FaSync className="text-blue-400/80 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <div>Recurring: {post.repeatType}</div>
+                    {post.lastRun && (
+                      <div className="text-white/60">Last run: {formatDate(post.lastRun)}</div>
+                    )}
+                  </div>
+                </div>
+              )}
+              <div className="flex items-center gap-1.5 text-blue-300/80">
+                <FaInfoCircle className="flex-shrink-0" />
+                <span>{post.statusFromApi === 'pending' ? 'Pending' : 'Scheduled'}</span>
+              </div>
+            </>
           ) : post.status === 'published' ? (
-            <div className="flex items-center gap-1">
-              <FaClock className="text-green-400/80" />
+            <div className="flex items-center gap-1.5">
+              <FaCheckCircle className="text-green-400/80 flex-shrink-0" />
               <span>Posted on {formatDate(post.postedAt)}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1 text-amber-400/80">
-              <FaEdit />
+            <div className="flex items-center gap-1.5 text-amber-400/80">
+              <FaEdit className="flex-shrink-0" />
               <span>Draft - Not published</span>
             </div>
           )}
@@ -109,13 +131,31 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
 
 const Posts = () => {
   const { isCollapsed } = useSidebar();
-  const { isConnected: isGoogleConnected, businesses, selectedBusiness, selectBusiness } = useGoogleBusiness();
+  const { 
+    isConnected: isGoogleConnected, 
+    businesses, 
+    selectedBusiness, 
+    selectBusiness,
+    scheduledPosts,
+    loadingScheduled
+  } = useGoogleBusiness();
+  
   const [activeTab, setActiveTab] = useState('published'); 
   const [showEditor, setShowEditor] = useState(false);
   const [posts, setPosts] = useState([]);
+  const [pagination, setPagination] = useState({
+    hasMore: false,
+    nextPageToken: null,
+    loadingMore: false,
+    pageSize: 20, // Default page size
+    totalItems: 0,
+    currentPage: 1
+  });
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
   
+  const navigate = useNavigate();
+
   const [currentPost, setCurrentPost] = useState({
     id: null,
     content: '',
@@ -129,16 +169,28 @@ const Posts = () => {
 
   const [businessDetails, setBusinessDetails] = useState(null);
   
-  const fetchPosts = async (accountId, locationId) => {
-    setIsLoadingPosts(true);
+  const fetchPosts = async (accountId, locationId, loadMore = false) => {
+    if (loadMore) {
+      setPagination(prev => ({ ...prev, loadingMore: true }));
+    } else {
+      setIsLoadingPosts(true);
+    }
+    
     try {
       // Ensure BACKEND_URL is defined and doesn't end with a slash
       if (!BACKEND_URL) {
         throw new Error('BACKEND_URL is not defined');
       }
+      
       const baseUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
-      // Remove /api from the URL path since the backend route is mounted at /auth/google
-      const url = `${baseUrl}/auth/google/accounts/${accountId}/locations/${locationId}/localPosts`;
+      
+      // Build URL with pagination parameters
+      const params = new URLSearchParams({
+        pageSize: pagination.pageSize,
+        ...(loadMore && pagination.nextPageToken && { pageToken: pagination.nextPageToken })
+      });
+      
+      const url = `${baseUrl}/auth/google/accounts/${accountId}/locations/${locationId}/localPosts?${params}`;
       
       console.log(`🔄 Fetching posts from:`, url);
       
@@ -146,7 +198,7 @@ const Posts = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}` // Add auth token if needed
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       
@@ -170,6 +222,18 @@ const Posts = () => {
       
       // Handle both response formats
       const postsList = responseData.localPosts || responseData.posts || [];
+      const nextPageToken = responseData.nextPageToken || null;
+      const totalItems = responseData.totalItems || 0;
+      
+      // Update pagination state
+      setPagination(prev => ({
+        ...prev,
+        hasMore: !!nextPageToken,
+        nextPageToken,
+        loadingMore: false,
+        totalItems,
+        currentPage: loadMore ? prev.currentPage + 1 : 1
+      }));
       
       const formattedPosts = postsList.map((post) => {
         const statusFromApi = (post.state || post.status || 'published').toLowerCase();
@@ -201,8 +265,14 @@ const Posts = () => {
         };
       });
       
-      console.log(`📊 Formatted ${formattedPosts.length} posts`);
-      setPosts(formattedPosts);
+      // Update posts state based on whether we're loading more or refreshing
+      if (loadMore) {
+        setPosts(prevPosts => [...prevPosts, ...formattedPosts]);
+      } else {
+        setPosts(formattedPosts);
+      }
+      
+      console.log(`📊 ${loadMore ? 'Added' : 'Loaded'} ${formattedPosts.length} posts`);
       return formattedPosts;
     } catch (error) {
       console.error("❌ Error fetching posts:", error);
@@ -391,7 +461,31 @@ const Posts = () => {
     setShowEditor(true);
   };
 
+  // Format scheduled posts to match the PostCard component's expected format
+  const formattedScheduledPosts = (scheduledPosts || []).map(post => ({
+    id: post._id || post.id,
+    content: post.content,
+    status: 'scheduled',
+    statusFromApi: post.status,
+    scheduledFor: post.scheduledFor || post.nextRun,
+    postedAt: post.createdAt,
+    platform: 'google',
+    isRecurring: post.isRecurring,
+    repeatType: post.repeatType,
+    repeatDays: post.repeatDays,
+    lastRun: post.lastRun,
+    nextRun: post.nextRun
+  }));
+
+  // Filter posts based on active tab (excluding scheduled posts which are handled separately)
   const filteredPosts = posts.filter(post => post.status === activeTab);
+  // Handle loading more posts
+  const handleLoadMore = () => {
+    if (selectedBusiness?.accountId && selectedBusiness?.name && pagination.hasMore && !pagination.loadingMore) {
+      const locationId = selectedBusiness.name.split('/')[1];
+      fetchPosts(selectedBusiness.accountId, locationId, true);
+    }
+  };
 
   const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
 
@@ -450,20 +544,31 @@ const Posts = () => {
                   </div>
                 )}
               </div>
-              <div className="flex-shrink-0">
-                <button
-                  onClick={() => {
-                    setCurrentPost({
-                      id: null, content: '', scheduledFor: null, media: null, isRecurring: false, 
-                      frequency: 'daily', time: '09:00', days: [1, 2, 3, 4, 5]
-                    });
-                    setShowEditor(true);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
-                  disabled={!isGoogleConnected}
-                >
-                  <FaPlus /> New Post
-                </button>
+              <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3">
+                <div>
+                  <button
+                    onClick={() => {
+                      setCurrentPost({
+                        id: null, content: '', scheduledFor: null, media: null, isRecurring: false, 
+                        frequency: 'daily', time: '09:00', days: [1, 2, 3, 4, 5]
+                      });
+                      setShowEditor(true);
+                    }}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+                    disabled={!isGoogleConnected}
+                  >
+                    <FaPlus /> New Post
+                  </button>
+                </div>
+                <div>
+                  <button
+                    onClick={() => navigate('/dashboard/schedule-post')}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+                    disabled={!isGoogleConnected}
+                  >
+                    <FaCalendarAlt /> Schedule Post
+                  </button>
+                </div>
                 {!isGoogleConnected && (
                   <p className="text-xs text-red-400 mt-1 text-center sm:text-right">
                     <a 
@@ -481,7 +586,7 @@ const Posts = () => {
           {/* Tabs */}
           <div className="border-b border-white/10 mb-6 bg-[#1a1b2e]/50 backdrop-blur-sm rounded-t-lg">
             <div className="flex overflow-x-auto scrollbar-hide px-2 py-2">
-              {['scheduled', 'published', 'drafts'].map((tab) => (
+              {['published', 'scheduled', 'drafts'].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -497,14 +602,14 @@ const Posts = () => {
                       ? 'bg-white/20 text-white' 
                       : 'bg-white/10 text-white/60'
                   }`}>
-                    {posts.filter(p => p.status === tab).length}
+                    {tab === 'scheduled' ? formattedScheduledPosts.length : posts.filter(p => p.status === tab).length}
                   </span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
             {!isGoogleConnected ? (
               <div className="text-center py-12">
                 <div className="bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border border-blue-500/30 rounded-xl p-8">
@@ -533,20 +638,61 @@ const Posts = () => {
                   </div>
                 </div>
               </div>
+            ) : activeTab === 'scheduled' ? (
+              <ScheduledPosts 
+                scheduledPosts={scheduledPosts} 
+                loadingScheduled={loadingScheduled}
+                onEdit={handleEditPost}
+                onDelete={handleDeletePost}
+              />
             ) : filteredPosts.length > 0 ? (
-              filteredPosts.map((post) => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onEdit={handleEditPost}
-                  onDelete={handleDeletePost}
-                  selectedBusiness={selectedBusiness}
-                />
-              ))
+              <>
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredPosts.map((post) => (
+                    <PostCard
+                      key={post.id}
+                      post={post}
+                      onEdit={handleEditPost}
+                      onDelete={handleDeletePost}
+                      selectedBusiness={selectedBusiness}
+                    />
+                  ))}
+                </div>
+                {pagination.hasMore && (
+                  <div className="col-span-full flex justify-center mt-6">
+                    <button
+                      onClick={handleLoadMore}
+                      disabled={pagination.loadingMore}
+                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {pagination.loadingMore ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Loading...
+                        </>
+                      ) : (
+                        'Load More'
+                      )}
+                    </button>
+                  </div>
+                )}
+              </>
             ) : (
-              <div className="text-center py-12 text-white/50">
-                <FaHistory className="mx-auto text-4xl mb-3 opacity-30" />
-                <p>No {activeTab} posts found</p>
+              <div className="col-span-full text-center py-12">
+                <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-500/10 rounded-full mb-4">
+                  <FaEdit className="text-indigo-400 text-2xl" />
+                </div>
+                <h3 className="text-lg font-medium text-white mb-1">
+                  {activeTab === 'published' ? 'No published posts' : 'No drafts'}
+                </h3>
+                <p className="text-white/60 max-w-md mx-auto">
+                  {activeTab === 'published' 
+                    ? 'Create your first post to get started.' 
+                    : 'Create a draft to get started.'}
+                </p>
               </div>
             )}
           </div>
@@ -605,22 +751,6 @@ const Posts = () => {
                   </div>
 
                   <div className="mb-6">
-                    <label className="flex items-center gap-2 mb-4">
-                      <input 
-                        type="checkbox" 
-                        checked={currentPost.scheduledFor !== null}
-                        onChange={(e) => {
-                          setCurrentPost({
-                            ...currentPost, 
-                            scheduledFor: e.target.checked ? new Date() : null,
-                            isRecurring: e.target.checked ? currentPost.isRecurring : false,
-                          });
-                        }}
-                        className="rounded border-white/20"
-                      />
-                      <span className="text-sm font-medium">Schedule for later</span>
-                    </label>
-
                     {currentPost.scheduledFor && (
                       <div className="pl-6 space-y-4">
                         <div>

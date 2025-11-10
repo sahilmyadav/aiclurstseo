@@ -17,9 +17,18 @@ export const GoogleBusinessProvider = ({ children }) => {
   const [businesses, setBusinesses] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
   const [reviews, setReviews] = useState([]);
+  const [localReviews, setLocalReviews] = useState([]); // New state for local reviews
   const [loading, setLoading] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
   const [reviewUri, setReviewUri] = useState('');
+  const [tokenDetails, setTokenDetails] = useState({
+    accessToken: null,
+    expiryDate: null,
+    scopes: []
+  });
+  
+  const [scheduledPosts, setScheduledPosts] = useState([]);
+  const [loadingScheduled, setLoadingScheduled] = useState(false);
   
   const { user: authUser, token } = useAuth();
   const BACKEND_URL = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
@@ -28,6 +37,31 @@ export const GoogleBusinessProvider = ({ children }) => {
     Authorization: token ? `Bearer ${token}` : undefined,
     'Content-Type': 'application/json',
   });
+
+  // Fetch scheduled posts for the current user
+  const fetchScheduledPosts = async () => {
+    if (!authUser?.id) return;
+    
+    setLoadingScheduled(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/post/user/${authUser.id}`, {
+        headers: authHeaders(),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setScheduledPosts(data.data || []);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to fetch scheduled posts');
+      }
+    } catch (error) {
+      console.error('Error fetching scheduled posts:', error);
+      toast.error(error.message || 'Failed to load scheduled posts');
+    } finally {
+      setLoadingScheduled(false);
+    }
+  };
 
   // Check Google authentication status
   const checkAuthStatus = async () => {
@@ -42,6 +76,20 @@ export const GoogleBusinessProvider = ({ children }) => {
         if (data.authenticated) {
           setUser(data.user);
           setIsConnected(true);
+          // Fetch scheduled posts when user is authenticated
+          fetchScheduledPosts();
+          
+          console.log("data.tokenDetails",data)
+          // Update token details if available
+          if (data.tokenDetails) {
+            setTokenDetails({
+              accessToken: data.tokenDetails.access_token,
+              refreshToken: data.tokenDetails.refresh_token,
+              expiryDate: data.tokenDetails.expiry_date ? new Date(data.tokenDetails.expiry_date) : null,
+              scopes: data.tokenDetails.scope ? data.tokenDetails.scope.split(' ') : []
+            });
+          }
+          
           await fetchBusinesses();
         }
       }
@@ -59,7 +107,7 @@ export const GoogleBusinessProvider = ({ children }) => {
         credentials: 'include',
       });
       const data = await res.json();
-      // console.log("data",data)
+      console.log("data",data)
       if (res.ok) {
         setUser(data.user || {});
         setBusinesses(data.businesses || []);
@@ -76,6 +124,8 @@ export const GoogleBusinessProvider = ({ children }) => {
           
           // Auto-fetch reviews for first business
           await fetchReviews(firstBusiness.accountId, firstBusiness.name.split("/")[1]);
+          // Also fetch local reviews
+          await fetchLocalReviews(firstBusiness.name.split("/")[1]);
         }
       }
     } catch (err) {
@@ -110,8 +160,34 @@ export const GoogleBusinessProvider = ({ children }) => {
     }
   };
 
+  // Fetch local reviews from database by locationId
+  const fetchLocalReviews = async (locationId) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${BACKEND_URL}/api/reviews/allReviews/${locationId}`, {
+        headers: authHeaders(),
+        credentials: 'include',
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        setLocalReviews(data || []);
+      } else {
+        throw new Error('Failed to fetch local reviews');
+      }
+    } catch (err) {
+      console.error('Error fetching local reviews:', err);
+      // Don't show toast error for local reviews as it might not be implemented yet
+      // toast.error("Failed to fetch local reviews");
+      setLocalReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Connect to Google
   const connectGoogle = async () => {
+   
    
     window.location.href = `${BACKEND_URL}/auth/google/login`;
   };
@@ -130,6 +206,7 @@ export const GoogleBusinessProvider = ({ children }) => {
       setBusinesses([]);
       setSelectedBusiness(null);
       setReviews([]);
+      setLocalReviews([]); // Reset local reviews
       setIsConnected(false);
       
       toast.success("Disconnected successfully");
@@ -151,6 +228,8 @@ export const GoogleBusinessProvider = ({ children }) => {
     }
     
     await fetchReviews(accountId, locationId);
+    // Also fetch local reviews when business is selected
+    await fetchLocalReviews(locationId);
   };
 
   // Calculate review statistics
@@ -188,6 +267,15 @@ export const GoogleBusinessProvider = ({ children }) => {
     };
   };
 
+  // Refresh all data when needed
+  const refreshData = async () => {
+    if (isConnected && selectedBusiness) {
+      const locationId = selectedBusiness.name.split("/")[1];
+      await fetchReviews(selectedBusiness.accountId, locationId);
+      await fetchLocalReviews(locationId);
+    }
+  };
+
   useEffect(() => {
     checkAuthStatus();
   }, [authUser]);
@@ -198,18 +286,28 @@ export const GoogleBusinessProvider = ({ children }) => {
     businesses,
     selectedBusiness,
     reviews,
+    localReviews,
     loading,
     isConnected,
     reviewUri,
-    
+    tokenDetails,
+    scheduledPosts,
+    loadingScheduled,
     // Actions
+    setBusinesses,
+    setSelectedBusiness,
+    setReviews,
+    setLocalReviews,
+    setLoading,
+    checkAuthStatus,
     connectGoogle,
     disconnectGoogle,
     fetchBusinesses,
     fetchReviews,
+    fetchLocalReviews,
     selectBusiness,
-    checkAuthStatus,
-    
+    refreshData,
+    fetchScheduledPosts,
     // Computed values
     reviewStats: getReviewStats()
   };
