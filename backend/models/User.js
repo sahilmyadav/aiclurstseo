@@ -14,7 +14,7 @@ const UserSchema = new mongoose.Schema(
     avatar: { type: String },
     provider: { type: String, enum: ['local', 'google', 'firebase'], default: 'local' },
     isEmailVerified: { type: Boolean, default: false },
-    
+    isBlocked: { type: Boolean, default: false },
     // Login tracking
     lastLogin: { type: Date, default: Date.now },
     loginCount: { type: Number, default: 0 }
