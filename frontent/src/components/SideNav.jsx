@@ -111,8 +111,8 @@ const SideNav = () => {
     { name: 'Social Sharing', icon: Share2, path: '/dashboard/social-sharing', active: location.pathname === '/dashboard/social-sharing' },
     { name: 'Notifications', icon: BellRing, path: '/dashboard/notifications', active: location.pathname === '/dashboard/notifications' },
     { name: 'Settings', icon: Settings, path: '/dashboard/settings', active: location.pathname === '/dashboard/settings' },
-    // { name: 'Subscription', icon: CreditCard, path: '/dashboard/subscription', active: location.pathname === '/dashboard/subscription' },
-    // { name: 'Billing', icon: CreditCard, path: '/dashboard/billing', active: location.pathname === '/dashboard/billing' },
+    { name: 'Subscription', icon: CreditCard, path: '/dashboard/subscription', active: location.pathname === '/dashboard/subscription' },
+    { name: 'Billing', icon: CreditCard, path: '/dashboard/billing', active: location.pathname === '/dashboard/billing' },
   ];
 
   const adminNavItems = [

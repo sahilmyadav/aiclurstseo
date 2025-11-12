@@ -18,6 +18,8 @@ import {
   User,
   ChevronLeft,
   ChevronRight,
+  Lock,
+  Unlock,
 } from "lucide-react";
 
 // Pagination Component
@@ -88,44 +90,67 @@ const debounce = (func, wait) => {
 };
 
 const AllUsers = () => {
-  const { users, loading, error, fetchUsers, updateUserRole, deleteUser } =
-    useContext(AdminContext);
+  const { 
+    users, 
+    allUsers, 
+    loading, 
+    error, 
+    pagination, 
+    fetchUsers, 
+    updateUserRole, 
+    deleteUser,
+    blockUnblockUser 
+  } = useContext(AdminContext);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isDeleting, setIsDeleting] = useState(null);
   const [isUpdating, setIsUpdating] = useState(null);
+  const [isBlocking, setIsBlocking] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // ✅ Fetch users only once
+  // Fetch users when page, search term, or active tab changes
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    const fetchData = async () => {
+      try {
+        let url = `/api/admin/users?page=${currentPage}&limit=${itemsPerPage}`;
+        
+        // Add role filter if a specific tab is selected
+        if (activeTab === 'admins') {
+          url += '&role=admin';
+        } else if (activeTab === 'users') {
+          url += '&role=user';
+        }
+        
+        // Add search term if provided
+        if (searchTerm) {
+          url += `&search=${encodeURIComponent(searchTerm)}`;
+        }
+        
+        await fetchUsers(url);
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
+    
+    fetchData();
+  }, [currentPage, itemsPerPage, searchTerm, activeTab, fetchUsers]);
 
-const filteredUsers = useMemo(() => {
-  return users.filter((user) => {
-    const role = user.role?.toLowerCase() || "";
-    const match =
-      !searchTerm ||
-      user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+  // Handle page change
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    // Scroll to top when changing pages
+    window.scrollTo(0, 0);
+  };
 
-    if (activeTab === "admins") return match && role === "admin";
-    if (activeTab === "users") return match && role === "user";
-    return match;
-  });
-}, [users, searchTerm, activeTab]);
+  // Reset to first page when search term or tab changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeTab]);
 
-
- console.log(users)
-  // ✅ Pagination logic
-  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage) || 1;
-  const start = (currentPage - 1) * itemsPerPage;
-  const currentUsers = filteredUsers.slice(start, start + itemsPerPage);
-
-  // ✅ Reset page on filter/search change
-  useEffect(() => setCurrentPage(1), [searchTerm, activeTab]);
+  // Current users are already paginated by the backend
+  const currentUsers = users;
 
   // ✅ Debounced search
   const debouncedSearch = useCallback(
@@ -166,19 +191,84 @@ const filteredUsers = useMemo(() => {
     }
   };
 
-  // ✅ Delete user
-  const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) return;
-    setIsDeleting(id);
+  // ✅ Block/Unblock user
+  const handleBlockUnblock = async (userId, isCurrentlyBlocked) => {
+    setIsBlocking(userId);
     try {
-      await deleteUser(id);
-      alert("User deleted successfully");
+      await blockUnblockUser(userId);
+      toast.success(
+        `User ${isCurrentlyBlocked ? 'unblocked' : 'blocked'} successfully`,
+        {
+          position: "top-right",
+          autoClose: 3000,
+        }
+      );
     } catch (err) {
-      console.error(err);
-      alert("Failed to delete user");
+      console.error('Error toggling block status:', err);
+      toast.error(err.response?.data?.message || 'Failed to update user status', {
+        position: "top-right",
+        autoClose: 3000,
+      });
     } finally {
-      setIsDeleting(null);
+      setIsBlocking(null);
     }
+  };
+
+  // ✅ Delete user
+  const handleDelete = (id) => {
+    // Show confirmation dialog
+    toast(({ closeToast }) => (
+      <div className="p-2">
+        <p className="text-gray-800 mb-4">Are you sure you want to delete this user?</p>
+        <div className="flex justify-end space-x-2">
+          <button
+            onClick={async () => {
+              closeToast();
+              setIsDeleting(id);
+              try {
+                await deleteUser(id);
+                toast.success("User deleted successfully", {
+                  position: "top-right",
+                  autoClose: 3000,
+                });
+              } catch (err) {
+                console.error(err);
+                toast.error("Failed to delete user", {
+                  position: "top-right",
+                  autoClose: 3000,
+                });
+              } finally {
+                setIsDeleting(null);
+              }
+            }}
+            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+          >
+            {isDeleting === id ? (
+              <span className="flex items-center">
+                <Loader2 className="w-4 h-4 mr-1 animate-spin" />
+                Deleting...
+              </span>
+            ) : (
+              "Delete"
+            )}
+          </button>
+          <button
+            onClick={closeToast}
+            className="px-3 py-1 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    ), {
+      position: "top-center",
+      autoClose: false,
+      closeButton: false,
+      draggable: false,
+      closeOnClick: false,
+      pauseOnHover: true,
+      className: 'w-full max-w-md',
+    });
   };
 
   // UI helpers
@@ -240,21 +330,21 @@ const filteredUsers = useMemo(() => {
         <nav className="flex space-x-4">
           <button onClick={() => setActiveTab("all")} className={getTabClass("all")}>
             <Users className="w-4 h-4" />
-            <span>All ({users.length})</span>
+            <span>All ({allUsers.length})</span>
           </button>
           <button
             onClick={() => setActiveTab("admins")}
             className={getTabClass("admins")}
           >
             <Shield className="w-4 h-4" />
-            <span>Admins ({users.filter((u) => u.role === "admin").length})</span>
+            <span>Admins ({allUsers.filter(u => u.role === "admin").length})</span>
           </button>
           <button
             onClick={() => setActiveTab("users")}
             className={getTabClass("users")}
           >
             <User className="w-4 h-4" />
-            <span>Users ({users.filter((u) => u.role === "user").length})</span>
+            <span>Users ({allUsers.filter(u => u.role === "user").length})</span>
           </button>
         </nav>
       </div>
@@ -285,6 +375,9 @@ const filteredUsers = useMemo(() => {
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Role
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Actions
@@ -327,6 +420,15 @@ const filteredUsers = useMemo(() => {
                         {user.role}
                       </span>
                     </td>
+                    <td className="px-6 py-4">
+                      <span
+                        className={`px-2 inline-flex text-xs font-semibold rounded-full ${
+                          user.isBlocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
+                        }`}
+                      >
+                        {user.isBlocked ? 'Blocked' : 'Active'}
+                      </span>
+                    </td>
                     <td className="px-6 py-4 text-sm font-medium space-x-3">
                       <button
                         onClick={() => handleRoleChange(user._id, user.role)}
@@ -356,6 +458,22 @@ const filteredUsers = useMemo(() => {
                         )}
                         Delete
                       </button>
+                      <button
+                        onClick={() => handleBlockUnblock(user._id, user.isBlocked)}
+                        disabled={isBlocking === user._id}
+                        className={`inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white ${
+                          user.isBlocked ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
+                        }`}
+                      >
+                        {isBlocking === user._id ? (
+                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                        ) : user.isBlocked ? (
+                          <Unlock className="w-3 h-3 mr-1" />
+                        ) : (
+                          <Lock className="w-3 h-3 mr-1" />
+                        )}
+                        {user.isBlocked ? 'Unblock' : 'Block'}
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -365,11 +483,11 @@ const filteredUsers = useMemo(() => {
         </div>
 
         {/* Pagination */}
-        {totalPages > 1 && (
+        {pagination.pages > 1 && (
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
+            currentPage={pagination.page}
+            totalPages={pagination.pages}
+            onPageChange={handlePageChange}
           />
         )}
       </div>

@@ -1,20 +1,86 @@
-import { BarChart3, Users, Clock, FileText, Settings, AlertCircle, MessageSquare, Activity, ArrowUpRight } from 'lucide-react';
-import { useState } from 'react';
+import { BarChart3, Users, Clock, FileText, Settings, AlertCircle, MessageSquare, Activity, ArrowUpRight, Loader2 } from 'lucide-react';
+import { useState, useContext, useEffect } from 'react';
+import { AdminContext } from '../../context/AdminContext';
 
 const AdminDashboard = () => {
-  const [stats] = useState({
-    totalUsers: 1245,
-    activeUsers: 892,
-    totalReviews: 5243,
-    pendingActions: 12,
+  const { 
+    users, 
+    allUsers, 
+    loading, 
+    error, 
+    fetchUsers 
+  } = useContext(AdminContext);
+
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    totalAdmins: 0,
+    activeUsers: 0,
+    blockedUsers: 0,
+    pendingActions: 0,
   });
 
-  const recentActivities = [
-    { id: 1, user: 'John Doe', action: 'created a new review', time: '2 min ago', icon: <MessageSquare className="w-4 h-4" /> },
-    { id: 2, user: 'Sarah Smith', action: 'updated business profile', time: '15 min ago', icon: <Settings className="w-4 h-4" /> },
-    { id: 3, user: 'Mike Johnson', action: 'replied to a review', time: '1 hour ago', icon: <MessageSquare className="w-4 h-4" /> },
-    { id: 4, user: 'System', action: 'scheduled maintenance', time: '3 hours ago', icon: <AlertCircle className="w-4 h-4" /> },
-  ];
+  useEffect(() => {
+    // Fetch users data when component mounts
+    const fetchData = async () => {
+      try {
+        await fetchUsers('/api/admin/users?limit=10&page=1');
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
+    fetchData();
+  }, [fetchUsers]);
+
+  useEffect(() => {
+    if (allUsers.length > 0) {
+      const activeUsers = allUsers.filter(user => !user.isBlocked).length;
+      const totalAdmins = allUsers.filter(user => user.role === 'admin').length;
+      const blockedUsers = allUsers.filter(user => user.isBlocked).length;
+      setStats({
+        totalUsers: allUsers.length,
+        totalAdmins,
+        activeUsers,
+        blockedUsers,
+        pendingActions: allUsers.filter(user => user.role === 'pending').length,
+      });
+    }
+  }, [allUsers]);
+
+  // Format time to relative time
+  const formatTimeAgo = (dateString) => {
+    const now = new Date();
+    const date = new Date(dateString);
+    const seconds = Math.floor((now - date) / 1000);
+    
+    const intervals = {
+      year: 31536000,
+      month: 2592000,
+      week: 604800,
+      day: 86400,
+      hour: 3600,
+      minute: 60
+    };
+    
+    for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+      const interval = Math.floor(seconds / secondsInUnit);
+      if (interval >= 1) {
+        return interval === 1 ? `1 ${unit} ago` : `${interval} ${unit}s ago`;
+      }
+    }
+    return 'Just now';
+  };
+  
+  // Get recent users for activity feed
+  const recentActivities = allUsers
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    .slice(0, 10)
+    .map(user => ({
+      id: user._id,
+      user: user.name || 'New User',
+      action: 'joined the platform',
+      time: formatTimeAgo(user.createdAt),
+      icon: <Users className="w-4 h-4 text-green-500" />
+    }));
 
   const quickActions = [
     { title: 'Manage Users', icon: <Users className="w-5 h-5" />, action: '/admin/users' },
@@ -23,6 +89,28 @@ const AdminDashboard = () => {
     { title: 'System Settings', icon: <Settings className="w-5 h-5" />, action: '/admin/settings' },
   ];
 
+  // Render loading state
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      </div>
+    );
+  }
+
+  // Render error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500 text-center p-4">
+          <AlertCircle className="w-8 h-8 mx-auto mb-2" />
+          <p>Error loading dashboard data: {error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Render main content
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="pt-20 px-4 sm:px-6 lg:px-8 pb-12">
@@ -45,35 +133,35 @@ const AdminDashboard = () => {
             <StatCard
               title="Total Users"
               value={stats.totalUsers.toLocaleString()}
-              change="+12.5%"
+              change={`${allUsers.length > 0 ? Math.round((stats.activeUsers / allUsers.length) * 100) : 0}% Active`}
               icon={<Users className="w-6 h-6 text-blue-500" />}
               color="blue"
             />
             <StatCard
+              title="Total Admins"
+              value={stats.totalAdmins.toLocaleString()}
+              change={`${allUsers.length > 0 ? Math.round((stats.totalAdmins / allUsers.length) * 100) : 0}% of total`}
+              icon={<Users className="w-6 h-6 text-indigo-500" />}
+              color="indigo"
+            />
+            <StatCard
               title="Active Users"
               value={stats.activeUsers.toLocaleString()}
-              change="+8.2%"
+              change={`${allUsers.length > 0 ? Math.round((stats.activeUsers / allUsers.length) * 100) : 0}% of total`}
               icon={<Activity className="w-6 h-6 text-green-500" />}
               color="green"
             />
             <StatCard
-              title="Total Reviews"
-              value={stats.totalReviews.toLocaleString()}
-              change="+24.3%"
-              icon={<MessageSquare className="w-6 h-6 text-purple-500" />}
-              color="purple"
-            />
-            <StatCard
-              title="Pending Actions"
-              value={stats.pendingActions}
-              change="-3"
-              icon={<AlertCircle className="w-6 h-6 text-orange-500" />}
-              color="orange"
+              title="Blocked Users"
+              value={stats.blockedUsers.toLocaleString()}
+              change={`${allUsers.length > 0 ? Math.round((stats.blockedUsers / allUsers.length) * 100) : 0}% of total`}
+              icon={<Users className="w-6 h-6 text-red-500" />}
+              color="red"
             />
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Quick Actions */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+            {/* Quick Actions - Left Side */}
             <div className="lg:col-span-1">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200">
@@ -99,14 +187,14 @@ const AdminDashboard = () => {
               </div>
             </div>
 
-            {/* Recent Activity */}
-            <div className="lg:col-span-2">
+            {/* Recent Activity - Right Side */}
+            <div className="lg:col-span-3">
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
                   <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
                   <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">View All</button>
                 </div>
-                <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-gray-200 max-h-[280px] overflow-y-auto">
                   {recentActivities.map((activity) => (
                     <div key={activity.id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
                       <div className="flex items-start">
@@ -116,10 +204,16 @@ const AdminDashboard = () => {
                           </span>
                         </div>
                         <div className="ml-3 flex-1">
-                          <p className="text-sm text-gray-800">
-                            <span className="font-medium">{activity.user}</span> {activity.action}
+                          <div className="flex items-center">
+                            <span className="font-medium text-gray-900">{activity.user}</span>
+                            <span className="mx-1 text-gray-500">{activity.action}</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5">
+                            {activity.time}
+                            {activity.userEmail && (
+                              <span className="ml-2 text-gray-400">• {activity.userEmail}</span>
+                            )}
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5">{activity.time}</p>
                         </div>
                       </div>
                     </div>
@@ -154,6 +248,7 @@ const StatCard = ({ title, value, change, icon, color }) => {
     green: 'bg-green-50 text-green-700',
     purple: 'bg-purple-50 text-purple-700',
     orange: 'bg-orange-50 text-orange-700',
+    indigo: 'bg-indigo-50 text-indigo-700',
   };
 
   return (
