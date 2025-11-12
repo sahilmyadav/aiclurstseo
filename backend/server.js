@@ -14,8 +14,7 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import invitationRoutes from './routes/invitationRoutes.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-
-
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 dotenv.config();
 
 const app = express();
@@ -60,7 +59,16 @@ if (process.env.NODE_ENV !== 'test') {
     .catch(err => console.error('Failed to start post scheduler:', err));
 }
 
-// Routes
+
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/subscription/webhook") {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
+
+app.use("/api/subscription", subscriptionRoutes);
 app.use("/auth/google", googleRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
