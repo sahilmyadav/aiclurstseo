@@ -229,19 +229,27 @@ export const deleteUser = async (req, res) => {
     }
 };
 
-export  const blockUnblockUser = async (req, res) => {
+export const blockUnblockUser = async (req, res) => {
     try {
         const { userId } = req.body;
         
-        const user = await User.findByIdAndUpdate(userId, { isBlocked: !user.isBlocked })
+        // First find the user to get current isBlocked status
+        const user = await User.findById(userId);
+        
         if (!user) {
             return res.status(404).json({
                 success: false,
                 message: 'User not found'
             });
-        }   
+        }
+        
+        // Toggle the isBlocked status
+        user.isBlocked = !user.isBlocked;
+        await user.save();
+        
         res.status(200).json({
             success: true,
+            message: `User ${user.isBlocked ? 'blocked' : 'unblocked'} successfully`,
             data: user
         });
         
