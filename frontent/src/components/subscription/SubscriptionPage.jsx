@@ -1,209 +1,236 @@
-import React, { useState } from 'react';
-import { CheckCircle, HelpCircle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { loadStripe } from "@stripe/stripe-js";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
 
-export default function SubscriptionPage() {
-  const [billingCycle, setBillingCycle] = useState('monthly');
-  const [selectedPlan, setSelectedPlan] = useState(null);
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-  const plans = {
-    starter: {
-      name: 'Starter',
-      price: { monthly: 99, yearly: 948 }, // 12 months for the price of 11 (99 * 12 = 1188 → 948)
-      description: 'Perfect for small businesses getting started',
-      features: [
-        'Basic SEO tools',
-        '10 monthly site audits',
-        'Keyword research (500 queries/month)',
-        'Basic analytics dashboard',
-        'Email support (48h response)',
-        '1 user account',
-        'Basic reporting'
-      ],
-      popular: false
-    },
-    growth: {
-      name: 'Growth',
-      price: { monthly: 199, yearly: 1990 }, // 12 months for the price of 10 (199 * 12 = 2388 → 1990)
-      description: 'For growing businesses with multiple projects',
-      features: [
-        'Everything in Starter',
-        'Unlimited site audits',
-        'Keyword research (2000 queries/month)',
-        'Advanced analytics',
-        'Priority email support (24h response)',
-        'Up to 5 user accounts',
-        'Competitor analysis',
-        'Custom reporting',
-        'API access (limited)'
-      ],
-      popular: true
-    },
-    pro: {
-      name: 'Pro',
-      price: { monthly: 299, yearly: 2990 }, // 12 months for the price of 10 (299 * 12 = 3588 → 2990)
-      description: 'For agencies and marketing teams',
-      features: [
-        'Everything in Growth',
-        'Unlimited keyword research',
-        'White-label reports',
-        'Full API access',
-        '24/7 priority support',
-        'Unlimited user accounts',
-        'Team collaboration tools',
-        'AI-powered recommendations',
-        'Dedicated account manager',
-        'Onboarding session'
-      ],
-      popular: false
+const SubscriptionPage = () => {
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const [profiles, setProfiles] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+
+  // Check for successful payment redirection
+  useEffect(() => {
+    const checkPaymentStatus = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('session_id');
+      
+      if (sessionId && user?._id) {
+        try {
+          setLoading(true);
+          // Wait a moment for the webhook to process
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          await verifySubscriptionStatus(user._id);
+        } catch (error) {
+          console.error('Error checking payment status:', error);
+        } finally {
+          // Clean up the URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setLoading(false);
+        }
+      }
+    };
+
+    checkPaymentStatus();
+  }, [user?._id]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate('/login', { state: { from: '/subscription' } });
+    }
+  }, [isAuthenticated, authLoading, navigate]);
+
+  // Show loading state while checking auth
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  // If not authenticated after loading, show nothing (will be redirected)
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  const monthlyPrice = 99;
+  const yearlyPrice = 599;
+
+  // Trial Activation
+  const handleTrial = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.post("/api/subscription/start-trial", {
+        userId: user._id,
+      });
+      alert(res.data.message || "14-day trial activated!");
+    } catch (error) {
+      console.error(error);
+      alert("Failed to start trial.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handlePlanSelect = (planKey) => {
-    setSelectedPlan(planKey);
-    // Handle plan selection logic here
-    console.log('Selected plan:', planKey);
+  // Verify subscription status
+  const verifySubscriptionStatus = async (userId) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_BASE}/api/subscription/verify/${userId}`
+      );
+      
+      if (response.data.active) {
+        alert(`🎉 Subscription activated successfully!\nPlan: ${response.data.planType}\nProfiles: ${response.data.profiles}`);
+        // You can update the UI or redirect as needed
+        window.location.reload();
+      } else {
+        console.log('Subscription not active yet, will be activated shortly...');
+        // Retry after 5 seconds if not active yet
+        setTimeout(() => verifySubscriptionStatus(userId), 5000);
+      }
+    } catch (error) {
+      console.error('Error verifying subscription:', error);
+      // Retry on error
+      setTimeout(() => verifySubscriptionStatus(userId), 5000);
+    }
   };
 
-  const toggleBillingCycle = () => {
-    setBillingCycle(prev => prev === 'monthly' ? 'yearly' : 'monthly');
-  };
+  // Stripe Payment
+  const handleSubscribe = async (planType) => {
+    try {
+      setLoading(true);
 
-  const getPriceSuffix = (price) => {
-    if (price === 0) return 'Free';
-    if (price === 'Custom') return 'Contact Us';
-    return `$${price}${billingCycle === 'monthly' ? '/mo' : '/yr'}`;
-  };
+      if (!isAuthenticated || !user?.id) {
+        navigate('/login', { state: { from: '/subscription' } });
+        return;
+      }
 
-  const calculateSavings = (monthlyPrice, yearlyPrice) => {
-    if (yearlyPrice === 'Custom' || monthlyPrice === 'Custom') return '';
-    const savings = ((monthlyPrice * 12 - yearlyPrice) / (monthlyPrice * 12)) * 100;
-    return `Save ${Math.round(savings)}%`;
+      if (!['monthly', 'yearly'].includes(planType)) {
+        throw new Error('Invalid plan type');
+      }
+
+      if (isNaN(profiles) || profiles < 1) {
+        throw new Error('Invalid number of profiles');
+      }
+
+      const requestData = {
+        userId: user.id,
+        planType,
+        profiles: Number(profiles)
+      };
+
+      console.log('Sending request with:', requestData);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_BASE}/api/subscription/create-checkout-session`,
+        requestData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        }
+      );
+
+      console.log('Response:', response.data);
+      
+      if (!response.data.url) {
+        throw new Error('No checkout URL received from server');
+      }
+
+      // Store the session ID in localStorage to check after redirect
+      if (response.data.sessionId) {
+        localStorage.setItem('stripe_session_id', response.data.sessionId);
+      }
+
+      // Redirect to Stripe Checkout
+      window.location.href = response.data.url;
+    } catch (error) {
+      console.error('Subscription Error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      alert(`Error: ${error.message || 'Failed to process subscription'}`);
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#121324] py-8 px-4 text-white">
-      <div className="max-w-6xl mx-auto">
-        <div className="text-center mb-12">
-          <h1 className="text-3xl font-bold text-white mb-3">Choose Your Plan</h1>
-          <p className="text-gray-300 max-w-2xl mx-auto">Select the plan that works best for your business needs. All plans include a 14-day free trial.</p>
-          
-          <div className="mt-8 flex items-center justify-center">
-            <div className="inline-flex items-center bg-[#1a1b2e] p-1 rounded-lg border border-white/10">
-              <button
-                onClick={() => setBillingCycle('monthly')}
-                className={`px-4 py-2 rounded-md text-sm font-medium ${
-                  billingCycle === 'monthly' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-gray-300 hover:bg-white/5'
-                }`}
-              >
-                Monthly Billing
-              </button>
-              <button
-                onClick={() => setBillingCycle('yearly')}
-                className={`px-4 py-2 rounded-md text-sm font-medium flex items-center ${
-                  billingCycle === 'yearly' 
-                    ? 'bg-blue-600 text-white' 
-                    : 'text-gray-300 hover:bg-white/5'
-                }`}
-              >
-                Yearly Billing
-                <span className="ml-2 px-2 py-0.5 bg-blue-900/50 text-blue-300 text-xs rounded-full">
-                  Save 20%
-                </span>
-              </button>
-            </div>
-          </div>
+    <div className="min-h-screen bg-gray-50 p-6">
+      {/* Top Section - 14 Day Free Trial */}
+      <div className="text-center bg-indigo-600 text-white py-8 rounded-xl shadow-md mb-10">
+        <h2 className="text-2xl font-semibold mb-2">
+          Claim your 14-Day Free Trial 🎉
+        </h2>
+        <p className="text-sm mb-4">
+          No credit card required — experience full access before subscribing.
+        </p>
+        <button
+          onClick={handleTrial}
+          disabled={loading}
+          className="bg-white text-indigo-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition"
+        >
+          {loading ? "Processing..." : "Activate Free Trial"}
+        </button>
+      </div>
+
+      {/* Profiles Selector */}
+      <div className="flex justify-center mb-8">
+        <label className="text-lg font-medium mr-3">Number of Profiles:</label>
+        <input
+          type="number"
+          min="1"
+          value={profiles}
+          onChange={(e) => setProfiles(Number(e.target.value))}
+          className="border rounded-md w-20 text-center py-1"
+        />
+      </div>
+
+      {/* Subscription Plans */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+        {/* Monthly Plan */}
+        <div className="bg-white shadow-lg p-8 rounded-2xl text-center border border-gray-200 hover:shadow-xl transition">
+          <h3 className="text-2xl font-semibold mb-3 text-indigo-600">
+            Monthly Plan
+          </h3>
+          <p className="text-gray-500 mb-4">$99/month per profile</p>
+          <p className="text-3xl font-bold mb-6">
+            ${(monthlyPrice * profiles).toFixed(2)} / month
+          </p>
+          <button
+            onClick={() => handleSubscribe("monthly")}
+            disabled={loading}
+            className="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
+          >
+            {loading ? "Redirecting..." : "Subscribe Now"}
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {Object.entries(plans).map(([key, plan]) => (
-            <div 
-              key={key}
-              className={`bg-[#1a1b2e]/90 rounded-xl overflow-hidden border ${
-                plan.popular ? 'border-blue-500' : 'border-white/10 hover:border-white/20'
-              } transition-all duration-200`}
-            >
-              {plan.popular && (
-                <div className="bg-blue-600 text-white text-center py-2 text-sm font-medium">
-                  Most Popular
-                </div>
-              )}
-              <div className="p-6">
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                  <p className="text-gray-400 text-sm mt-1">{plan.description}</p>
-                </div>
-
-                <div className="mb-6 bg-[#121324] p-4 rounded-lg border border-white/5">
-                  <div className="flex items-baseline">
-                    <span className="text-3xl font-bold text-white">
-                      ${billingCycle === 'monthly' ? plan.price.monthly : plan.price.yearly}
-                    </span>
-                    <span className="ml-1.5 text-gray-400">
-                      /{billingCycle === 'monthly' ? 'month' : 'year'}
-                    </span>
-                  </div>
-                  {billingCycle === 'yearly' && (
-                    <p className="text-sm text-green-400 mt-1 font-medium">
-                      {calculateSavings(plan.price.monthly, plan.price.yearly)} • 1 month free
-                    </p>
-                  )}
-                </div>
-
-                <ul className="space-y-3 mb-6">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start">
-                      <CheckCircle className="h-5 w-5 text-green-500 mr-2.5 mt-0.5 flex-shrink-0" />
-                      <span className="text-gray-300 text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => handlePlanSelect(key)}
-                  className={`w-full py-2.5 px-4 rounded-lg font-medium transition-colors ${
-                    plan.popular
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
-                      : 'bg-white/5 text-white hover:bg-white/10 border border-white/10'
-                  }`}
-                >
-                  {plan.popular ? 'Get Started' : 'Choose Plan'}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="mt-16 max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-center text-white mb-8">Frequently Asked Questions</h2>
-          <div className="space-y-4">
-            {[
-              {
-                question: 'Can I change plans later?',
-                answer: 'Yes, you can upgrade or downgrade your plan at any time. Your subscription will be prorated accordingly.'
-              },
-              {
-                question: 'Is there a free trial?',
-                answer: 'Yes, all paid plans come with a 14-day free trial. No credit card is required to start your trial.'
-              },
-              {
-                question: 'What payment methods do you accept?',
-                answer: 'We accept all major credit cards including Visa, Mastercard, American Express, and Discover.'
-              },
-              {
-                question: 'Can I cancel anytime?',
-                answer: 'Yes, you can cancel your subscription at any time. Your account will remain active until the end of your billing period.'
-              }
-            ].map((faq, index) => (
-              <div key={index} className="bg-[#1a1b2e]/90 p-4 rounded-lg border border-white/10">
-                <h3 className="font-medium text-white">{faq.question}</h3>
-                <p className="mt-1.5 text-gray-300 text-sm">{faq.answer}</p>
-              </div>
-            ))}
-          </div>
+        {/* Yearly Plan */}
+        <div className="bg-white shadow-lg p-8 rounded-2xl text-center border border-gray-200 hover:shadow-xl transition">
+          <h3 className="text-2xl font-semibold mb-3 text-green-600">
+            Yearly Plan <span className="text-sm text-gray-400">(50% OFF)</span>
+          </h3>
+          <p className="text-gray-500 mb-4">$599/year per profile</p>
+          <p className="text-3xl font-bold mb-6">
+            ${(yearlyPrice * profiles).toFixed(2)} / year
+          </p>
+          <button
+            onClick={() => handleSubscribe("yearly")}
+            disabled={loading}
+            className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition"
+          >
+            {loading ? "Redirecting..." : "Subscribe Now"}
+          </button>
         </div>
       </div>
     </div>
   );
-}
+};
+
+export default SubscriptionPage;
