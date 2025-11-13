@@ -15,6 +15,7 @@ import invitationRoutes from './routes/invitationRoutes.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import { startSubscriptionJobs } from './jobs/subscriptionJobs.js';
 dotenv.config();
 
 const app = express();
@@ -51,6 +52,11 @@ app.use(bodyParser.json({ limit: '200kb' }));
 // Initialize services
 connectDB();
 initializeFirebase();
+
+// Start subscription jobs
+if (process.env.NODE_ENV !== 'test') {
+  startSubscriptionJobs();
+}
 
 // Start the post scheduler (runs every 5 minutes)
 if (process.env.NODE_ENV !== 'test') {

@@ -9,6 +9,36 @@ const UserSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     
+    // Subscription information
+    subscription: {
+      activeSubscriptionId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Subscription' 
+      },
+      hasUsedTrial: { 
+        type: Boolean, 
+        default: false 
+      },
+      trialUsedAt: { 
+        type: Date 
+      },
+      previousSubscriptions: [{
+        subscriptionId: { 
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: 'Subscription' 
+        },
+        status: { 
+          type: String, 
+          enum: ['active', 'expired', 'cancelled'],
+          default: 'active'
+        },
+        changedAt: { 
+          type: Date, 
+          default: Date.now 
+        }
+      }]
+    },
+    
     // Firebase fields
     firebaseUid: { type: String },
     avatar: { type: String },

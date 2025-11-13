@@ -31,6 +31,7 @@ import AllUsers from './components/admin/AllUsers'
 import { AdminProvider } from './context/AdminContext'
 import Reviews from './components/Reviews'
 import SubscriptionPage from './components/subscription/SubscriptionPage'
+import SubscriptionSuccess from './components/subscription/SubscriptionSuccess'
 
 
 const AppContent = () => {
@@ -81,6 +82,7 @@ const AppContent = () => {
             <Route path="social-sharing" element={<Posts />} />
             <Route path="schedule-post" element={<SocialSharing />} />
             <Route path="subscription" element={<SubscriptionPage />} />
+            <Route path="subscription/success" element={<SubscriptionSuccess />} />
             
             <Route path="notifications" element={<Notifications />} />
             <Route path="settings" element={<Settings />} />
