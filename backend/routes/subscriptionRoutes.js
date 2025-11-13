@@ -3,7 +3,9 @@ import {
   startTrial,
   createCheckoutSession,
   verifyStripeWebhook,
-  verifySubscription
+  verifySubscription,
+  checkTrialEligibility,
+  testTrialEndDate
 } from "../controllers/subscriptionController.js";
 
 const router = express.Router();
@@ -19,8 +21,10 @@ router.post(
 );
 
 // Regular API routes
+router.get("/check-trial-eligibility/:userId", checkTrialEligibility);
+router.get("/test-trial-enddate/:userId", testTrialEndDate); // Test endpoint
 router.post("/start-trial", startTrial);
 router.post("/create-checkout-session", createCheckoutSession);
-router.get("/verify/:userId", verifySubscription);
+router.get("/verify", verifySubscription);
 
 export default router;

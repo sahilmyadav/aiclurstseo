@@ -5,9 +5,11 @@ const subscriptionSchema = new mongoose.Schema({
   planType: { type: String, enum: ["trial", "monthly", "yearly"], required: true },
   profiles: { type: Number, default: 1 },
   startDate: { type: Date, default: Date.now },
-  endDate: { type: Date },
+  endDate: { type: Date, required: true },
   stripeSessionId: { type: String },
   status: { type: String, enum: ["active", "expired"], default: "active" },
+}, {
+  timestamps: true // This will add createdAt and updatedAt fields
 });
 
 export default mongoose.model("Subscription", subscriptionSchema);
