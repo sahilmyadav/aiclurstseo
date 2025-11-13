@@ -11,6 +11,8 @@ const SubscriptionPage = () => {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const [profiles, setProfiles] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [monthlyLoading, setMonthlyLoading] = useState(false);
+  const [yearlyLoading, setYearlyLoading] = useState(false);
   const [trialEligible, setTrialEligible] = useState(true);
   const [trialMessage, setTrialMessage] = useState("");
   const [trialData, setTrialData] = useState(null); // For active trial info
@@ -235,7 +237,12 @@ const SubscriptionPage = () => {
   // Stripe Payment
   const handleSubscribe = async (planType) => {
     try {
-      setLoading(true);
+      // Set loading state for specific plan
+      if (planType === 'monthly') {
+        setMonthlyLoading(true);
+      } else if (planType === 'yearly') {
+        setYearlyLoading(true);
+      }
 
       // Get user ID - handle both _id and id fields
       const userId = user?._id || user?.id;
@@ -291,7 +298,9 @@ const SubscriptionPage = () => {
         status: error.response?.status,
       });
       alert(`Error: ${error.message || 'Failed to process subscription'}`);
-      setLoading(false);
+      // Reset loading state for specific plan
+      setMonthlyLoading(false);
+      setYearlyLoading(false);
     }
   };
 
@@ -299,228 +308,238 @@ const SubscriptionPage = () => {
 
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Compact Header */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black py-8 px-4">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
         <div className="text-center mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent mb-2">
             Choose Your Plan
           </h1>
-          <p className="text-gray-600">
-            Scale your social media presence with powerful automation tools
+          <p className="text-sm text-gray-300 max-w-xl mx-auto">
+            Scale your social media presence with powerful automation tools and AI-driven insights
           </p>
         </div>
 
         {/* Trial Status */}
         {trialData && remainingDays > 0 ? (
           // Active Trial Progress
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-gray-900">Free Trial Active</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="text-xl font-bold text-white flex items-center">
+                  <div className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse"></div>
+                  Free Trial Active
+                </h3>
+                <p className="text-gray-300 mt-1">
                   Your 14-day free trial is currently active.
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-green-600">{remainingDays}</div>
-                <div className="text-xs text-gray-500">days left</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">{remainingDays}</div>
+                <div className="text-sm text-gray-400">days left</div>
               </div>
             </div>
-            <div className="bg-gray-200 rounded-full h-2">
+            <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
               <div 
-                className="bg-green-500 rounded-full h-2 transition-all duration-300"
+                className="bg-gradient-to-r from-green-400 to-emerald-400 rounded-full h-3 transition-all duration-500 shadow-sm"
                 style={{ width: `${(remainingDays / 14) * 100}%` }}
               ></div>
             </div>
           </div>
         ) : trialData && remainingDays === 0 ? (
           // Trial Expired
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-            <div className="flex items-center justify-between mb-3">
+          <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-gray-900">Free Trial Used</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="text-xl font-bold text-white">Free Trial Used</h3>
+                <p className="text-gray-300 mt-1">
                   Your 14-day free trial has expired. Please choose a subscription plan below.
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-gray-500">0</div>
-                <div className="text-xs text-gray-500">days left</div>
+                <div className="text-3xl font-bold text-gray-500">0</div>
+                <div className="text-sm text-gray-400">days left</div>
               </div>
             </div>
-            <div className="bg-gray-200 rounded-full h-2">
-              <div className="bg-gray-400 rounded-full h-2 w-full"></div>
+            <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
+              <div className="bg-gradient-to-r from-gray-500 to-gray-600 rounded-full h-3 w-full"></div>
             </div>
           </div>
         ) : trialEligible ? (
           // Trial Available
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg p-4 mb-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 text-white rounded-2xl shadow-xl p-6 mb-8 relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm"></div>
+            <div className="relative flex items-center justify-between">
               <div>
-                <h3 className="font-semibold flex items-center">
-                  <FiStar className="w-4 h-4 mr-1" />
+                <h3 className="text-xl font-bold flex items-center">
+                  <FiStar className="w-6 h-6 mr-2 text-yellow-400" />
                   14-Day Free Trial
                 </h3>
-                <p className="text-sm opacity-90">No credit card required</p>
+                <p className="text-blue-100 mt-1">No credit card required • Full access</p>
               </div>
               <button
                 onClick={handleTrial}
                 disabled={loading}
-                className="bg-white text-indigo-600 px-4 py-2 rounded-lg font-medium hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Starting..." : "Start Trial"}
+                {loading ? "Starting..." : "Start Free Trial"}
               </button>
             </div>
           </div>
         ) : (
-          // Trial Not Available (Never Used)
-          <div className="bg-white rounded-lg border border-gray-200 p-4 mb-6">
-            <div className="flex items-center justify-between mb-3">
+          // Trial Not Available
+          <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-gray-900">Free Trial Used</h3>
-                <p className="text-sm text-gray-600">
+                <h3 className="text-xl font-bold text-white">Free Trial Used</h3>
+                <p className="text-gray-300 mt-1">
                   Your 14-day free trial has expired. Please choose a subscription plan below.
                 </p>
               </div>
               <div className="text-right">
-                <div className="text-2xl font-bold text-gray-500">0</div>
-                <div className="text-xs text-gray-500">days left</div>
+                <div className="text-3xl font-bold text-gray-500">0</div>
+                <div className="text-sm text-gray-400">days left</div>
               </div>
             </div>
-            <div className="bg-gray-200 rounded-full h-2">
-              <div className="bg-gray-400 rounded-full h-2 w-full"></div>
+            <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
+              <div className="bg-gradient-to-r from-gray-500 to-gray-600 rounded-full h-3 w-full"></div>
             </div>
           </div>
         )}
 
-        {/* Compact Profile Selector */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
+        {/* Profile Selector */}
+        <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <FiUsers className="w-5 h-5 text-indigo-600 mr-2" />
-              <span className="font-medium">Profiles:</span>
+              <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-4">
+                <FiUsers className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-white">Number of Profiles</h3>
+                <p className="text-sm text-gray-300">Select how many social media profiles you want to manage</p>
+              </div>
             </div>
             <div className="flex items-center space-x-3">
               <button
                 onClick={() => setProfiles(Math.max(1, profiles - 1))}
-                disabled={profiles <= 1}
-                className={`p-2 rounded-full ${
-                  profiles <= 1 
-                    ? 'bg-gray-100 text-gray-400' 
-                    : 'bg-indigo-100 text-indigo-600 hover:bg-indigo-200'
-                }`}
+                className="w-10 h-10 rounded-xl bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500 flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md"
               >
-                <FiMinus className="w-4 h-4" />
+                <FiMinus className="w-5 h-5 text-gray-300" />
               </button>
-              <div className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-bold min-w-[60px] text-center">
-                {profiles}
+              <div className="w-16 h-10 bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-xl flex items-center justify-center">
+                <span className="text-xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">{profiles}</span>
               </div>
               <button
                 onClick={() => setProfiles(profiles + 1)}
-                className="p-2 rounded-full bg-indigo-100 text-indigo-600 hover:bg-indigo-200"
+                className="w-10 h-10 rounded-xl bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl"
               >
-                <FiPlus className="w-4 h-4" />
+                <FiPlus className="w-5 h-5" />
               </button>
             </div>
           </div>
         </div>
 
-        {/* Compact Subscription Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Subscription Plans */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Monthly Plan */}
-          <div className="bg-white rounded-lg shadow border hover:shadow-md transition-shadow">
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
+          <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">Monthly</h3>
-                  <p className="text-sm text-gray-600">Perfect for getting started</p>
+                  <h3 className="text-2xl font-bold text-white">Monthly</h3>
+                  <p className="text-gray-300 mt-1">Perfect for getting started</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-indigo-600">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
                     ${(monthlyPrice * profiles).toFixed(0)}
                   </div>
-                  <div className="text-xs text-gray-500">/month</div>
+                  <div className="text-sm text-gray-400">/month</div>
                 </div>
               </div>
 
-              <div className="space-y-2 mb-6">
+              <div className="space-y-3 mb-8">
                 {[
                   "Unlimited posts",
                   "Analytics dashboard", 
                   "Team collaboration",
                   "24/7 support"
                 ].map((feature, index) => (
-                  <div key={index} className="flex items-center text-sm">
-                    <FiCheck className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-700">{feature}</span>
+                  <div key={index} className="flex items-center">
+                    <div className="w-5 h-5 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center mr-3">
+                      <FiCheck className="w-3 h-3 text-white" />
+                    </div>
+                    <span className="text-gray-300">{feature}</span>
                   </div>
                 ))}
               </div>
 
               <button
                 onClick={() => handleSubscribe("monthly")}
-                disabled={loading}
-                className="w-full bg-indigo-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                disabled={monthlyLoading}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Processing..." : "Get Started"}
+                {monthlyLoading ? "Processing..." : "Get Started"}
               </button>
             </div>
           </div>
 
           {/* Yearly Plan */}
-          <div className="bg-white rounded-lg shadow border-2 border-green-200 hover:shadow-md transition-shadow relative">
+          <div className="bg-gray-800 rounded-2xl shadow-xl border-2 border-emerald-600 hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-green-400"></div>
             {/* Popular Badge */}
-            <div className="absolute -top-2 -right-2 bg-green-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+            <div className="absolute -top-3 -right-3 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
               SAVE 50%
             </div>
             
-            <div className="p-6">
-              <div className="flex justify-between items-start mb-4">
+            <div className="p-8">
+              <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">Yearly</h3>
-                  <p className="text-sm text-gray-600">Best value</p>
+                  <h3 className="text-2xl font-bold text-white">Yearly</h3>
+                  <p className="text-gray-300 mt-1">Best value</p>
                 </div>
                 <div className="text-right">
-                  <div className="text-2xl font-bold text-green-600">
+                  <div className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
                     ${(yearlyPrice * profiles).toFixed(0)}
                   </div>
-                  <div className="text-xs text-gray-500">/year</div>
-                  <div className="text-xs text-green-600 font-medium">
+                  <div className="text-sm text-gray-400">/year</div>
+                  <div className="text-sm bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent font-semibold">
                     Save ${((monthlyPrice * 12 - yearlyPrice) * profiles).toFixed(0)}
                   </div>
                 </div>
               </div>
 
-              <div className="space-y-2 mb-6">
+              <div className="space-y-3 mb-8">
                 {[
                   "Everything in Monthly",
                   "AI content generation",
                   "Custom branding",
                   "Dedicated manager"
                 ].map((feature, index) => (
-                  <div key={index} className="flex items-center text-sm">
-                    <FiCheck className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" />
-                    <span className="text-gray-700">{feature}</span>
+                  <div key={index} className="flex items-center">
+                    <div className="w-5 h-5 bg-gradient-to-r from-emerald-400 to-green-400 rounded-full flex items-center justify-center mr-3">
+                      <FiCheck className="w-3 h-3 text-white" />
+                    </div>
+                    <span className="text-gray-300">{feature}</span>
                   </div>
                 ))}
               </div>
 
               <button
                 onClick={() => handleSubscribe("yearly")}
-                disabled={loading}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+                disabled={yearlyLoading}
+                className="w-full bg-gradient-to-r from-emerald-600 to-green-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? "Processing..." : "Get 50% Off"}
+                {yearlyLoading ? "Processing..." : "Get 50% Off"}
               </button>
             </div>
           </div>
         </div>
 
-        {/* Compact Footer */}
+        {/* Footer */}
         <div className="text-center mt-8">
-          <p className="text-sm text-gray-500">
-            Questions? <a href="mailto:support@example.com" className="text-indigo-600 hover:underline">Contact Support</a>
+          <p className="text-sm text-gray-400">
+            Questions? <a href="mailto:support@example.com" className="text-blue-400 hover:text-blue-300 hover:underline">Contact Support</a>
           </p>
         </div>
       </div>
