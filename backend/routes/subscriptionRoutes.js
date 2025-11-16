@@ -7,6 +7,7 @@ import {
   checkTrialEligibility,
   testTrialEndDate
 } from "../controllers/subscriptionController.js";
+import protect from "../middleware/auth.js";
 
 const router = express.Router();
 
@@ -21,10 +22,10 @@ router.post(
 );
 
 // Regular API routes
-router.get("/check-trial-eligibility/:userId", checkTrialEligibility);
-router.get("/test-trial-enddate/:userId", testTrialEndDate); // Test endpoint
-router.post("/start-trial", startTrial);
-router.post("/create-checkout-session", createCheckoutSession);
+router.get("/check-trial-eligibility/:userId",protect, checkTrialEligibility);
+router.get("/test-trial-enddate/:userId",protect, testTrialEndDate); // Test endpoint
+router.post("/start-trial",protect,startTrial);
+router.post("/create-checkout-session", protect,createCheckoutSession);
 router.get("/verify", verifySubscription);
 
-export default router;
+export default router;  

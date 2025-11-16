@@ -8,7 +8,7 @@ import { FiCheck, FiPlus, FiMinus, FiStar, FiUsers } from "react-icons/fi";
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const SubscriptionPage = () => {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading,token } = useAuth();
   const [profiles, setProfiles] = useState(1);
   const [loading, setLoading] = useState(false);
   const [monthlyLoading, setMonthlyLoading] = useState(false);
@@ -64,8 +64,11 @@ const SubscriptionPage = () => {
         try {
           // Check trial eligibility
           const eligibilityResponse = await axios.get(
-            `${import.meta.env.VITE_API_BASE}/api/subscription/check-trial-eligibility/${userId}`
+            `${import.meta.env.VITE_API_BASE}/api/subscription/check-trial-eligibility/${userId}`,
+            {
+               headers: { 'Authorization': `Bearer ${token}` } }
           );
+          console.log(eligibilityResponse)
           
           setTrialEligible(eligibilityResponse.data.eligible);
           if (!eligibilityResponse.data.eligible) {
@@ -75,7 +78,9 @@ const SubscriptionPage = () => {
           // Check for active trial
           try {
             const subscriptionResponse = await axios.get(
-              `${import.meta.env.VITE_API_BASE}/api/subscription/verify?userId=${userId}`
+              `${import.meta.env.VITE_API_BASE}/api/subscription/verify?userId=${userId}`,
+                {
+               headers: { 'Authorization': `Bearer ${token}` } }
             );
             console.log('Subscription response:', subscriptionResponse);
             
@@ -142,17 +147,22 @@ const SubscriptionPage = () => {
   const yearlyPrice = 599;
 
   // Helper function to calculate remaining trial days based on endDate
-  const getRemainingTrialDays = () => {
-    if (!trialData?.endDate) return 0;
-    
-    const now = new Date();
-    const endDate = new Date(trialData.endDate);
-    const diffTime = endDate - now;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    // Return remaining days (0 if expired)
-    return Math.max(0, diffDays);
-  };
+ const getRemainingTrialDays = () => {
+  if (!trialData?.endDate) return 0;
+
+  const today = new Date();
+  const end = new Date(trialData.endDate);
+
+  // Strip time (set to midnight)
+  today.setHours(0, 0, 0, 0);
+  end.setHours(0, 0, 0, 0);
+
+  const diffTime = end - today;
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  console.log(diffDays)
+
+  return Math.max(0, diffDays);
+};
 
   // Trial Activation
   const handleTrial = async () => {
@@ -177,6 +187,8 @@ const SubscriptionPage = () => {
         `${import.meta.env.VITE_API_BASE}/api/subscription/start-trial`, 
         {
           userId: userId,
+        },{
+           headers: { 'Authorization': `Bearer ${token}` }
         }
       );
       
@@ -274,6 +286,7 @@ const SubscriptionPage = () => {
         {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           }
         }
       );
