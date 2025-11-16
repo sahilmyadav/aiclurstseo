@@ -300,60 +300,156 @@ export const verifyStripeWebhook = async (req, res) => {
         return res.status(400).json({ error: "Invalid session data" });
       }
 
-      // Check if subscription already exists
-      const existingSub = await Subscription.findOne({ stripeSessionId: session.id });
-      if (existingSub) {
-        console.log("Subscription already processed:", session.id);
-        return res.json({ received: true });
-      }
-
-      const startDate = new Date();
-      const endDate = new Date(startDate);
-      if (planType === "monthly") endDate.setMonth(endDate.getMonth() + 1);
-      if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
-
-      // Create new subscription
-      const newSubscription = await Subscription.create({
+      // Check if user already has an active subscription
+      const existingSubscription = await Subscription.findOne({
         userId,
-        planType,
-        profiles: parseInt(profiles) || 1,
-        stripeSessionId: session.id,
-        startDate,
-        endDate,
         status: "active",
+        endDate: { $gt: new Date() }
       });
 
-      // Create payment record with currency conversion
-      let amountInINR = session.amount_total;
-      let subtotalInINR = session.amount_subtotal;
-      
-      // Convert USD to INR if currency is USD (1 USD = 83 INR)
-      if (session.currency === 'usd') {
-        amountInINR = Math.round(session.amount_total / 100 * 83); // Convert from cents to rupees
-        subtotalInINR = Math.round(session.amount_subtotal / 100 * 83);
+      if (existingSubscription) {
+        // Find the last pending subscription to get the correct start date
+        const lastPendingSubscription = await Subscription.findOne({
+          userId,
+          status: "pending"
+        }).sort({ endDate: -1 }); // Get the latest endDate (last to activate)
+        
+        let startDate;
+        if (lastPendingSubscription) {
+          // Start after the last pending subscription ends
+          startDate = new Date(lastPendingSubscription.endDate);
+        } else {
+          // No pending subscriptions, start after current active one ends
+          startDate = new Date(existingSubscription.endDate);
+        }
+        
+        const endDate = new Date(startDate);
+        if (planType === "monthly") endDate.setMonth(endDate.getMonth() + 1);
+        if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
+
+        // Create new subscription with queued status
+        const newSubscription = await Subscription.create({
+          userId,
+          planType,
+          profiles: parseInt(profiles) || 1,
+          stripeSessionId: session.id,
+          startDate,
+          endDate,
+          status: "pending",
+        });
+
+        // Create payment record
+        let amountInINR = session.amount_total;
+        let subtotalInINR = session.amount_subtotal;
+        
+        if (session.currency === 'usd') {
+          amountInINR = Math.round(session.amount_total / 100 * 83);
+          subtotalInINR = Math.round(session.amount_subtotal / 100 * 83);
+        }
+        
+        await Payment.create({
+          userId,
+          subscriptionId: newSubscription._id,
+          sessionId: session.id,
+          paymentStatus: session.payment_status,
+          amountInINR: amountInINR,
+          amountInUSD: session.currency === 'usd' ? session.amount_total / 100 : 0,
+          amountInCents: session.amount_total,
+          currency: session.currency,
+          customerEmail: session.customer_email,
+          created: new Date(session.created * 1000).toISOString(),
+          metadata: session.metadata,
+          paymentMethodTypes: session.payment_method_types,
+          subtotalInINR: subtotalInINR,
+          subtotalInCents: session.amount_subtotal,
+          totalDetails: session.total_details,
+          paymentIntent: session.payment_intent,
+          customer: session.customer
+        });
+
+        console.log(` Subscription PENDING for user ${userId}, will start on ${startDate.toISOString()}`);
+        
+        // Also save pending subscription ID in user model
+        const user = await User.findById(userId);
+        if (user) {
+          if (!user.subscription) {
+            user.subscription = {};
+          }
+          
+          // Get the first pending subscription (earliest startDate) to set as nextPendingSubscriptionId
+          const firstPendingSubscription = await Subscription.findOne({
+            userId,
+            status: "pending"
+          }).sort({ startDate: 1 }); // Get the earliest pending subscription
+          
+          user.subscription.nextPendingSubscriptionId = firstPendingSubscription._id;
+          user.subscription.pendingSubscriptions.push({
+            subscriptionId: newSubscription._id,
+            status: "pending",
+            addedAt: new Date()
+          });
+          await user.save();
+        }
+      } else {
+        // No active subscription, create new one immediately
+        const startDate = new Date();
+        const endDate = new Date(startDate);
+        if (planType === "monthly") endDate.setMonth(endDate.getMonth() + 1);
+        if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
+
+        // Create new subscription
+        const newSubscription = await Subscription.create({
+          userId,
+          planType,
+          profiles: parseInt(profiles) || 1,
+          stripeSessionId: session.id,
+          startDate,
+          endDate,
+          status: "active",
+        });
+
+        // Create payment record with currency conversion
+        let amountInINR = session.amount_total;
+        let subtotalInINR = session.amount_subtotal;
+        
+        // Convert USD to INR if currency is USD (1 USD = 83 INR)
+        if (session.currency === 'usd') {
+          amountInINR = Math.round(session.amount_total / 100 * 83); // Convert from cents to rupees
+          subtotalInINR = Math.round(session.amount_subtotal / 100 * 83);
+        }
+        
+        await Payment.create({
+          userId,
+          subscriptionId: newSubscription._id,
+          sessionId: session.id,
+          paymentStatus: session.payment_status,
+          amountInINR: amountInINR, // Amount in Indian Rupees
+          amountInUSD: session.currency === 'usd' ? session.amount_total / 100 : 0, // Amount in USD
+          amountInCents: session.amount_total, // Original amount in cents from Stripe
+          currency: session.currency, // Original currency from Stripe (usd, inr, etc.)
+          customerEmail: session.customer_email,
+          created: new Date(session.created * 1000).toISOString(),
+          metadata: session.metadata,
+          paymentMethodTypes: session.payment_method_types,
+          subtotalInINR: subtotalInINR,
+          subtotalInCents: session.amount_subtotal,
+          totalDetails: session.total_details,
+          paymentIntent: session.payment_intent,
+          customer: session.customer
+        });
+
+        // Update user's subscription reference
+        const user = await User.findById(userId);
+        if (user) {
+          if (!user.subscription) {
+            user.subscription = {};
+          }
+          user.subscription.activeSubscriptionId = newSubscription._id;
+          await user.save();
+        }
+
+        console.log(` Subscription ACTIVATED for user ${userId}`);
       }
-      
-      await Payment.create({
-        userId,
-        subscriptionId: newSubscription._id,
-        sessionId: session.id,
-        paymentStatus: session.payment_status,
-        amountInINR: amountInINR, // Amount in Indian Rupees
-        amountInUSD: session.currency === 'usd' ? session.amount_total / 100 : 0, // Amount in USD
-        amountInCents: session.amount_total, // Original amount in cents from Stripe
-        currency: session.currency, // Original currency from Stripe (usd, inr, etc.)
-        customerEmail: session.customer_email,
-        created: new Date(session.created * 1000).toISOString(),
-        metadata: session.metadata,
-        paymentMethodTypes: session.payment_method_types,
-        subtotalInINR: subtotalInINR,
-        subtotalInCents: session.amount_subtotal,
-        totalDetails: session.total_details,
-        paymentIntent: session.payment_intent,
-        customer: session.customer
-      });
-
-      console.log(` Subscription activated with payment record for user ${userId}`);
     } catch (error) {
       console.error("Error processing webhook:", error);
       return res.status(500).json({ error: "Error processing subscription" });
@@ -381,11 +477,6 @@ export const verifySubscription = async (req, res) => {
           if (!subscription && session.metadata) {
             const { userId, planType, profiles } = session.metadata;
             console.log('Creating subscription for user:', userId, planType, profiles); 
-            const startDate = new Date();
-            const endDate = new Date(startDate);
-            
-            if (planType === "monthly") endDate.setMonth(endDate.getMonth() + 1);
-            if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
             
             // Get user to check for existing subscription
             const user = await User.findById(userId);
@@ -393,34 +484,86 @@ export const verifySubscription = async (req, res) => {
               return res.status(404).json({ error: 'User not found' });
             }
             
-            // If user has an active subscription, move it to previousSubscriptions
-            if (user.subscription?.activeSubscriptionId) {
-              const oldSubscription = await Subscription.findById(user.subscription.activeSubscriptionId);
-              
-              if (oldSubscription) {
-                // Update old subscription status
-                oldSubscription.status = 'expired';
-                await oldSubscription.save();
-                
-                // Add to previousSubscriptions
-                user.subscription.previousSubscriptions.push({
-                  subscriptionId: oldSubscription._id,
-                  status: 'expired',
-                  changedAt: new Date()
-                });
-              }
-            }
-            
-            // Create new subscription
-            subscription = await Subscription.create({
+            // Check if user already has an active subscription
+            const existingSubscription = await Subscription.findOne({
               userId,
-              planType,
-              profiles: parseInt(profiles) || 1,
-              stripeSessionId: sessionId,
-              startDate,
-              endDate,
               status: "active",
+              endDate: { $gt: new Date() }
             });
+
+            let startDate, endDate;
+            
+            if (existingSubscription) {
+              // Find the last pending subscription to get the correct start date
+              const lastPendingSubscription = await Subscription.findOne({
+                userId,
+                status: "pending"
+              }).sort({ endDate: -1 }); // Get the latest endDate (last to activate)
+              
+              let startDate;
+              if (lastPendingSubscription) {
+                // Start after the last pending subscription ends
+                startDate = new Date(lastPendingSubscription.endDate);
+              } else {
+                // No pending subscriptions, start after current active one ends
+                startDate = new Date(existingSubscription.endDate);
+              }
+              
+              endDate = new Date(startDate);
+              if (planType === "monthly") endDate.setMonth(endDate.getMonth() + 1);
+              if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
+              
+              // Create new subscription with pending status
+              subscription = await Subscription.create({
+                userId,
+                planType,
+                profiles: parseInt(profiles) || 1,
+                stripeSessionId: sessionId,
+                startDate,
+                endDate,
+                status: "pending",
+              });
+              
+              console.log(` Subscription PENDING for user ${userId}, will start on ${startDate.toISOString()}`);
+              
+              // Also save pending subscription ID in user model
+              if (!user.subscription) {
+                user.subscription = {};
+              }
+              
+              // Get the first pending subscription (earliest startDate) to set as nextPendingSubscriptionId
+              const firstPendingSubscription = await Subscription.findOne({
+                userId,
+                status: "pending"
+              }).sort({ startDate: 1 }); // Get the earliest pending subscription
+              
+              user.subscription.nextPendingSubscriptionId = firstPendingSubscription._id;
+              user.subscription.pendingSubscriptions.push({
+                subscriptionId: subscription._id,
+                status: "pending",
+                addedAt: new Date()
+              });
+              await user.save();
+            } else {
+              // No active subscription, create new one immediately
+              startDate = new Date();
+              endDate = new Date(startDate);
+              if (planType === "monthly") endDate.setMonth(endDate.getMonth() + 1);
+              if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
+              
+              // Create new subscription
+              subscription = await Subscription.create({
+                userId,
+                planType,
+                profiles: parseInt(profiles) || 1,
+                stripeSessionId: sessionId,
+                startDate,
+                endDate,
+                status: "active",
+              });
+              
+              console.log(` Subscription ACTIVATED for user ${userId}`);
+            }
 
             // Create payment record with currency conversion
             let amountInINR = session.amount_total;
@@ -452,9 +595,14 @@ export const verifySubscription = async (req, res) => {
               customer: session.customer
             });
 
-            // Update user's subscription reference
-            user.subscription.activeSubscriptionId = subscription._id;
-            await user.save();
+            // Update user's subscription reference only if subscription is active
+            if (subscription.status === "active") {
+              if (!user.subscription) {
+                user.subscription = {};
+              }
+              user.subscription.activeSubscriptionId = subscription._id;
+              await user.save();
+            }
           }
           
           return res.json({

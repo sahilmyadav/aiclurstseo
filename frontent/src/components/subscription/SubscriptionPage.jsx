@@ -3,19 +3,31 @@ import { useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
+import { useSubscriptionContext } from "../../context/SubscriptionContext";
 import { FiCheck, FiPlus, FiMinus, FiStar, FiUsers } from "react-icons/fi";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const SubscriptionPage = () => {
   const { user, isAuthenticated, isLoading: authLoading,token } = useAuth();
+  const { 
+    subscriptionData, 
+    trialEligible, 
+    trialMessage, 
+    trialData, 
+    loading: subscriptionLoading, 
+    error,
+    checkSubscriptionStatus, 
+    activateTrial, 
+    getRemainingTrialDays,
+    setUserId,
+    setToken
+  } = useSubscriptionContext();
+  
   const [profiles, setProfiles] = useState(1);
   const [loading, setLoading] = useState(false);
   const [monthlyLoading, setMonthlyLoading] = useState(false);
   const [yearlyLoading, setYearlyLoading] = useState(false);
-  const [trialEligible, setTrialEligible] = useState(true);
-  const [trialMessage, setTrialMessage] = useState("");
-  const [trialData, setTrialData] = useState(null); // For active trial info
   const navigate = useNavigate();
 
   // Check for successful payment redirection
@@ -30,7 +42,10 @@ const SubscriptionPage = () => {
           setLoading(true);
           // Wait a moment for the webhook to process
           await new Promise(resolve => setTimeout(resolve, 2000));
-          await verifySubscriptionStatus(userId);
+          await checkSubscriptionStatus(userId, token);
+          // Also update context state
+          setUserId(userId);
+          setToken(token);
         } catch (error) {
           console.error('Error checking payment status:', error);
         } finally {
@@ -51,64 +66,14 @@ const SubscriptionPage = () => {
     }
   }, [isAuthenticated, authLoading, navigate]);
 
-  // Check trial eligibility and active trial status
+  // Set user and token for subscription context
   useEffect(() => {
-    const checkTrialStatus = async () => {
-      // Get user ID - handle both _id and id fields
-      const userId = user?._id || user?.id;
-      
-      console.log('User object:', user);
-      console.log('User ID for trial check:', userId);
-      
-      if (userId) {
-        try {
-          // Check trial eligibility
-          const eligibilityResponse = await axios.get(
-            `${import.meta.env.VITE_API_BASE}/api/subscription/check-trial-eligibility/${userId}`,
-            {
-               headers: { 'Authorization': `Bearer ${token}` } }
-          );
-          console.log(eligibilityResponse)
-          
-          setTrialEligible(eligibilityResponse.data.eligible);
-          if (!eligibilityResponse.data.eligible) {
-            setTrialMessage(eligibilityResponse.data.reason);
-          }
-
-          // Check for active trial
-          try {
-            const subscriptionResponse = await axios.get(
-              `${import.meta.env.VITE_API_BASE}/api/subscription/verify?userId=${userId}`,
-                {
-               headers: { 'Authorization': `Bearer ${token}` } }
-            );
-            console.log('Subscription response:', subscriptionResponse);
-            
-            if (subscriptionResponse.data.active && subscriptionResponse.data.planType === 'trial') {
-              setTrialData({
-                endDate: new Date(subscriptionResponse.data.endDate),
-                planType: subscriptionResponse.data.planType
-              });
-            } else {
-              setTrialData(null);
-            }
-          } catch (subError) {
-            setTrialData(null);
-          }
-        } catch (error) {
-          console.error('Error checking trial eligibility:', error);
-          setTrialEligible(false);
-          setTrialMessage("Unable to check trial eligibility");
-        }
-      } else {
-        console.log('No user ID found, user not loaded yet');
-        setTrialEligible(false);
-        setTrialMessage("User not loaded");
-      }
-    };
-
-    checkTrialStatus();
-  }, [user]);
+    const userId = user?._id || user?.id;
+    if (userId && token) {
+      setUserId(userId);
+      setToken(token);
+    }
+  }, [user, token, setUserId, setToken]);
 
   // Show loading state while checking auth or user not loaded
   if (authLoading || !user) {
@@ -146,27 +111,8 @@ const SubscriptionPage = () => {
   const monthlyPrice = 99;
   const yearlyPrice = 599;
 
-  // Helper function to calculate remaining trial days based on endDate
- const getRemainingTrialDays = () => {
-  if (!trialData?.endDate) return 0;
-
-  const today = new Date();
-  const end = new Date(trialData.endDate);
-
-  // Strip time (set to midnight)
-  today.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
-
-  const diffTime = end - today;
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  console.log(diffDays)
-
-  return Math.max(0, diffDays);
-};
-
   // Trial Activation
   const handleTrial = async () => {
-    // Get user ID - handle both _id and id fields
     const userId = user?._id || user?.id;
     
     if (!userId) {
@@ -174,75 +120,18 @@ const SubscriptionPage = () => {
       return;
     }
 
-    if (!trialEligible) {
-      alert(trialMessage || "You are not eligible for a free trial.");
-      return;
-    }
-
     try {
       setLoading(true);
-      console.log('Starting trial for user ID:', userId);
-      
-      const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE}/api/subscription/start-trial`, 
-        {
-          userId: userId,
-        },{
-           headers: { 'Authorization': `Bearer ${token}` }
-        }
-      );
+      const res = await activateTrial(userId, token);
       
       alert(res.data.message || "14-day trial activated!");
-      
-      // Update trial eligibility after successful activation
-      setTrialEligible(false);
-      setTrialMessage("Trial has been used");
-      
-      // Set trial data from response
-      if (res.data.endDate) {
-        setTrialData({
-          endDate: new Date(res.data.endDate),
-          planType: 'trial'
-        });
-      }
       
       // Optionally redirect to dashboard
       // navigate('/dashboard');
     } catch (error) {
-      console.error('Trial activation error:', error);
-      const errorMessage = error.response?.data?.message || "Failed to start trial.";
-      alert(errorMessage);
-      
-      // If trial was already used, update the UI
-      if (error.response?.status === 400) {
-        setTrialEligible(false);
-        setTrialMessage(errorMessage);
-      }
+      alert(error.message || "Failed to activate trial");
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Verify subscription status
-  const verifySubscriptionStatus = async (userId) => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_BASE}/api/subscription/verify/${userId}`
-      );
-      
-      if (response.data.active) {
-        alert(`🎉 Subscription activated successfully!\nPlan: ${response.data.planType}\nProfiles: ${response.data.profiles}`);
-        // You can update the UI or redirect as needed
-        window.location.reload();
-      } else {
-        console.log('Subscription not active yet, will be activated shortly...');
-        // Retry after 5 seconds if not active yet
-        setTimeout(() => verifySubscriptionStatus(userId), 5000);
-      }
-    } catch (error) {
-      console.error('Error verifying subscription:', error);
-      // Retry on error
-      setTimeout(() => verifySubscriptionStatus(userId), 5000);
     }
   };
 

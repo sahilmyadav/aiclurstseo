@@ -15,6 +15,25 @@ const UserSchema = new mongoose.Schema(
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Subscription' 
       },
+      nextPendingSubscriptionId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Subscription' 
+      },
+      pendingSubscriptions: [{
+        subscriptionId: { 
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: 'Subscription' 
+        },
+        status: { 
+          type: String, 
+          enum: ['pending'],
+          default: 'pending'
+        },
+        addedAt: { 
+          type: Date, 
+          default: Date.now 
+        }
+      }],
       hasUsedTrial: { 
         type: Boolean, 
         default: false 
