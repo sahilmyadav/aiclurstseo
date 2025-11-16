@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import Subscription from "../models/Subscription.js";
 import User from "../models/User.js";
 import TrialUsage from "../models/TrialUsage.js";
+import Payment from "../models/Payment.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -312,7 +313,7 @@ export const verifyStripeWebhook = async (req, res) => {
       if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
 
       // Create new subscription
-      await Subscription.create({
+      const newSubscription = await Subscription.create({
         userId,
         planType,
         profiles: parseInt(profiles) || 1,
@@ -322,7 +323,37 @@ export const verifyStripeWebhook = async (req, res) => {
         status: "active",
       });
 
-      console.log(` Subscription activated for user ${userId}`);
+      // Create payment record with currency conversion
+      let amountInINR = session.amount_total;
+      let subtotalInINR = session.amount_subtotal;
+      
+      // Convert USD to INR if currency is USD (1 USD = 83 INR)
+      if (session.currency === 'usd') {
+        amountInINR = Math.round(session.amount_total / 100 * 83); // Convert from cents to rupees
+        subtotalInINR = Math.round(session.amount_subtotal / 100 * 83);
+      }
+      
+      await Payment.create({
+        userId,
+        subscriptionId: newSubscription._id,
+        sessionId: session.id,
+        paymentStatus: session.payment_status,
+        amountInINR: amountInINR, // Amount in Indian Rupees
+        amountInUSD: session.currency === 'usd' ? session.amount_total / 100 : 0, // Amount in USD
+        amountInCents: session.amount_total, // Original amount in cents from Stripe
+        currency: session.currency, // Original currency from Stripe (usd, inr, etc.)
+        customerEmail: session.customer_email,
+        created: new Date(session.created * 1000).toISOString(),
+        metadata: session.metadata,
+        paymentMethodTypes: session.payment_method_types,
+        subtotalInINR: subtotalInINR,
+        subtotalInCents: session.amount_subtotal,
+        totalDetails: session.total_details,
+        paymentIntent: session.payment_intent,
+        customer: session.customer
+      });
+
+      console.log(` Subscription activated with payment record for user ${userId}`);
     } catch (error) {
       console.error("Error processing webhook:", error);
       return res.status(500).json({ error: "Error processing subscription" });
@@ -390,7 +421,37 @@ export const verifySubscription = async (req, res) => {
               endDate,
               status: "active",
             });
+
+            // Create payment record with currency conversion
+            let amountInINR = session.amount_total;
+            let subtotalInINR = session.amount_subtotal;
             
+            // Convert USD to INR if currency is USD (1 USD = 83 INR)
+            if (session.currency === 'usd') {
+              amountInINR = Math.round(session.amount_total / 100 * 83); // Convert from cents to rupees
+              subtotalInINR = Math.round(session.amount_subtotal / 100 * 83);
+            }
+            
+            await Payment.create({
+              userId,
+              subscriptionId: subscription._id,
+              sessionId: session.id,
+              paymentStatus: session.payment_status,
+              amountInINR: amountInINR, // Amount in Indian Rupees
+              amountInUSD: session.currency === 'usd' ? session.amount_total / 100 : 0, // Amount in USD
+              amountInCents: session.amount_total, // Original amount in cents from Stripe
+              currency: session.currency, // Original currency from Stripe (usd, inr, etc.)
+              customerEmail: session.customer_email,
+              created: new Date(session.created * 1000).toISOString(),
+              metadata: session.metadata,
+              paymentMethodTypes: session.payment_method_types,
+              subtotalInINR: subtotalInINR,
+              subtotalInCents: session.amount_subtotal,
+              totalDetails: session.total_details,
+              paymentIntent: session.payment_intent,
+              customer: session.customer
+            });
+
             // Update user's subscription reference
             user.subscription.activeSubscriptionId = subscription._id;
             await user.save();
