@@ -7,7 +7,7 @@ const subscriptionSchema = new mongoose.Schema({
   startDate: { type: Date, default: Date.now },
   endDate: { type: Date, required: true },
   stripeSessionId: { type: String },
-  status: { type: String, enum: ["active", "expired"], default: "active" },
+  status: { type: String, enum: ["active", "expired", "pending"], default: "active" },
 }, {
   timestamps: true // This will add createdAt and updatedAt fields
 });

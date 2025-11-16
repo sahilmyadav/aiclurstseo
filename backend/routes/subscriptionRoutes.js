@@ -7,6 +7,7 @@ import {
   checkTrialEligibility,
   testTrialEndDate
 } from "../controllers/subscriptionController.js";
+import { triggerActivation } from "../controllers/subscriptionQueueController.js";
 import protect from "../middleware/auth.js";
 
 const router = express.Router();
@@ -27,5 +28,8 @@ router.get("/test-trial-enddate/:userId",protect, testTrialEndDate); // Test end
 router.post("/start-trial",protect,startTrial);
 router.post("/create-checkout-session", protect,createCheckoutSession);
 router.get("/verify", verifySubscription);
+
+// Queue management route
+router.post("/activate-queued", triggerActivation);
 
 export default router;  
