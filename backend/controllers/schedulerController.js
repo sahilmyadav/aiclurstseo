@@ -1,5 +1,6 @@
 import ScheduledPost from '../models/ScheduledPost.js';
 import mongoose from 'mongoose';
+import { generateAIPost } from '../utils/aiGenerator.js';
 
 export const schedulePost = async (req, res) => {
     const session = await mongoose.startSession();
@@ -8,6 +9,7 @@ export const schedulePost = async (req, res) => {
     try {
         const {
             content,
+            keywords = [],
             isScheduled = false,
             scheduledFor = null,
             isRecurring = false,
@@ -17,16 +19,32 @@ export const schedulePost = async (req, res) => {
             locationId,
             businessName,
             createdBy,
-            tokenDetails
+            tokenDetails,
+            businessData // Add business data for AI generation
         } = req.body;
           console.log("tokenDetails",tokenDetails)
+        
+        // Generate AI content if content is empty but keywords are provided
+        let finalContent = content;
+        if (!content || content.trim() === '') {
+            if (keywords.length > 0 && businessData) {
+                try {
+                    const postType = isScheduled ? 'promotional' : 'engagement';
+                    finalContent = await generateAIPost(businessData, keywords, postType);
+                    console.log('Generated AI content for scheduled post');
+                } catch (error) {
+                    console.error('Failed to generate AI content:', error);
+                    // Continue with empty content if AI generation fails
+                }
+            }
+        }
         // Validate required fields
-        if (!content || !accountId || !locationId ) {
+        if (!finalContent || !accountId || !locationId ) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({
                 success: false,
-                message: 'Content, accountId, locationId, and businessName are required fields'
+                message: 'Content (or keywords for AI generation), accountId, locationId, and businessName are required fields'
             });
         }
 
@@ -94,7 +112,8 @@ export const schedulePost = async (req, res) => {
 
         // Create the scheduled post
         const scheduledPost = new ScheduledPost({
-            content,
+            content: finalContent,
+            keywords,
             accountId,
             locationId,
             businessName,
@@ -162,26 +181,35 @@ export const schedulePost = async (req, res) => {
     }
 };
 
-// Get scheduled posts by user ID
+// Get scheduled posts by location ID
 export const getScheduledPostsByUser = async (req, res) => {
     try {
-        const { userId } = req.params;
+        const { userId } = req.params; // This is actually locationId
         
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({
-                success: false,
-                message: 'Invalid user ID format'
+        console.log('=== Backend Debug ===');
+        console.log('Fetching scheduled posts for locationId:', userId);
+        console.log('Request params:', req.params);
+        
+        // First, try a simple query to see if any posts exist for this location
+        const allPosts = await ScheduledPost.find({ locationId: userId });
+        console.log('All posts for location:', allPosts.length);
+        
+        // Now apply the filters
+        const posts = await ScheduledPost.find({ 
+            locationId: userId,
+            status: { $in: ['pending', 'failed'] }
+        }).sort({ createdAt: -1 });
+
+        console.log('Filtered posts (pending/failed):', posts.length);
+        if (posts.length > 0) {
+            console.log('First post sample:', {
+                id: posts[0]._id,
+                locationId: posts[0].locationId,
+                status: posts[0].status,
+                scheduledFor: posts[0].scheduledFor,
+                nextRun: posts[0].nextRun
             });
         }
-
-        const posts = await ScheduledPost.find({ 
-            createdBy: userId,
-            status: { $in: ['pending', 'failed'] },
-            $or: [
-                { scheduledFor: { $exists: true } },
-                { nextRun: { $exists: true } }
-            ]
-        }).sort({ scheduledFor: 1, nextRun: 1 });
 
         res.status(200).json({
             success: true,
