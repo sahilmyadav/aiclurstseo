@@ -15,110 +15,181 @@ const oauth2Client = new OAuth2Client(
  * Process a single scheduled post
  */
 async function processPost(post) {
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  let retryCount = 0;
+  const maxRetries = 3;
   
-  try {
-    // Mark post as processing
-    post.status = 'processing';
-    post.lastRun = new Date();
-    await post.save({ session });
-
-    // Get fresh token details
-    let tokenDetails = post.tokenDetails;
-    
-    // Check if token is expired and refresh if needed
-    if (tokenDetails && tokenDetails.expiryDate < new Date()) {
-      oauth2Client.setCredentials({
-        access_token: tokenDetails.accessToken,
-        refresh_token: tokenDetails.refreshToken,
-        expiry_date: tokenDetails.expiryDate.getTime()
-      });
-
-      const { credentials } = await oauth2Client.refreshAccessToken();
-      tokenDetails = {
-        accessToken: credentials.access_token,
-        refreshToken: credentials.refresh_token || tokenDetails.refreshToken,
-        expiryDate: credentials.expiry_date ? new Date(credentials.expiry_date) : null,
-        scopes: credentials.scope ? credentials.scope.split(' ') : []
-      };
-      
-      // Update token details in the post
-      post.tokenDetails = tokenDetails;
-      await post.save({ session });
-    }
-
-    // Prepare the post data for Google My Business
-    const postData = {
-      languageCode: 'en-US',
-      summary: post.content,
-      callToAction: {
-        actionType: 'LEARN_MORE',
-        url: process.env.APP_URL || 'https://your-website.com'
-      },
-      topicType: 'STANDARD'
-    };
-
-    // Make the API call to create the post using direct axios call
-    const response = await axios.post(
-      `https://mybusiness.googleapis.com/v4/accounts/${post.accountId}/locations/${post.locationId}/localPosts`,
-      postData,
-      {
-        headers: {
-          'Authorization': `Bearer ${tokenDetails.accessToken}`,
-          'Content-Type': 'application/json',
-        },
+  while (retryCount < maxRetries) {
+    try {
+      // For recurring posts, don't change status to processing
+      // For non-recurring posts, set status to processing
+      if (!post.isRecurring) {
+        const updated = await ScheduledPost.updateOne(
+          { _id: post._id, status: { $ne: 'processing' } },
+          { 
+            status: 'processing', 
+            lastRun: new Date()
+          }
+        );
+        
+        // If no document was updated, it means another process is already handling it
+        if (updated.matchedCount === 0) {
+          console.log(`⚠️ Post ${post._id} is already being processed by another process`);
+          return { success: false, reason: 'Already processing' };
+        }
       }
-    );
-    
-    console.log(`✅ Post created successfully:`, response.data);
+      
+      // Refresh the post to get the latest data
+      post = await ScheduledPost.findById(post._id);
+      
+      console.log(`📤 Publishing post to Google Business Profile...`);
+      
+      // Get token details
+      let tokenDetails = post.tokenDetails;
+      
+      // Check if token is expired and refresh if needed
+      if (tokenDetails && tokenDetails.expiryDate < new Date()) {
+        oauth2Client.setCredentials({
+          access_token: tokenDetails.accessToken,
+          refresh_token: tokenDetails.refreshToken,
+          expiry_date: tokenDetails.expiryDate.getTime()
+        });
 
-    // Update post status
-    post.status = 'posted';
-    post.postedAt = new Date();
-    
-    // If it's a recurring post, update both scheduledFor and nextRun
-    if (post.isRecurring) {
-      // Calculate next run time
-      post.nextRun = post.calculateNextRun();
+        const { credentials } = await oauth2Client.refreshAccessToken();
+        tokenDetails = {
+          accessToken: credentials.access_token,
+          refreshToken: credentials.refresh_token || tokenDetails.refreshToken,
+          expiryDate: credentials.expiry_date ? new Date(credentials.expiry_date) : null,
+          scopes: credentials.scope ? credentials.scope.split(' ') : []
+        };
+        
+        // Update token details in the post
+        post.tokenDetails = tokenDetails;
+      }
+
+      // Prepare the post data for Google My Business
+      const postData = {
+        languageCode: 'en-US',
+        summary: post.content,
+        callToAction: {
+          actionType: 'LEARN_MORE',
+          url: process.env.APP_URL || 'https://your-website.com'
+        },
+        topicType: 'STANDARD'
+      };
+
+      // Make the API call to create the post using direct axios call
+      const response = await axios.post(
+        `https://mybusiness.googleapis.com/v4/accounts/${post.accountId}/locations/${post.locationId}/localPosts`,
+        postData,
+        {
+          headers: {
+            'Authorization': `Bearer ${tokenDetails.accessToken}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
       
-      // For recurring posts, update scheduledFor to the next run time
-      // This ensures the next post will be scheduled correctly
-      post.scheduledFor = new Date(post.nextRun);
+      console.log(`✅ Post created successfully:`, response.data);
+
+      // Update post status
+      // For recurring posts, keep status as 'pending' since they will run again
+      // For one-time posts, change to 'posted'
+      if (!post.isRecurring) {
+        post.status = 'posted';
+        post.postedAt = new Date();
+      }
       
-      // Log the update for debugging
-      console.log(`🔄 Recurring post scheduled for next run at: ${post.nextRun.toISOString()}`);
+      // If it's a recurring post, generate new content and update schedule
+      if (post.isRecurring) {
+        // Set lastRun to the current time before calculating next run
+        // This ensures calculateNextRun uses the correct base date
+        post.lastRun = new Date();
+        
+        // Save the post with lastRun first
+        await post.save();
+        
+        // Generate new content for the next occurrence if keywords are available
+        if (post.keywords && post.keywords.length > 0) {
+          try {
+            // Import generateAIPost function
+            const { generateAIPost } = await import('../utils/aiGenerator.js');
+            
+            // Create business data object from available fields
+            const businessData = {
+              name: post.businessName,
+              locationId: post.locationId,
+              accountId: post.accountId
+            };
+            
+            // Generate new content for the next post
+            const newContent = await generateAIPost(businessData, post.keywords, 'promotional');
+            post.content = newContent;
+            console.log(`🔄 Generated new content for recurring post: "${newContent.substring(0, 50)}..."`);
+          } catch (error) {
+            console.error('Failed to generate new content for recurring post:', error);
+            // Keep existing content if AI generation fails
+          }
+        }
+        
+        // Calculate next run time based on the lastRun time
+        // Now lastRun is saved in the database, so calculateNextRun will use it correctly
+        post.nextRun = post.calculateNextRun();
+        
+        // For recurring posts, update scheduledFor to the next run time
+        // This ensures the next post will be scheduled correctly
+        post.scheduledFor = new Date(post.nextRun);
+        
+        // Log the update for debugging
+        console.log(`🔄 Recurring post scheduled for next run at: ${post.nextRun.toISOString()}`);
+        console.log(`📅 Updated scheduledFor to: ${post.scheduledFor.toISOString()}`);
+        console.log(`📋 Repeat type: ${post.repeatType}`);
+        console.log(`📋 Base date (lastRun): ${post.lastRun.toISOString()}`);
+        if (post.repeatDays && post.repeatDays.length > 0) {
+          console.log(`📋 Repeat days: ${post.repeatDays.join(', ')}`);
+        }
+        
+        // Mark fields as modified to ensure they're saved
+        post.markModified('content');
+        post.markModified('nextRun');
+        post.markModified('scheduledFor');
+      }
+
+      await post.save();
+      return { success: true, post };
+    } catch (error) {
+      // Check if it's a write conflict error
+      if (error.errorLabels && error.errorLabels.includes('TransientTransactionError')) {
+        retryCount++;
+        console.log(`⚠️ Write conflict detected, retrying... (${retryCount}/${maxRetries})`);
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 100 * retryCount));
+        continue;
+      }
       
-      // Reset status to pending for the next run
-      post.status = 'pending';
+      // Mark as failed if it's not a retryable error
+      try {
+        await ScheduledPost.updateOne(
+          { _id: post._id },
+          { 
+            status: 'failed',
+            error: error.message,
+            lastRun: new Date()
+          }
+        );
+      } catch (updateError) {
+        console.error('Failed to mark post as failed:', updateError);
+      }
       
-      // Mark fields as modified to ensure they're saved
-      post.markModified('nextRun');
-      post.markModified('scheduledFor');
-      post.markModified('status');
+      console.error('Error processing post:', error);
+      return { 
+        success: false, 
+        error: error.message,
+        post 
+      };
     }
-
-    await post.save({ session });
-    await session.commitTransaction();
-    
-    return { success: true, post };
-  } catch (error) {
-    await session.abortTransaction();
-    console.error('Error processing post:', error);
-    
-    // Update post status to failed
-    post.status = 'failed';
-    post.error = error.message;
-    await post.save({ session });
-    
-    return { 
-      success: false, 
-      error: error.message,
-      post 
-    };
-  } finally {
-    session.endSession();
   }
+  
+  throw new Error(`Failed to process post after ${maxRetries} retries due to write conflicts`);
 }
 
 /**
@@ -144,10 +215,24 @@ async function checkScheduledPosts() {
     
     // Convert to IST (UTC+5:30) for logging
     const nowIST = new Date(now.getTime() + (5.5 * 60 * 60 * 1000));
-    console.log(`🔍 Checking for posts to process (Current time in IST: ${nowIST.toISOString()})`);
+    console.log(`🔍 Checking for posts to process (Current UTC: ${now.toISOString()})`);
+    console.log(`🔍 Current IST: ${nowIST.toISOString()}`);
+    
+    // Debug: Check what posts are in the database
+    const allPosts = await ScheduledPost.find({ status: 'pending' });
+    console.log(`📊 Debug: Found ${allPosts.length} pending posts in database`);
+    if (allPosts.length > 0) {
+      allPosts.forEach(p => {
+        console.log(`   - Post ${p._id}:`);
+        console.log(`     scheduledFor: ${p.scheduledFor?.toISOString()}`);
+        console.log(`     nextRun: ${p.nextRun?.toISOString()}`);
+        console.log(`     isScheduled: ${p.isScheduled}`);
+        console.log(`     lastRun: ${p.lastRun?.toISOString()}`);
+      });
+    }
     
     // Find posts that need to be processed
-    // Note: We store and compare all times in UTC, but the scheduled times are in IST
+    // Only process posts scheduled for current time or past times
     const posts = await ScheduledPost.find({
       $and: [
         {
@@ -161,27 +246,17 @@ async function checkScheduledPosts() {
         },
         {
           $or: [
-            // Posts with nextRun in the past (converted to IST for comparison)
+            // For recurring posts: check if nextRun is due (current time or past)
             { 
-              $expr: {
-                $lte: [
-                  "$nextRun",
-                  { $dateAdd: { startDate: new Date(0), unit: "millisecond", amount: now.getTime() + (5.5 * 60 * 60 * 1000) } }
-                ]
-              },
+              isRecurring: true,
+              nextRun: { $lte: now },
               nextRun: { $ne: null }
             },
-            // New scheduled posts that haven't been processed yet
+            // For one-time scheduled posts: check if scheduledFor is due (current time or past)
             { 
+              isRecurring: { $ne: true },
               isScheduled: true,
-              $expr: {
-                $lte: [
-                  "$scheduledFor",
-                  { $dateAdd: { startDate: new Date(0), unit: "millisecond", amount: now.getTime() + (5.5 * 60 * 60 * 1000) } }
-                ]
-              },
-              nextRun: { $exists: false },
-              lastRun: { $exists: false }
+              scheduledFor: { $lte: now }
             }
           ]
         }

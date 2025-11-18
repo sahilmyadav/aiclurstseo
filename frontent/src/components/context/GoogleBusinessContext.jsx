@@ -38,21 +38,29 @@ export const GoogleBusinessProvider = ({ children }) => {
     'Content-Type': 'application/json',
   });
 
-  // Fetch scheduled posts for the current user
+  // Fetch scheduled posts for the selected business location
   const fetchScheduledPosts = async () => {
-    if (!authUser?.id) return;
+    if (!selectedBusiness) return;
+    
+    const locationId = selectedBusiness.name.split("/")[1];
+    
+    console.log('Frontend: Fetching scheduled posts for locationId:', locationId);
     
     setLoadingScheduled(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/post/user/${authUser.id}`, {
+      const response = await fetch(`${BACKEND_URL}/api/post/user/${locationId}`, {
         headers: authHeaders(),
       });
       
+      console.log('Frontend: Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Frontend: Received data:', data);
         setScheduledPosts(data.data || []);
       } else {
         const errorData = await response.json().catch(() => ({}));
+        console.error('Frontend: Error response:', errorData);
         throw new Error(errorData.message || 'Failed to fetch scheduled posts');
       }
     } catch (error) {
@@ -76,8 +84,6 @@ export const GoogleBusinessProvider = ({ children }) => {
         if (data.authenticated) {
           setUser(data.user);
           setIsConnected(true);
-          // Fetch scheduled posts when user is authenticated
-          fetchScheduledPosts();
           
           console.log("data.tokenDetails",data)
           // Update token details if available
@@ -126,6 +132,7 @@ export const GoogleBusinessProvider = ({ children }) => {
           await fetchReviews(firstBusiness.accountId, firstBusiness.name.split("/")[1]);
           // Also fetch local reviews
           await fetchLocalReviews(firstBusiness.name.split("/")[1]);
+          // fetchScheduledPosts will be called by useEffect when selectedBusiness changes
         }
       }
     } catch (err) {
@@ -270,15 +277,26 @@ export const GoogleBusinessProvider = ({ children }) => {
   // Refresh all data when needed
   const refreshData = async () => {
     if (isConnected && selectedBusiness) {
+      // Ensure the selected business is set
+      console.log('Refreshing data for selected business:', selectedBusiness.title || selectedBusiness.name);
+      
       const locationId = selectedBusiness.name.split("/")[1];
       await fetchReviews(selectedBusiness.accountId, locationId);
       await fetchLocalReviews(locationId);
+      await fetchScheduledPosts();
     }
   };
 
   useEffect(() => {
     checkAuthStatus();
   }, [authUser]);
+
+  // Fetch scheduled posts when selected business changes
+  useEffect(() => {
+    if (selectedBusiness) {
+      fetchScheduledPosts();
+    }
+  }, [selectedBusiness]);
 
   const value = {
     // State

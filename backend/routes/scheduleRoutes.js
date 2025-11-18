@@ -6,7 +6,7 @@ const router = express.Router();
 // Schedule a new post
 router.post('/schedule', schedulePost);
 
-// Get scheduled posts by user ID
+// Get scheduled posts by location ID
 router.get('/user/:userId', getScheduledPostsByUser);
 
 export default router;
