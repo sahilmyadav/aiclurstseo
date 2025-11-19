@@ -91,7 +91,7 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-// DB and server start
+// DB and server start .
 const PORT = process.env.PORT || 8000;
 
 
