@@ -43,10 +43,15 @@ const Navbar = () => {
 
           <div className="hidden md:flex items-center justify-between md:justify-around gap-4 lg:gap-10 space-x-4 lg:space-x-8 font-medium">
             <Link to="/" className="text-sm font-normal text-black hover:text-indigo-600">Home</Link>
-            {isAuthenticated && <Link to={user?.role === 'admin' ? '/ad-dashboard' : '/dashboard'} className="text-sm font-normal text-black hover:text-indigo-600">Dashboard</Link>}
-            <Link to="/reviews" className="text-sm font-normal text-black hover:text-indigo-600">Reviews</Link>
-            <Link to="/seo-dashboard" className="text-sm font-normal text-black hover:text-indigo-600">SEO</Link>
-            <Link to="/analytics-dashboard" className="text-sm font-normal text-black hover:text-indigo-600">Analytics</Link>
+            <Link to="/about" className="text-sm font-normal text-black hover:text-indigo-600">About</Link>
+            {isAuthenticated && (
+              <>
+                <Link to={user?.role === 'admin' ? '/ad-dashboard' : '/dashboard'} className="text-sm font-normal text-black hover:text-indigo-600">Dashboard</Link>
+                <Link to="/reviews" className="text-sm font-normal text-black hover:text-indigo-600">Reviews</Link>
+                <Link to="/seo-dashboard" className="text-sm font-normal text-black hover:text-indigo-600">SEO</Link>
+                <Link to="/analytics-dashboard" className="text-sm font-normal text-black hover:text-indigo-600">Analytics</Link>
+              </>
+            )}
             {/* {isAuthenticated && <Link to="/dashboard/settings" className="text-sm font-normal text-black hover:text-indigo-600">Settings</Link>} */}
 
             {isAuthenticated && user ? (

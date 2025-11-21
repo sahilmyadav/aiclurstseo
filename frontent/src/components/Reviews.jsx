@@ -2,13 +2,14 @@ import {
   Search, MoreVertical, Star, StarHalf, ChevronLeft, ChevronRight, Loader2, 
   ChevronDown, ChevronUp, MessageSquare, MessageSquareText, CheckCircle2, 
   Clock, BarChart2, Star as StarIcon, MessageSquare as MessageSquareIcon,
-  X
+  X, Sparkles, Copy, RefreshCw
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import React from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
+import { generateAIReviewReply } from '../utils/aiReplyGenerator';
 
 const Reviews = () => {
     const [searchQuery, setSearchQuery] = useState('');
@@ -19,6 +20,9 @@ const Reviews = () => {
     const [currentReview, setCurrentReview] = useState(null);
     const [replyLoading, setReplyLoading] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
+    const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+    const [aiSuggestion, setAiSuggestion] = useState('');
+    const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'replied', 'needsReply'
     const { reviews, selectedBusiness, businesses, loading, selectBusiness, tokenDetails } = useGoogleBusiness();
     
     // Initialize expanded rows when reviews are loaded
@@ -39,11 +43,22 @@ const Reviews = () => {
         setShowBusinessDropdown(false);
     };
 
-    const filteredReviews = reviews?.filter(review =>
-        review.reviewer?.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        review.comment?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        review.starRating?.toString().includes(searchQuery)
-    ) || [];
+    const filteredReviews = reviews?.filter(review => {
+        // Apply search filter
+        const matchesSearch = 
+            review.reviewer?.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            review.comment?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            review.starRating?.toString().includes(searchQuery);
+            
+        // Apply status filter
+        const hasReply = !!review.reviewReply?.comment;
+        const matchesFilter = 
+            activeFilter === 'all' ||
+            (activeFilter === 'replied' && hasReply) ||
+            (activeFilter === 'needsReply' && !hasReply);
+            
+        return matchesSearch && matchesFilter;
+    }) || [];
 
     const formatReviewData = (reviews) => {
         if (!reviews) return [];
@@ -68,14 +83,14 @@ const Reviews = () => {
 
     const displayReviews = formatReviewData(filteredReviews);
 
-    // Calculate review statistics
-    const totalReviews = displayReviews.length;
-    const repliedReviews = displayReviews.filter(review => 
-        !!review.reply || (review.reviewData?.reviewReply?.comment)
-    ).length;
+    // Calculate review statistics - always use all reviews, not filtered ones
+    const totalReviews = reviews?.length || 0;
+    const repliedReviews = reviews?.filter(review => review.reviewReply?.comment).length || 0;
     const pendingReviews = totalReviews - repliedReviews;
-    const averageRating = displayReviews.length > 0 
-        ? (displayReviews.reduce((sum, review) => sum + review.rating, 0) / displayReviews.length).toFixed(1)
+    
+    // Calculate average rating from all reviews
+    const averageRating = reviews?.length > 0 
+        ? (reviews.reduce((sum, review) => sum + (parseFloat(review.starRating) || 0), 0) / reviews.length).toFixed(1)
         : 0;
 
     const toggleRowExpand = (reviewId) => {
@@ -110,6 +125,7 @@ const Reviews = () => {
     const handleReply = (review) => {
         setCurrentReview(review);
         setReplyText('');
+        setAiSuggestion('');
         setIsEditMode(false);
         setReplyLoading(false);
         setReplyDialogOpen(true);
@@ -119,9 +135,66 @@ const Reviews = () => {
     const handleEditReply = (review) => {
         setCurrentReview(review);
         setReplyText(review.reply || '');
+        setAiSuggestion('');
         setIsEditMode(true);
         setReplyLoading(false);
         setReplyDialogOpen(true);
+    };
+
+    // Generate AI reply for the current review
+    const generateAIReply = async () => {
+        if (!currentReview || !selectedBusiness) return;
+
+        setIsGeneratingAI(true);
+        setAiSuggestion('');
+        try {
+            const reply = await generateAIReviewReply(
+                currentReview.comment,
+                selectedBusiness.categories?.join(', ') || 'business',
+                'professional',
+                isEditMode,
+                currentReview.rating,
+                selectedBusiness.title || selectedBusiness.locationName
+            );
+            
+            setAiSuggestion(reply);
+            toast.success('AI reply generated!');
+        } catch (error) {
+            console.error('Error generating AI reply:', error);
+            toast.error(error.message || 'Failed to generate AI reply');
+        } finally {
+            setIsGeneratingAI(false);
+        }
+    };
+
+    // Copy AI suggestion to reply text
+    const copyAISuggestion = () => {
+        if (aiSuggestion) {
+            setReplyText(aiSuggestion);
+            // Add visual feedback
+            const copyButton = document.querySelector('.copy-ai-suggestion');
+            if (copyButton) {
+                copyButton.innerHTML = '<CheckCircle2 className="w-4 h-4" />';
+                copyButton.classList.remove('text-blue-600', 'dark:text-blue-400');
+                copyButton.classList.add('text-green-600', 'dark:text-green-400');
+                
+                // Revert back after 2 seconds
+                setTimeout(() => {
+                    copyButton.innerHTML = '<Copy className="w-4 h-4" />';
+                    copyButton.classList.add('text-blue-600', 'dark:text-blue-400');
+                    copyButton.classList.remove('text-green-600', 'dark:text-green-400');
+                }, 2000);
+            }
+            toast.success('Reply copied to text area', {
+                duration: 2000,
+                position: 'top-center',
+            });
+        } else {
+            toast.error('No AI suggestion to copy', {
+                duration: 2000,
+                position: 'top-center',
+            });
+        }
     };
 
     // Submit reply/update to backend
@@ -288,7 +361,7 @@ const Reviews = () => {
                                     <div className="bg-gradient-to-r from-blue-50 to-blue-50/70 dark:from-blue-900/30 dark:to-blue-900/10 p-4 rounded-xl border border-blue-100 dark:border-blue-900/30 shadow-sm">
                                     <div className="flex">
                                         <div className="flex-shrink-0 h-10 w-10 rounded-lg bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center">
-                                            <MessageSquare className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                            <MessageSquare className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                         </div>
                                         <div className="ml-3 flex-1 min-w-0">
                                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -350,7 +423,7 @@ const Reviews = () => {
     return (
         <div className="relative">
             {renderBusinessDropdown()}
-            
+
             {/* Stats Cards */}
             <div className="mx-4 sm:mx-6 lg:mx-8 mb-8">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -433,6 +506,41 @@ const Reviews = () => {
                 </div>
             </div>
 
+            {/* Filter Tabs */}
+            <div className="px-4 sm:px-6 lg:px-8 mb-6">
+                <div className="flex space-x-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg w-full">
+                    {[
+                        { id: 'all', label: 'All Reviews' },
+                        { id: 'replied', label: 'Replied' },
+                        { id: 'needsReply', label: 'Needs Reply' }
+                    ].map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveFilter(tab.id)}
+                            className={`flex-1 flex items-center justify-center px-4 py-3 text-sm font-medium rounded-md transition-colors duration-200 ${
+                                activeFilter === tab.id
+                                    ? 'bg-white dark:bg-gray-800 shadow-sm text-blue-600 dark:text-blue-400'
+                                    : 'text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white'
+                            }`}
+                        >
+                            <span className="flex items-center">
+                                {tab.label}
+                                {tab.id === 'replied' && (
+                                    <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                        {repliedReviews}
+                                    </span>
+                                )}
+                                {tab.id === 'needsReply' && (
+                                    <span className="ml-1.5 px-1.5 py-0.5 text-xs rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
+                                        {pendingReviews}
+                                    </span>
+                                )}
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
             <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-900/10 rounded-xl shadow-sm border border-blue-100 dark:border-blue-900/20 overflow-hidden mx-4 sm:mx-6 lg:mx-8 transition-all duration-300 hover:shadow-md">
                 <div className="overflow-x-auto">
                     <table className="min-w-full">
@@ -507,38 +615,130 @@ const Reviews = () => {
             
             {/* Reply Dialog */}
             {replyDialogOpen && (
-                <div className="fixed inset-0 bg-opacity-50 flex items-center backdrop-blur-sm justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-4xl">
                         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                             <div className="flex justify-between items-center">
-                                <div className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                                <h3 className="text-lg font-medium text-gray-900 dark:text-white">
                                     {isEditMode ? 'Edit Reply' : 'Reply to Review'}
-                                </div>
+                                </h3>
                                 <button
                                     type="button"
-                                    className="absolute top-2 right-2 text-gray-400 hover:text-gray-500"
-                                    onClick={() => setReplyDialogOpen(false)}
+                                    className="text-gray-400 hover:text-gray-500"
+                                    onClick={() => {
+                                        setReplyDialogOpen(false);
+                                        setAiSuggestion('');
+                                    }}
                                 >
                                     <X className="h-5 w-5" />
                                 </button>
                             </div>
-                            <div className="mt-4">
-                                <label htmlFor="reply-text" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    {isEditMode ? 'Edit your reply' : 'Your Reply'}
-                                </label>
-                                <textarea
-                                    value={replyText}
-                                    onChange={(e) => setReplyText(e.target.value)}
-                                    rows={4}
-                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-                                    placeholder="Enter your response to this review..."
-                                />
+                        </div>
+                        
+                        <div className="p-6 flex flex-col md:flex-row gap-6">
+                            {/* Review Preview */}
+                            <div className="md:w-1/2">
+                                <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Review</h4>
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+                                    <div className="flex items-center mb-2">
+                                        <div className="flex items-center">
+                                            {renderStars(currentReview?.rating || 0)}
+                                        </div>
+                                        <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                                            {currentReview?.name || 'Anonymous'}
+                                        </span>
+                                    </div>
+                                    <p className="text-gray-800 dark:text-gray-200 text-sm">
+                                        {currentReview?.comment}
+                                    </p>
+                                </div>
+                                
+                                <div className="mt-4">
+                                    <label htmlFor="reply-text" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Your Response
+                                    </label>
+                                    <textarea
+                                        id="reply-text"
+                                        rows="6"
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                                        placeholder="Type your response here..."
+                                        value={replyText}
+                                        onChange={(e) => setReplyText(e.target.value)}
+                                    ></textarea>
+                                </div>
+                            </div>
+                            
+                            {/* AI Suggestion Box */}
+                            <div className="md:w-1/2">
+                                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 h-full border border-blue-200 dark:border-blue-800">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                                            AI Reply Assistant
+                                        </h4>
+                                        <button
+                                            onClick={generateAIReply}
+                                            disabled={isGeneratingAI}
+                                            className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                        >
+                                            {isGeneratingAI ? (
+                                                <>
+                                                    <RefreshCw className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                                                    Generating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+                                                    Generate Suggestion
+                                                </>
+                                            )}
+                                        </button>
+                                    </div>
+                                    
+                                    {aiSuggestion ? (
+                                        <div className="relative bg-white dark:bg-gray-800 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+                                            <div className="prose prose-sm dark:prose-invert max-w-none">
+                                                {aiSuggestion}
+                                            </div>
+                                            <div className="absolute top-2 right-2 flex gap-1">
+                                                <button
+                                                    onClick={copyAISuggestion}
+                                                    className="copy-ai-suggestion p-1.5 text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                                                    title="Copy to reply"
+                                                >
+                                                    <Copy className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center text-center h-64">
+                                            <Sparkles className="w-8 h-8 text-gray-400 mb-2" />
+                                            <h4 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                                                AI-Powered Reply Suggestion
+                                            </h4>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
+                                                Click "Generate Suggestion" to get AI-generated response
+                                            </p>
+                                            <button
+                                                onClick={generateAIReply}
+                                                disabled={isGeneratingAI}
+                                                className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                            >
+                                                <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                                                {isGeneratingAI ? 'Generating...' : 'Generate Suggestion'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
+                        
                         <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex justify-end space-x-3">
                             <button
                                 type="button"
-                                onClick={() => setReplyDialogOpen(false)}
+                                onClick={() => {
+                                    setReplyDialogOpen(false);
+                                    setAiSuggestion('');
+                                }}
                                 className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                             >
                                 Cancel

@@ -32,6 +32,7 @@ import { AdminProvider } from './context/AdminContext'
 import Reviews from './components/Reviews'
 import SubscriptionPage from './components/subscription/SubscriptionPage'
 import SubscriptionSuccess from './components/subscription/SubscriptionSuccess'
+import About from './pages/About'
 
 
 const AppContent = () => {
@@ -58,6 +59,7 @@ const AppContent = () => {
             <Features />
           </>
         } />
+        <Route path="/about" element={<About />} />
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
         <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />
         <Route path="/review/:locationId" element={<MakeReview />} />
