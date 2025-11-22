@@ -232,7 +232,7 @@ async function checkScheduledPosts() {
     }
     
     // Find posts that need to be processed
-    // Only process posts scheduled for current time or past times
+    // Only process posts where the scheduled time has passed
     const posts = await ScheduledPost.find({
       $and: [
         {
@@ -246,22 +246,18 @@ async function checkScheduledPosts() {
         },
         {
           $or: [
-            // For recurring posts: check if nextRun is due (current time or past)
+            // For all scheduled posts, check if scheduledFor is in the past
             { 
-              isRecurring: true,
-              nextRun: { $lte: now },
-              nextRun: { $ne: null }
-            },
-            // For one-time scheduled posts: check if scheduledFor is due (current time or past)
-            { 
-              isRecurring: { $ne: true },
               isScheduled: true,
-              scheduledFor: { $lte: now }
+              scheduledFor: { 
+                $ne: null,
+                $lte: now 
+              }
             }
           ]
         }
       ]
-    }).sort({ scheduledFor: 1, nextRun: 1 }); // Sort by schedule time
+    }).sort({ scheduledFor: 1 }); // Sort by scheduled time
 
     console.log(`Found ${posts.length} posts to process`);
     
