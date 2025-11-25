@@ -3,26 +3,27 @@ import { useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { useSubscriptionContext } from "../../context/SubscriptionContext";
 import { FiCheck, FiPlus, FiMinus, FiStar, FiUsers } from "react-icons/fi";
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const SubscriptionPage = () => {
-  const { user, isAuthenticated, isLoading: authLoading,token } = useAuth();
   const { 
+    user, 
+    isAuthenticated, 
+    isLoading: authLoading,
+    token,
+    // Subscription-related values from AuthContext
     subscriptionData, 
     trialEligible, 
     trialMessage, 
     trialData, 
-    loading: subscriptionLoading, 
-    error,
+    subscriptionLoading, 
+    subscriptionError,
     checkSubscriptionStatus, 
     activateTrial, 
-    getRemainingTrialDays,
-    setUserId,
-    setToken
-  } = useSubscriptionContext();
+    getRemainingTrialDays
+  } = useAuth();
   
   const [profiles, setProfiles] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -43,9 +44,6 @@ const SubscriptionPage = () => {
           // Wait a moment for the webhook to process
           await new Promise(resolve => setTimeout(resolve, 2000));
           await checkSubscriptionStatus(userId, token);
-          // Also update context state
-          setUserId(userId);
-          setToken(token);
         } catch (error) {
           console.error('Error checking payment status:', error);
         } finally {
@@ -57,7 +55,7 @@ const SubscriptionPage = () => {
     };
 
     checkPaymentStatus();
-  }, [user?._id]);
+  }, [user?._id, checkSubscriptionStatus, token]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -65,15 +63,6 @@ const SubscriptionPage = () => {
       navigate('/login', { state: { from: '/subscription' } });
     }
   }, [isAuthenticated, authLoading, navigate]);
-
-  // Set user and token for subscription context
-  useEffect(() => {
-    const userId = user?._id || user?.id;
-    if (userId && token) {
-      setUserId(userId);
-      setToken(token);
-    }
-  }, [user, token, setUserId, setToken]);
 
   // Show loading state while checking auth or user not loaded
   if (authLoading || !user) {

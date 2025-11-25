@@ -1,0 +1,271 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { useGoogleBusiness } from '../context/GoogleBusinessContext';
+import { useAuth } from '../context/AuthContext';
+import { ChevronDown, Lock, AlertCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+
+const BusinessProfileDropdown = ({ 
+  onSelect, 
+  className = '',
+  showLabel = true,
+  disabled = false
+}) => {
+  const { 
+    businesses = [], 
+    selectedBusiness, 
+    selectBusiness,
+    loading: businessesLoading 
+  } = useGoogleBusiness();
+  
+  const { subscriptionData, subscriptionLoading } = useAuth();
+  console.log('Subscription Data:', subscriptionData);
+  const [isOpen, setIsOpen] = useState(false);
+  const [internalSelected, setInternalSelected] = useState(null);
+
+  // Check if subscription is active
+  const isSubscriptionActive = useMemo(() => {
+    if (subscriptionLoading) return true; // Assume active while loading to prevent flickering
+    if (!subscriptionData) return false;
+    
+    // Check if subscription is active and not expired
+    const now = new Date();
+    const endDate = new Date(subscriptionData.endDate);
+    return subscriptionData.active && endDate > now;
+  }, [subscriptionData, subscriptionLoading]);
+
+  // Get subscription limits
+  const { maxProfiles = 1, usedProfiles = 0 } = useMemo(() => {
+    if (!subscriptionData) return { maxProfiles: 1, usedProfiles: 0 };
+    
+    // For trial or basic subscription
+    if (subscriptionData.planType === 'trial' || !subscriptionData.planType) {
+      return { maxProfiles: 1, usedProfiles: businesses.length > 0 ? 1 : 0 };
+    }
+    
+    // For paid subscriptions - adjust these values based on your subscription plans
+    const planLimits = {
+      basic: 1,
+      standard: 3,
+      premium: 10,
+      enterprise: 50
+    };
+    
+    return {
+      maxProfiles: planLimits[subscriptionData.planType.toLowerCase()] || 1,
+      usedProfiles: businesses.filter(b => b.isSelected).length
+    };
+  }, [subscriptionData, businesses]);
+
+  // Check if a business can be selected
+  const canSelectBusiness = (business) => {
+    // If no subscription or subscription expired, cannot select
+    if (!subscriptionData || !isSubscriptionActive) return false;
+    
+    // If already selected, can deselect
+    if (business.name === selectedBusiness?.name) return true;
+    
+    // Check if within subscription limits
+    return usedProfiles < maxProfiles || businesses.some(b => b.name === business.name && b.isSelected);
+  };
+
+  // Auto-select first business if none selected and within limits
+  useEffect(() => {
+    if (businesses?.length > 0 && !selectedBusiness && !businessesLoading && maxProfiles > 0) {
+      const firstBusiness = businesses[0];
+      if (canSelectBusiness(firstBusiness)) {
+        selectBusiness(firstBusiness);
+        setInternalSelected(firstBusiness);
+      }
+    }
+  }, [businesses, selectedBusiness, businessesLoading, selectBusiness, maxProfiles]);
+
+  // Update internal state when selectedBusiness changes
+  useEffect(() => {
+    if (selectedBusiness) {
+      setInternalSelected(selectedBusiness);
+    }
+  }, [selectedBusiness]);
+
+  const handleSelect = (business) => {
+    if (!canSelectBusiness(business)) return;
+    
+    // Toggle selection if clicking the same business
+    if (selectedBusiness?.name === business.name) {
+      // If it's the only selected business, don't deselect it
+      if (businesses.filter(b => b.isSelected).length <= 1) return;
+      selectBusiness(null);
+      setInternalSelected(null);
+    } else {
+      selectBusiness(business);
+      setInternalSelected(business);
+    }
+    
+    setIsOpen(false);
+    if (onSelect) {
+      onSelect(business);
+    }
+  };
+
+  // Show loading state
+  if (businessesLoading || subscriptionLoading) {
+    return (
+      <div className={`flex items-center space-x-2 ${className}`}>
+        {showLabel && <span className="text-sm text-gray-300">Loading subscription data...</span>}
+        <div className="animate-pulse h-10 w-48 bg-gray-700 rounded-md"></div>
+      </div>
+    );
+  }
+
+  // Show subscription status message if no active subscription
+  if (!subscriptionData || !isSubscriptionActive) {
+    return (
+      <div className={`bg-yellow-50 border-l-4 border-yellow-400 p-4 ${className}`}>
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <AlertCircle className="h-5 w-5 text-yellow-400" aria-hidden="true" />
+          </div>
+          <div className="ml-3">
+            <p className="text-sm text-yellow-700">
+              {!subscriptionData 
+                ? 'No active subscription found. '
+                : 'Your subscription has expired. '}
+              <Link 
+                to="/pricing" 
+                className="font-medium text-yellow-700 underline hover:text-yellow-600"
+              >
+                Upgrade your plan
+              </Link>{' '}
+              to continue adding business profiles.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // If no businesses are available
+  if (!businesses || businesses.length === 0) {
+    return (
+      <div className={`text-sm text-yellow-400 ${className}`}>
+        No business profiles found. Please connect your Google Business account.
+      </div>
+    );
+  }
+  
+  // Get the number of selectable profiles
+  const selectableProfiles = Math.min(maxProfiles, businesses.length);
+
+  return (
+    <div className={`relative ${className}`}>
+      {showLabel && (
+        <label className="block text-sm font-medium text-gray-300 mb-1">
+          Business Profile
+        </label>
+      )}
+      
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
+          disabled={disabled}
+          className={`w-full flex items-center justify-between px-4 py-2 bg-[#1a1b2e]/90 border ${
+            disabled ? 'border-gray-700 text-gray-500 cursor-not-allowed' : 'border-white/10 hover:bg-[#1a1b2e] hover:border-white/20'
+          } rounded-lg transition-colors`}
+        >
+          <span className="text-sm truncate">
+            {internalSelected ? (
+              <span className="flex items-center">
+                {internalSelected.title || internalSelected.locationName}
+                {!canSelectBusiness(internalSelected) && (
+                  <Lock className="h-3 w-3 ml-2 text-yellow-400" />
+                )}
+              </span>
+            ) : 'Select Business'}
+          </span>
+          <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${
+            isOpen ? 'transform rotate-180' : ''
+          }`} />
+        </button>
+        
+        {!disabled && (
+          <div className="absolute right-2 -top-2 bg-purple-600 text-white text-xs px-2 py-0.5 rounded-full">
+            {usedProfiles}/{maxProfiles} profiles
+          </div>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="absolute z-50 mt-1 w-full bg-[#1a1b2e] border border-white/10 rounded-lg shadow-lg max-h-60 overflow-auto">
+          {businesses.map((business) => {
+            const isSelectable = canSelectBusiness(business);
+            const isSelected = internalSelected?.name === business.name;
+            
+            return (
+              <div 
+                key={business.name}
+                className={`relative group ${!isSelectable ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                title={!isSelectable ? `You only have access to ${maxProfiles} profile${maxProfiles > 1 ? 's' : ''}` : ''}
+              >
+                <button
+                  type="button"
+                  onClick={() => isSelectable && handleSelect(business)}
+                  disabled={!isSelectable}
+                  className={`w-full text-left px-4 py-2 text-sm flex items-center justify-between ${
+                    isSelected
+                      ? 'bg-blue-600 text-white'
+                      : !isSelectable
+                      ? 'text-gray-500 hover:bg-white/5'
+                      : 'text-gray-200 hover:bg-white/5'
+                  }`}
+                >
+                  <span className="truncate">
+                    {business.title || business.locationName}
+                  </span>
+                  {!isSelectable && !isSelected && (
+                    <Lock className="h-3 w-3 ml-2 flex-shrink-0 text-yellow-400" />
+                  )}
+                </button>
+                {!isSelectable && (
+                  <div className="hidden group-hover:block absolute z-10 w-48 p-2 mt-1 -ml-2 text-xs text-white bg-gray-800 rounded shadow-lg">
+                    You only have access to {maxProfiles} profile{maxProfiles > 1 ? 's' : ''}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+          
+          {maxProfiles > 1 && (
+            <div className="px-4 py-2 text-xs text-gray-400 border-t border-white/5">
+              {usedProfiles >= maxProfiles ? (
+                <span className="text-yellow-400">
+                  Upgrade your plan to select more than {maxProfiles} profiles
+                </span>
+              ) : (
+                <span>
+                  {maxProfiles - usedProfiles} of {maxProfiles} profiles remaining
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Show subscription status if available */}
+      {subscriptionData && (
+        <div className="mt-1 text-xs text-gray-400">
+          {subscriptionData.active ? (
+            <span className="text-green-400">
+              {subscriptionData.planType === 'trial' 
+                ? `Trial active until ${new Date(subscriptionData.endDate).toLocaleDateString()}`
+                : 'Subscription Active'}
+            </span>
+          ) : (
+            <span className="text-yellow-400">No active subscription</span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default BusinessProfileDropdown;
