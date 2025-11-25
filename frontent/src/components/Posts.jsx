@@ -136,7 +136,9 @@ const Posts = () => {
     isConnected: isGoogleConnected, 
     businesses, 
     selectedBusiness, 
+    selectedBusinesses, // Add this
     selectBusiness,
+    selectMultipleBusinesses, // Add this
     scheduledPosts,
     loadingScheduled
   } = useGoogleBusiness();
@@ -506,14 +508,27 @@ const Posts = () => {
               <div className="flex items-center gap-4">
                 {/* Business Profile Dropdown */}
                 <BusinessProfileDropdown 
-                  onSelect={(business) => {
+                  onSelect={(businessOrBusinesses) => {
                     // Fetch posts for the selected business
-                    if (business && business.name) {
-                      const locationId = business.name.split('/')[1];
-                      fetchPosts(business.accountId, locationId);
+                    if (Array.isArray(businessOrBusinesses)) {
+                      // Handle multiple selections - use the first one
+                      if (businessOrBusinesses.length > 0) {
+                        const business = businessOrBusinesses[0];
+                        if (business && business.name) {
+                          const locationId = business.name.split('/')[1];
+                          fetchPosts(business.accountId, locationId);
+                        }
+                      }
+                    } else {
+                      // Handle single selection
+                      if (businessOrBusinesses && businessOrBusinesses.name) {
+                        const locationId = businessOrBusinesses.name.split('/')[1];
+                        fetchPosts(businessOrBusinesses.accountId, locationId);
+                      }
                     }
                   }}
                   className="w-64"
+                  multiple={selectedBusinesses && selectedBusinesses.length > 1}
                 />
               </div>
               <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3">

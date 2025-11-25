@@ -20,7 +20,9 @@ import {
   ChevronRight,
   Lock,
   Unlock,
+  CreditCard,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 // Pagination Component
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
@@ -102,6 +104,7 @@ const AllUsers = () => {
     blockUnblockUser 
   } = useContext(AdminContext);
 
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [isDeleting, setIsDeleting] = useState(null);
@@ -269,6 +272,11 @@ const AllUsers = () => {
       pauseOnHover: true,
       className: 'w-full max-w-md',
     });
+  };
+
+  // ✅ Navigate to billing page for a specific user
+  const handleViewBilling = (userId) => {
+    navigate(`/ad-dashboard/billing?userId=${userId}`);
   };
 
   // UI helpers
@@ -445,6 +453,13 @@ const AllUsers = () => {
                           <UserCog className="w-3 h-3 mr-1" />
                         )}
                         {user.role === "admin" ? "Make User" : "Make Admin"}
+                      </button>
+                      <button
+                        onClick={() => handleViewBilling(user._id)}
+                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                      >
+                        <CreditCard className="w-3 h-3 mr-1" />
+                        View Billing
                       </button>
                       <button
                         onClick={() => handleDelete(user._id)}

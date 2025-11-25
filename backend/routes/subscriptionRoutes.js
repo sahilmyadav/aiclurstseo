@@ -5,7 +5,9 @@ import {
   verifyStripeWebhook,
   verifySubscription,
   checkTrialEligibility,
-  testTrialEndDate
+  testTrialEndDate,
+  getUserSubscription, // Add this
+  getUserTransactions
 } from "../controllers/subscriptionController.js";
 import { triggerActivation } from "../controllers/subscriptionQueueController.js";
 import protect from "../middleware/auth.js";
@@ -28,8 +30,10 @@ router.get("/test-trial-enddate/:userId",protect, testTrialEndDate); // Test end
 router.post("/start-trial",protect,startTrial);
 router.post("/create-checkout-session", protect,createCheckoutSession);
 router.get("/verify", verifySubscription);
+router.get("/user/:userId", protect, getUserSubscription); // Add this
+router.get("/transactions/:userId", protect, getUserTransactions);
 
 // Queue management route
 router.post("/activate-queued", triggerActivation);
 
-export default router;  
+export default router;

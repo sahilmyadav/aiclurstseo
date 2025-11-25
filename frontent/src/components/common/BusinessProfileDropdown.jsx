@@ -8,12 +8,16 @@ const BusinessProfileDropdown = ({
   onSelect, 
   className = '',
   showLabel = true,
-  disabled = false
+  disabled = false,
+  multiple = false // Allow multiple selections
 }) => {
   const { 
     businesses = [], 
     selectedBusiness, 
+    selectedBusinesses = [], // For multiple selections
     selectBusiness,
+    selectMultipleBusinesses, // New function for multiple selections
+    toggleBusinessSelection, // Toggle selection
     loading: businessesLoading 
   } = useGoogleBusiness();
   
@@ -21,6 +25,7 @@ const BusinessProfileDropdown = ({
   console.log('Subscription Data:', subscriptionData);
   const [isOpen, setIsOpen] = useState(false);
   const [internalSelected, setInternalSelected] = useState(null);
+  const [internalSelectedMultiple, setInternalSelectedMultiple] = useState([]); // For multiple selections
 
   // Check if subscription is active
   const isSubscriptionActive = useMemo(() => {
@@ -37,24 +42,14 @@ const BusinessProfileDropdown = ({
   const { maxProfiles = 1, usedProfiles = 0 } = useMemo(() => {
     if (!subscriptionData) return { maxProfiles: 1, usedProfiles: 0 };
     
-    // For trial or basic subscription
-    if (subscriptionData.planType === 'trial' || !subscriptionData.planType) {
-      return { maxProfiles: 1, usedProfiles: businesses.length > 0 ? 1 : 0 };
-    }
-    
-    // For paid subscriptions - adjust these values based on your subscription plans
-    const planLimits = {
-      basic: 1,
-      standard: 3,
-      premium: 10,
-      enterprise: 50
-    };
+    // Use the actual profiles count from subscription data
+    const subscriptionProfiles = subscriptionData.profiles || 1;
     
     return {
-      maxProfiles: planLimits[subscriptionData.planType.toLowerCase()] || 1,
-      usedProfiles: businesses.filter(b => b.isSelected).length
+      maxProfiles: subscriptionProfiles,
+      usedProfiles: multiple ? selectedBusinesses.length : (selectedBusiness ? 1 : 0)
     };
-  }, [subscriptionData, businesses]);
+  }, [subscriptionData, businesses, multiple, selectedBusinesses, selectedBusiness]);
 
   // Check if a business can be selected
   const canSelectBusiness = (business) => {
@@ -62,10 +57,15 @@ const BusinessProfileDropdown = ({
     if (!subscriptionData || !isSubscriptionActive) return false;
     
     // If already selected, can deselect
-    if (business.name === selectedBusiness?.name) return true;
+    if (multiple) {
+      return selectedBusinesses.some(b => b.name === business.name) || 
+             selectedBusinesses.length < maxProfiles;
+    } else {
+      if (business.name === selectedBusiness?.name) return true;
+    }
     
     // Check if within subscription limits
-    return usedProfiles < maxProfiles || businesses.some(b => b.name === business.name && b.isSelected);
+    return usedProfiles < maxProfiles;
   };
 
   // Auto-select first business if none selected and within limits
@@ -75,34 +75,56 @@ const BusinessProfileDropdown = ({
       if (canSelectBusiness(firstBusiness)) {
         selectBusiness(firstBusiness);
         setInternalSelected(firstBusiness);
+        if (multiple) {
+          selectMultipleBusinesses([firstBusiness]);
+          setInternalSelectedMultiple([firstBusiness]);
+        }
       }
     }
-  }, [businesses, selectedBusiness, businessesLoading, selectBusiness, maxProfiles]);
+  }, [businesses, selectedBusiness, businessesLoading, selectBusiness, maxProfiles, multiple, selectMultipleBusinesses]);
 
   // Update internal state when selectedBusiness changes
   useEffect(() => {
-    if (selectedBusiness) {
-      setInternalSelected(selectedBusiness);
+    if (multiple) {
+      setInternalSelectedMultiple(selectedBusinesses);
+    } else {
+      if (selectedBusiness) {
+        setInternalSelected(selectedBusiness);
+      }
     }
-  }, [selectedBusiness]);
+  }, [selectedBusiness, selectedBusinesses, multiple]);
 
   const handleSelect = (business) => {
     if (!canSelectBusiness(business)) return;
     
-    // Toggle selection if clicking the same business
-    if (selectedBusiness?.name === business.name) {
-      // If it's the only selected business, don't deselect it
-      if (businesses.filter(b => b.isSelected).length <= 1) return;
-      selectBusiness(null);
-      setInternalSelected(null);
+    if (multiple) {
+      // Handle multiple selections
+      toggleBusinessSelection(business);
+      
+      // Update internal state
+      const newSelections = selectedBusinesses.some(b => b.name === business.name)
+        ? selectedBusinesses.filter(b => b.name !== business.name)
+        : [...selectedBusinesses, business];
+      
+      setInternalSelectedMultiple(newSelections);
+      
+      if (onSelect) {
+        onSelect(newSelections);
+      }
     } else {
-      selectBusiness(business);
-      setInternalSelected(business);
-    }
-    
-    setIsOpen(false);
-    if (onSelect) {
-      onSelect(business);
+      // Toggle selection if clicking the same business
+      if (selectedBusiness?.name === business.name) {
+        selectBusiness(null);
+        setInternalSelected(null);
+      } else {
+        selectBusiness(business);
+        setInternalSelected(business);
+      }
+      
+      setIsOpen(false);
+      if (onSelect) {
+        onSelect(business);
+      }
     }
   };
 
@@ -173,12 +195,15 @@ const BusinessProfileDropdown = ({
           } rounded-lg transition-colors`}
         >
           <span className="text-sm truncate">
-            {internalSelected ? (
+            {multiple ? (
+              internalSelectedMultiple.length > 0 ? (
+                <span className="flex items-center">
+                  {internalSelectedMultiple.length} profile{internalSelectedMultiple.length !== 1 ? 's' : ''} selected
+                </span>
+              ) : 'Select Business Profiles'
+            ) : internalSelected ? (
               <span className="flex items-center">
                 {internalSelected.title || internalSelected.locationName}
-                {!canSelectBusiness(internalSelected) && (
-                  <Lock className="h-3 w-3 ml-2 text-yellow-400" />
-                )}
               </span>
             ) : 'Select Business'}
           </span>
@@ -198,7 +223,9 @@ const BusinessProfileDropdown = ({
         <div className="absolute z-50 mt-1 w-full bg-[#1a1b2e] border border-white/10 rounded-lg shadow-lg max-h-60 overflow-auto">
           {businesses.map((business) => {
             const isSelectable = canSelectBusiness(business);
-            const isSelected = internalSelected?.name === business.name;
+            const isSelected = multiple 
+              ? internalSelectedMultiple.some(b => b.name === business.name)
+              : internalSelected?.name === business.name;
             
             return (
               <div 
@@ -221,6 +248,9 @@ const BusinessProfileDropdown = ({
                   <span className="truncate">
                     {business.title || business.locationName}
                   </span>
+                  {isSelected && (
+                    <span className="h-2 w-2 rounded-full bg-green-400 ml-2 flex-shrink-0"></span>
+                  )}
                   {!isSelectable && !isSelected && (
                     <Lock className="h-3 w-3 ml-2 flex-shrink-0 text-yellow-400" />
                   )}
@@ -257,7 +287,7 @@ const BusinessProfileDropdown = ({
             <span className="text-green-400">
               {subscriptionData.planType === 'trial' 
                 ? `Trial active until ${new Date(subscriptionData.endDate).toLocaleDateString()}`
-                : 'Subscription Active'}
+                : `Subscription Active (${subscriptionData.profiles || 1} profile${(subscriptionData.profiles || 1) !== 1 ? 's' : ''})`}
             </span>
           ) : (
             <span className="text-yellow-400">No active subscription</span>

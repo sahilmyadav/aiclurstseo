@@ -33,6 +33,7 @@ import Reviews from './components/Reviews'
 import SubscriptionPage from './components/subscription/SubscriptionPage'
 import SubscriptionSuccess from './components/subscription/SubscriptionSuccess'
 import About from './pages/About'
+import Billing from './components/subscription/Billing'
 
 
 const AppContent = () => {
@@ -85,6 +86,8 @@ const AppContent = () => {
             <Route path="schedule-post" element={<SocialSharing />} />
             <Route path="subscription" element={<SubscriptionPage />} />
             <Route path="subscription/success" element={<SubscriptionSuccess />} />
+            <Route path="billing" element={<Billing />} />
+            
             
             <Route path="notifications" element={<Notifications />} />
             <Route path="settings" element={<Settings />} />
@@ -107,20 +110,22 @@ const AppContent = () => {
               <Route path="settings" element={<Settings />} />
               <Route path="users" element={<AllUsers />} />
               <Route path="analytics" element={<AnalyticsDashboard />} />
+              <Route path="billing" element={<Billing />} />
             </Route>
           )
         }
         {/* 
-
-
-      
         {/* Catch-all route for non-existent paths */}
         {/* Only handle 404 redirects after auth is initialized */}
         <Route 
           path="*" 
           element={
             isInitialized ? (
-              <Navigate to={isAuthenticated ? "/" : "/"} replace />
+              isAuthenticated ? (
+                user.role === 'admin' ? 
+                <Navigate to="/ad-dashboard" replace /> : 
+                <Navigate to="/dashboard" replace />
+              ) : <Navigate to="/login" replace />
             ) : null
           } 
         />

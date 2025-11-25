@@ -9,11 +9,13 @@ const Dashboard = () => {
   const {
     businesses,
     selectedBusiness,
+    selectedBusinesses, // For multiple selections
     reviews,
     loading,
     isConnected,
     reviewStats,
-    selectBusiness
+    selectBusiness,
+    selectMultipleBusinesses // For multiple selections
   } = useGoogleBusiness();
 
   // Process monthly chart data from reviews
@@ -41,8 +43,14 @@ const Dashboard = () => {
 
 
   // Handle business selection
-  const handleBusinessSelect = (business) => {
-    selectBusiness(business);
+  const handleBusinessSelect = (businessOrBusinesses) => {
+    if (Array.isArray(businessOrBusinesses)) {
+      // Multiple selections
+      selectMultipleBusinesses(businessOrBusinesses);
+    } else {
+      // Single selection
+      selectBusiness(businessOrBusinesses);
+    }
   };
 
   // Convert Google star rating to number for display
@@ -78,6 +86,11 @@ const Dashboard = () => {
                 {selectedBusiness && (
                   <p className="text-sm text-white/60">Showing data for: {selectedBusiness.title || selectedBusiness.locationName}</p>
                 )}
+                {selectedBusinesses && selectedBusinesses.length > 1 && (
+                  <p className="text-sm text-white/60">
+                    {selectedBusinesses.length} business profiles selected
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center space-x-3">
@@ -85,6 +98,7 @@ const Dashboard = () => {
                   onSelect={handleBusinessSelect}
                   className="w-64"
                   showLabel={false}
+                  multiple={selectedBusinesses && selectedBusinesses.length > 1}
                 />
               </div>
             </div>
