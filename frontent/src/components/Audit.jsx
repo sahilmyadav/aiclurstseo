@@ -18,9 +18,9 @@ import { toast } from 'sonner';
 import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 import fetchWithAuth from '../utils/fetchWithAuth';
+import BusinessProfileDropdown from './common/BusinessProfileDropdown';
 
 const Audit = () => {
-  const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [aiInsights, setAIInsights] = useState(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
@@ -38,7 +38,7 @@ const Audit = () => {
     reviewStats
   } = useGoogleBusiness();
   
-  const { isCollapsed } = useSidebar();
+  // const { isCollapsed } = useSidebar();
 
   const timerRef = useRef(null);
 
@@ -69,7 +69,6 @@ const Audit = () => {
   const handleBusinessSelect = useCallback(async (business) => {
     try {
       await selectBusiness(business);
-      setShowBusinessDropdown(false);
       // Reset insights when business changes
       setAIInsights(null);
       setInsightsError(null);
@@ -251,47 +250,14 @@ const Audit = () => {
               </div>
             )}
             
-            {/* Business Selection Only */}
+            {/* Business Selection */}
             {businesses && businesses.length > 0 && (
               <div className="flex justify-center sm:justify-start">
-                <div className="relative w-full sm:w-auto max-w-sm">
-                  <button
-                    onClick={() => setShowBusinessDropdown(!showBusinessDropdown)}
-                    className="flex items-center justify-between w-full px-4 py-3 bg-[#1a1b2e]/90 border border-white/10 rounded-lg text-white hover:bg-[#1a1b2e] transition-colors"
-                  >
-                    <span className="text-sm truncate mr-2">{selectedBusiness ? selectedBusiness.title : 'Select Business'}</span>
-                    <ChevronDown className="w-4 h-4 flex-shrink-0" />
-                  </button>
-                
-                  {showBusinessDropdown && (
-                    <div className="absolute left-0 sm:right-0 mt-2 w-full sm:w-64 bg-[#1a1b2e] border border-white/10 rounded-lg shadow-lg z-50">
-                      <div className="p-2 border-b border-white/10">
-                        <p className="text-xs text-white/60">1 of {businesses.length} profiles available</p>
-                      </div>
-                      {businesses.map((business, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleBusinessSelect(business)}
-                          className={`w-full text-left px-4 py-3 text-sm text-white hover:bg-white/5 transition-colors ${
-                            selectedBusiness?.name === business.name ? 'bg-green-400/10' : ''
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium flex items-center">
-                                {selectedBusiness?.name === business.name && <div className="w-2 h-2 rounded-full bg-green-400 mr-2 flex-shrink-0"></div>}
-                                <span className="truncate">{business.title}</span>
-                              </div>
-                              <div className="text-xs text-white/60 mt-1 truncate">{business.primaryCategory?.displayName || 'Business'}</div>
-                            </div>
-                            {selectedBusiness?.name === business.name && (
-                              <span className="text-xs text-green-400 px-2 py-1 bg-green-400/20 rounded ml-2 flex-shrink-0">Active</span>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                <div className="w-full sm:w-64">
+                  <BusinessProfileDropdown 
+                    onSelect={handleBusinessSelect}
+                    showLabel={false}
+                  />
                 </div>
               </div>
             )}

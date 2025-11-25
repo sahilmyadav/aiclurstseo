@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "./context/AuthContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
+import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
 import { FiExternalLink, FiStar, FiChevronRight, FiLogOut, FiLoader, FiAlertCircle, FiCheckCircle, FiMapPin } from "react-icons/fi";
 import { FaGoogle } from "react-icons/fa";
 
@@ -110,7 +111,7 @@ const Integrations = () => {
             {user && (
               <button 
                 onClick={handleDisconnect} 
-                className="flex items-center space-x-2 px-4 py-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-red-5 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
               >
                 <FiLogOut className="w-5 h-5" />
                 <span>Disconnect</span>
@@ -154,65 +155,58 @@ const Integrations = () => {
                 <div className="mb-6">
                   <h3 className="text-lg font-medium text-gray-900 mb-4">Your Business Locations</h3>
                   
+                  {/* Business Profile Dropdown */}
+                  <div className="mb-6">
+                    <BusinessProfileDropdown 
+                      onSelect={handleBusinessSelect}
+                      className="w-full max-w-md"
+                    />
+                  </div>
+                  
                   {loading && businesses.length === 0 ? (
                     <div className="space-y-4">
                       <SkeletonLoader count={3} height={120} className="rounded-lg" />
                     </div>
-                  ) : businesses.length > 0 ? (
+                  ) : businesses.length > 0 && selectedBusiness ? (
                     <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                      {businesses.map((business, index) => {
-                        const accountId = business.accountId;
-                        const locationId = business.name.split("/")[1];
-                        const isSelected = selectedLocation === locationId;
-                        
-                        return (
-                          <div 
-                            key={index} 
-                            className={`border rounded-xl p-5 transition-all cursor-pointer hover:shadow-md ${
-                              isSelected ? 'border-blue-500 ring-2 ring-blue-100 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                            }`}
-                            onClick={() => handleBusinessSelect(business)}
+                      <div 
+                        className="border rounded-xl p-5 transition-all border-blue-500 ring-2 ring-blue-100 bg-blue-50"
+                      >
+                        <div className="flex justify-between items-start mb-3">
+                          <h4 className="font-medium text-gray-900 line-clamp-2">{selectedBusiness.title}</h4>
+                          <span className="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded-full">
+                            {selectedBusiness.primaryCategory?.displayName || 'Business'}
+                          </span>
+                        </div>
+                        <div className="flex items-center text-sm text-gray-500 mb-3">
+                          <FiMapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
+                          <span className="truncate">
+                            {[selectedBusiness.location?.address?.addressLines?.[0], selectedBusiness.location?.address?.locality, selectedBusiness.location?.address?.postalCode]
+                              .filter(Boolean)
+                              .join(', ')}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                          <button 
+                            className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
+                            onClick={() => handleBusinessSelect(selectedBusiness)}
                           >
-                            <div className="flex justify-between items-start mb-3">
-                              <h4 className="font-medium text-gray-900 line-clamp-2">{business.title}</h4>
-                              <span className="bg-blue-100 text-blue-800 text-xs px-2.5 py-0.5 rounded-full">
-                                {business.primaryCategory?.displayName || 'Business'}
-                              </span>
-                            </div>
-                            <div className="flex items-center text-sm text-gray-500 mb-3">
-                              <FiMapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
-                              <span className="truncate">
-                                {[business.location?.address?.addressLines?.[0], business.location?.address?.locality, business.location?.address?.postalCode]
-                                  .filter(Boolean)
-                                  .join(', ')}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-                              <button 
-                                className="text-sm font-medium text-blue-600 hover:text-blue-800 flex items-center"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleBusinessSelect(business);
-                                }}
-                              >
-                                View Reviews
-                                <FiChevronRight className="w-4 h-4 ml-1" />
-                              </button>
-                              {business.websiteUri && (
-                                <a 
-                                  href={business.websiteUri} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="text-gray-400 hover:text-gray-600"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <FiExternalLink className="w-4 h-4" />
-                                </a>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
+                            View Reviews
+                            <FiChevronRight className="w-4 h-4 ml-1" />
+                          </button>
+                          {selectedBusiness.websiteUri && (
+                            <a 
+                              href={selectedBusiness.websiteUri} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-gray-400 hover:text-gray-600"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <FiExternalLink className="w-4 h-4" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ) : (
                     <div className="text-center py-8 border-2 border-dashed border-gray-200 rounded-lg">

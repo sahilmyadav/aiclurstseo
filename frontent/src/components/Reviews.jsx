@@ -10,11 +10,10 @@ import React from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { generateAIReviewReply } from '../utils/aiReplyGenerator';
+import BusinessProfileDropdown from './common/BusinessProfileDropdown';
 
 const Reviews = () => {
     const [searchQuery, setSearchQuery] = useState('');
-    const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
-    const [expandedRows, setExpandedRows] = useState({});
     const [replyDialogOpen, setReplyDialogOpen] = useState(false);
     const [replyText, setReplyText] = useState('');
     const [currentReview, setCurrentReview] = useState(null);
@@ -38,11 +37,6 @@ const Reviews = () => {
         }
     }, [reviews]);
     
-    const handleBusinessSelect = (business) => {
-        selectBusiness(business);
-        setShowBusinessDropdown(false);
-    };
-
     const filteredReviews = reviews?.filter(review => {
         // Apply search filter
         const matchesSearch = 
@@ -260,47 +254,6 @@ const Reviews = () => {
         }
     };
 
-    const renderBusinessDropdown = () => (
-        <div className="mt- mb-8 mx-4 sm:mx-6 lg:mx-8">
-            <div className="relative mt-5 inline-block text-left w-full max-w-md">
-                <div>
-                    <button
-                        type="button"
-                        className="inline-flex justify-between items-center w-full rounded-lg border border-gray-200 dark:border-gray-600 shadow-sm px-4 py-3 bg-white dark:bg-gray-700 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
-                        onClick={() => setShowBusinessDropdown(!showBusinessDropdown)}
-                    >
-                        <span className="truncate">
-                            {selectedBusiness ? (selectedBusiness.title || selectedBusiness.locationName) : 'Select a business'}
-                        </span>
-                        <svg className="ml-2 h-4 w-4 flex-shrink-0 text-gray-500 dark:text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                        </svg>
-                    </button>
-                </div>
-
-                {showBusinessDropdown && (
-                    <div className="origin-top-right absolute left-0 mt-1 w-full rounded-lg shadow-lg bg-white dark:bg-gray-700 ring-1 ring-black ring-opacity-5 dark:ring-white/10 z-10">
-                        <div className="py-1" role="menu" aria-orientation="vertical">
-                            {businesses && businesses.length > 0 ? (
-                                businesses.map((business) => (
-                                    <button
-                                        key={business.name}
-                                        className="block w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors duration-150"
-                                        onClick={() => handleBusinessSelect(business)}
-                                    >
-                                        {business.title || business.locationName}
-                                    </button>
-                                ))
-                            ) : (
-                                <div className="px-4 py-2 text-sm text-gray-500">No businesses found</div>
-                            )}
-                        </div>
-                    </div>
-                )}
-            </div>
-        </div>
-    );
-
     const renderReviewRow = (review) => {
         const hasReply = !!review.reply || (review.reviewData?.reviewReply?.comment);
         const reply = review.reply || review.reviewData?.reviewReply?.comment;
@@ -422,7 +375,10 @@ const Reviews = () => {
 
     return (
         <div className="relative">
-            {renderBusinessDropdown()}
+            {/* Business Profile Dropdown */}
+            <div className="mt-5 mb-8 mx-4 sm:mx-6 lg:mx-8">
+                <BusinessProfileDropdown />
+            </div>
 
             {/* Stats Cards */}
             <div className="mx-4 sm:mx-6 lg:mx-8 mb-8">

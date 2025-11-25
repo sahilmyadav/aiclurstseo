@@ -4,6 +4,7 @@ import SideNav from "./SideNav";
 import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 import ScheduledPosts from "./ScheduledPosts";
+import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
 import { 
   FaGoogle, 
   FaCalendarAlt, 
@@ -487,19 +488,6 @@ const Posts = () => {
     }
   };
 
-  const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
-
-  const handleBusinessSelect = (business) => {
-    selectBusiness(business);
-    setShowBusinessDropdown(false);
-    
-    // Fetch posts for the selected business
-    if (business && business.name) {
-      const locationId = business.name.split('/')[1];
-      fetchPosts(business.accountId, locationId);
-    }
-  };
-
   return (
     <div className="min-h-screen w-full text-white bg-transparent flex">
       <SideNav />
@@ -516,33 +504,17 @@ const Posts = () => {
                 )}
               </div>
               <div className="flex items-center gap-4">
-                {businesses && businesses.length > 1 && (
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowBusinessDropdown(!showBusinessDropdown)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-[#1a1b2e]/90 border border-white/10 rounded-lg text-white hover:bg-[#1a1b2e] transition-colors"
-                    >
-                      <span className="text-sm">
-                        {selectedBusiness ? (selectedBusiness.title || selectedBusiness.locationName || selectedBusiness.name?.split('/').pop()) : 'Select Business'}
-                      </span>
-                      <span className="text-xs">▼</span>
-                    </button>
-
-                    {showBusinessDropdown && (
-                      <div className="absolute right-0 mt-2 w-64 bg-[#1a1b2e] border border-white/10 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                        {businesses.map((business, index) => (
-                          <button
-                            key={business.name || index}
-                            onClick={() => handleBusinessSelect(business)}
-                            className={`w-full text-left px-4 py-2 text-sm hover:bg-[#2a2b3e] ${selectedBusiness?.name === business.name ? 'bg-blue-600/20' : ''}`}
-                          >
-                            {business.title || business.locationName || business.name?.split('/').pop()}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                {/* Business Profile Dropdown */}
+                <BusinessProfileDropdown 
+                  onSelect={(business) => {
+                    // Fetch posts for the selected business
+                    if (business && business.name) {
+                      const locationId = business.name.split('/')[1];
+                      fetchPosts(business.accountId, locationId);
+                    }
+                  }}
+                  className="w-64"
+                />
               </div>
               <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3">
                 <div>
