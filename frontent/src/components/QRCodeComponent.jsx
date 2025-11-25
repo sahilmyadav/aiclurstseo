@@ -3,24 +3,24 @@ import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import QRCode from 'qrcode';
 import BusinessProfileDropdown from './common/BusinessProfileDropdown';
 
-function QRCodeComponent() {
-  const { businesses, selectedBusiness, isConnected, loading } = useGoogleBusiness();
+const QRCodeComponent = () => {
+  const { businesses, selectedBusinesses, isConnected, loading } = useGoogleBusiness();
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [reviewLink, setReviewLink] = useState('');
   
   // Generate QR code when business is selected
   useEffect(() => {
-    if (selectedBusiness) {
+    if (selectedBusinesses) {
       generateQRCode();
     }
-  }, [selectedBusiness]);
+  }, [selectedBusinesses]);
 
   const generateQRCode = async () => {
-    if (!selectedBusiness) return;
+    if (!selectedBusinesses) return;
     
     // Extract location ID from business name
-    const locationId = selectedBusiness.name.split('/').pop();
-    const businessName = selectedBusiness.title || 'Business';
+    const locationId = selectedBusinesses.map(business => business.name.split('/').pop()).join(',');
+    const businessName = selectedBusinesses.map(business => business.title || 'Business').join(', ');
     
     // Get frontend URL from env or use current origin
     const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
@@ -48,7 +48,7 @@ function QRCodeComponent() {
     if (!qrCodeUrl) return;
     
     const link = document.createElement('a');
-    link.download = `qr-${selectedBusiness?.title || 'business'}.png`;
+    link.download = `qr-${selectedBusinesses?.title || 'business'}.png`;
     link.href = qrCodeUrl;
     link.click();
   };
@@ -109,7 +109,7 @@ function QRCodeComponent() {
               title="Refresh local businesses"
             >
               <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" />
+                <path d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" />
               </svg>
             </button>
           </div>
@@ -120,7 +120,9 @@ function QRCodeComponent() {
 
         {/* Business Selection - Using BusinessProfileDropdown component */}
         <div className="mb-6">
-          <BusinessProfileDropdown />
+          <BusinessProfileDropdown 
+            multiple={selectedBusinesses && selectedBusinesses.length > 1}
+          />
         </div>
 
         {/* Review Link Display */}

@@ -645,3 +645,86 @@ export const verifySubscription = async (req, res) => {
     res.status(500).json({ error: error.message || "Error verifying subscription" });
   }
 };
+
+// Get user subscription data
+export const getUserSubscription = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({ message: "User ID required" });
+    }
+    
+    // Check if requesting user is admin or requesting their own data
+    const requestingUserId = req.user._id.toString();
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    // If not admin and not requesting own data, deny access
+    if (requestingUserId !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    
+    // Fetch active subscription for this user
+    const subscription = await Subscription.findOne({ 
+      userId,
+      status: { $in: ['active', 'cancelled'] }
+    }).sort({ createdAt: -1 });
+    
+    if (!subscription) {
+      return res.json(null);
+    }
+    
+    res.json({
+      id: subscription._id,
+      userId: subscription.userId,
+      planType: subscription.planType,
+      profiles: subscription.profiles,
+      startDate: subscription.startDate,
+      endDate: subscription.endDate,
+      status: subscription.status,
+      cancelledAt: subscription.cancelledAt,
+      isTrial: subscription.planType === 'trial'
+    });
+  } catch (err) {
+    console.error('Error fetching user subscription:', err);
+    res.status(500).json({ message: "Failed to fetch subscription data" });
+  }
+};
+
+// Get user transaction history
+export const getUserTransactions = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({ message: "User ID required" });
+    }
+    
+    // Check if requesting user is admin or requesting their own data
+    const requestingUserId = req.user._id.toString();
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    
+    // If not admin and not requesting own data, deny access
+    if (requestingUserId !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: "Access denied" });
+    }
+    
+    // Fetch payment transactions for this user
+    const transactions = await Payment.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(50); // Limit to 50 most recent transactions
+    
+    res.json(transactions);
+  } catch (err) {
+    console.error('Error fetching user transactions:', err);
+    res.status(500).json({ message: "Failed to fetch transaction data" });
+  }
+};

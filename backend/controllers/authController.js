@@ -63,6 +63,45 @@ export const register = async (req, res) => {
   }
 };
 
+export const getUserById = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+    
+    // Check if requesting user is admin or requesting their own data
+    const requestingUserId = req.user._id.toString();
+    
+    // If not admin and not requesting own data, deny access
+    if (requestingUserId !== userId && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Access denied' });
+    }
+    
+    const user = await User.findById(userId).select('-password -__v');
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    return res.json({
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      isActive: user.isActive,
+      lastLogin: user.lastLogin,
+      loginCount: user.loginCount,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt
+    });
+  } catch (err) {
+    console.error('Error fetching user:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
 export const getCurrentUser = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('-password -__v');

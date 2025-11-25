@@ -1,6 +1,6 @@
 import express from 'express';
 const router = express.Router();
-import { register, login, getCurrentUser } from '../controllers/authController.js';
+import { register, login, getCurrentUser, getUserById } from '../controllers/authController.js';
 import { firebaseGoogleSignup } from '../controllers/firebaseAuthController.js';
 import auth from '../middleware/auth.js';
 
@@ -16,6 +16,7 @@ router.post('/firebase/google-signup', firebaseGoogleSignup);
 // GET /api/auth/me - Get current user's profile
 router.get('/me', auth, getCurrentUser);
 
-export default router;
+// GET /api/auth/user/:userId - Get user by ID (admin or own user only)
+router.get('/user/:userId', auth, getUserById);
 
-// ok
+export default router;

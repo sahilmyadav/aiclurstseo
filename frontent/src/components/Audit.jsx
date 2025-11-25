@@ -31,10 +31,12 @@ const Audit = () => {
   const {
     businesses,
     selectedBusiness,
+    selectedBusinesses, // Add this
     reviews,
     loading,
     isConnected,
     selectBusiness,
+    selectMultipleBusinesses, // Add this
     reviewStats
   } = useGoogleBusiness();
   
@@ -66,17 +68,16 @@ const Audit = () => {
     };
   }, []);
 
-  const handleBusinessSelect = useCallback(async (business) => {
-    try {
-      await selectBusiness(business);
-      // Reset insights when business changes
-      setAIInsights(null);
-      setInsightsError(null);
-      setCooldownTimer(0); // Reset cooldown when business changes
-    } catch (error) {
-      toast.error('Failed to select business');
+  // Handle business selection
+  const handleBusinessSelect = (businessOrBusinesses) => {
+    if (Array.isArray(businessOrBusinesses)) {
+      // Multiple selections
+      selectMultipleBusinesses(businessOrBusinesses);
+    } else {
+      // Single selection
+      selectBusiness(businessOrBusinesses);
     }
-  }, [selectBusiness]);
+  };
 
   const monthlyData = useMemo(() => {
     if (!reviews?.length) return [];
@@ -257,6 +258,7 @@ const Audit = () => {
                   <BusinessProfileDropdown 
                     onSelect={handleBusinessSelect}
                     showLabel={false}
+                    multiple={selectedBusinesses && selectedBusinesses.length > 1}
                   />
                 </div>
               </div>

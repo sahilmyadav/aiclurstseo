@@ -22,7 +22,16 @@ const Reviews = () => {
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
     const [aiSuggestion, setAiSuggestion] = useState('');
     const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'replied', 'needsReply'
-    const { reviews, selectedBusiness, businesses, loading, selectBusiness, tokenDetails } = useGoogleBusiness();
+    const { 
+      reviews, 
+      selectedBusiness, 
+      selectedBusinesses, // Add this
+      businesses, 
+      loading, 
+      selectBusiness, 
+      selectMultipleBusinesses, // Add this
+      tokenDetails 
+    } = useGoogleBusiness();
     
     // Initialize expanded rows when reviews are loaded
     useEffect(() => {
@@ -191,46 +200,29 @@ const Reviews = () => {
         }
     };
 
-    // Submit reply/update to backend
-    const submitReply = async () => {
-        if (!replyText.trim() || !currentReview || !selectedBusiness) return;
-
+    const handleSubmitReply = async (reviewId, replyText) => {
         setReplyLoading(true);
-        const isEdit = isEditMode; // Capture the edit mode before async operations
         try {
-            // Extract account ID and location ID from selected business
-            const accountId = selectedBusiness.accountId;
-            const locationId = selectedBusiness.name.split("/")[1];
-            const reviewId = currentReview.reviewData.name.split("/").pop();
-            
-            // Create axios instance with base URL and default headers
-            const api = axios.create({
-                baseURL:  import.meta.env.VITE_API_BASE , // Replace with your actual backend URL
+            // Submit the reply to Google
+            const response = await fetch(`${import.meta.env.VITE_API_BASE}/auth/google/reply`, {
+                method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${tokenDetails?.accessToken}`
+                    'Authorization': `Bearer ${token}`
                 },
-                withCredentials: true,
-                timeout: 10000 // 10 seconds timeout
+                body: JSON.stringify({
+                    reviewId,
+                    comment: replyText
+                })
             });
 
-            // Use the same endpoint for both create and update
-            const response = await api.post('/api/reviews/reply', {
-                comment: replyText,
-                accountId,
-                locationId,
-                reviewId,
-                accessToken: tokenDetails?.accessToken
-            });
-            
-            console.log('Response:', response.data);
-
-            // Show success message based on action
-            if (isEditMode) {
-                toast.success('Reply updated successfully!');
-            } else {
-                toast.success('Reply sent successfully!');
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Failed to submit reply');
             }
+
+            // Show success toast
+            toast.success('Reply sent successfully!');
             
             // Always reset UI state regardless of response
             setReplyLoading(false);
@@ -238,7 +230,12 @@ const Reviews = () => {
             setReplyText('');
             
             // Refresh reviews to show the new reply
-            await selectBusiness(selectedBusiness);
+            if (selectedBusinesses && selectedBusinesses.length > 0) {
+                // For multiple selections, use the first one
+                await selectBusiness(selectedBusinesses[0]);
+            } else if (selectedBusiness) {
+                await selectBusiness(selectedBusiness);
+            }
         } catch (error) {
             console.error('Error submitting reply:', error);
             // Show error toast
@@ -250,7 +247,12 @@ const Reviews = () => {
             setReplyText('');
             
             // Refresh reviews to show any changes
-            await selectBusiness(selectedBusiness);
+            if (selectedBusinesses && selectedBusinesses.length > 0) {
+                // For multiple selections, use the first one
+                await selectBusiness(selectedBusinesses[0]);
+            } else if (selectedBusiness) {
+                await selectBusiness(selectedBusiness);
+            }
         }
     };
 
@@ -377,7 +379,9 @@ const Reviews = () => {
         <div className="relative">
             {/* Business Profile Dropdown */}
             <div className="mt-5 mb-8 mx-4 sm:mx-6 lg:mx-8">
-                <BusinessProfileDropdown />
+                <BusinessProfileDropdown 
+                    multiple={selectedBusinesses && selectedBusinesses.length > 1}
+                />
             </div>
 
             {/* Stats Cards */}

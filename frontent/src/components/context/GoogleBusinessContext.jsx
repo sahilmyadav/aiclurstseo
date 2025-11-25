@@ -16,6 +16,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [businesses, setBusinesses] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [selectedBusinesses, setSelectedBusinesses] = useState([]); // For multiple selections
   const [reviews, setReviews] = useState([]);
   const [localReviews, setLocalReviews] = useState([]); // New state for local reviews
   const [loading, setLoading] = useState(false);
@@ -122,6 +123,7 @@ export const GoogleBusinessProvider = ({ children }) => {
         if (data.businesses && data.businesses.length > 0 && !selectedBusiness) {
           const firstBusiness = data.businesses[0];
           setSelectedBusiness(firstBusiness);
+          setSelectedBusinesses([firstBusiness]); // Also add to multiple selections
           
           // Set review URI from first business metadata if available
           if (firstBusiness.metadata?.newReviewUri) {
@@ -212,6 +214,7 @@ export const GoogleBusinessProvider = ({ children }) => {
       setUser(null);
       setBusinesses([]);
       setSelectedBusiness(null);
+      setSelectedBusinesses([]); // Reset multiple selections
       setReviews([]);
       setLocalReviews([]); // Reset local reviews
       setIsConnected(false);
@@ -223,7 +226,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     }
   };
 
-  // Select a business and fetch its reviews
+  // Select a single business and fetch its reviews
   const selectBusiness = async (business) => {
     setSelectedBusiness(business);
     const accountId = business.accountId;
@@ -237,6 +240,50 @@ export const GoogleBusinessProvider = ({ children }) => {
     await fetchReviews(accountId, locationId);
     // Also fetch local reviews when business is selected
     await fetchLocalReviews(locationId);
+  };
+
+  // Select multiple businesses
+  const selectMultipleBusinesses = async (businesses) => {
+    setSelectedBusinesses(businesses);
+    
+    // If there's at least one business selected, use the first one as the primary
+    if (businesses.length > 0) {
+      const primaryBusiness = businesses[0];
+      setSelectedBusiness(primaryBusiness);
+      
+      // Set review URI from business metadata if available
+      if (primaryBusiness.metadata?.newReviewUri) {
+        setReviewUri(primaryBusiness.metadata.newReviewUri);
+      }
+      
+      // Fetch reviews for the primary business
+      const accountId = primaryBusiness.accountId;
+      const locationId = primaryBusiness.name.split("/")[1];
+      await fetchReviews(accountId, locationId);
+      // Also fetch local reviews when business is selected
+      await fetchLocalReviews(locationId);
+    } else {
+      // If no businesses selected, clear the primary selection
+      setSelectedBusiness(null);
+      setReviews([]);
+      setLocalReviews([]);
+    }
+  };
+
+  // Toggle selection of a business (for multiple selections)
+  const toggleBusinessSelection = async (business) => {
+    const isSelected = selectedBusinesses.some(b => b.name === business.name);
+    
+    let newSelections;
+    if (isSelected) {
+      // Remove from selection
+      newSelections = selectedBusinesses.filter(b => b.name !== business.name);
+    } else {
+      // Add to selection
+      newSelections = [...selectedBusinesses, business];
+    }
+    
+    await selectMultipleBusinesses(newSelections);
   };
 
   // Calculate review statistics
@@ -303,6 +350,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     user,
     businesses,
     selectedBusiness,
+    selectedBusinesses, // For multiple selections
     reviews,
     localReviews,
     loading,
@@ -314,6 +362,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     // Actions
     setBusinesses,
     setSelectedBusiness,
+    setSelectedBusinesses, // For multiple selections
     setReviews,
     setLocalReviews,
     setLoading,
@@ -324,6 +373,8 @@ export const GoogleBusinessProvider = ({ children }) => {
     fetchReviews,
     fetchLocalReviews,
     selectBusiness,
+    selectMultipleBusinesses, // For multiple selections
+    toggleBusinessSelection, // Toggle selection
     refreshData,
     fetchScheduledPosts,
     // Computed values

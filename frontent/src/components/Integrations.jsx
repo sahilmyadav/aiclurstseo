@@ -68,11 +68,13 @@ const Integrations = () => {
     businesses,
     reviews,
     selectedBusiness,
+    selectedBusinesses,
     loading,
     isConnected,
     connectGoogle,
     disconnectGoogle,
-    selectBusiness
+    selectBusiness,
+    selectMultipleBusinesses
   } = useGoogleBusiness();
   
   const [selectedLocation, setSelectedLocation] = useState(null);
@@ -89,10 +91,16 @@ const Integrations = () => {
     await connectGoogle();
   };
 
-  const handleBusinessSelect = async (business) => {
-    await selectBusiness(business);
+  // Handle business selection
+  const handleBusinessSelect = (businessOrBusinesses) => {
+    if (Array.isArray(businessOrBusinesses)) {
+      // Multiple selections
+      selectMultipleBusinesses(businessOrBusinesses);
+    } else {
+      // Single selection
+      selectBusiness(businessOrBusinesses);
+    }
   };
-
 
   const handleDisconnect = async () => {
     await disconnectGoogle();
@@ -160,6 +168,7 @@ const Integrations = () => {
                     <BusinessProfileDropdown 
                       onSelect={handleBusinessSelect}
                       className="w-full max-w-md"
+                      multiple={selectedBusinesses && selectedBusinesses.length > 1}
                     />
                   </div>
                   
