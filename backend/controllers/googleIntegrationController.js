@@ -117,8 +117,22 @@ export const getGoogleBusinesses = async (req, res) => {
           {
             headers: { Authorization: `Bearer ${token}` },
             params: {
-              readMask: "name,title,storeCode,metadata,latlng,phoneNumbers,regularHours",
-            },
+              readMask: `
+                name,
+                title,
+                storeCode,
+                metadata,
+                latlng,
+                phoneNumbers,
+                regularHours,
+                moreHours,
+                specialHours,
+                categories,
+                websiteUri,
+                languageCode
+                
+              `.replace(/\s+/g, '')
+            }
           }
         );
         const locations = locationsRes.data.locations || [];
@@ -127,6 +141,7 @@ export const getGoogleBusinesses = async (req, res) => {
         console.warn(`Failed to fetch locations for account ${accountId}:`, locErr.response?.data || locErr.message);
       }
     }
+    console.log("allLocations",allLocations)
     res.json({
       user: global.googleUser,
       businesses: allLocations,

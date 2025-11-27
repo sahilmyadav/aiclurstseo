@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import Subscription from "../models/Subscription.js";
+import Plan from "../models/Plan.js";
 import User from "../models/User.js";
 import TrialUsage from "../models/TrialUsage.js";
 import Payment from "../models/Payment.js";
@@ -205,24 +206,44 @@ export const testTrialEndDate = async (req, res) => {
 export const createCheckoutSession = async (req, res) => {
   try {
     console.log('Request body:', req.body);
-    const { userId, planType, profiles } = req.body;
-    
+    const { planType, profiles } = req.body;
+    const userId = req.user?._id || req.body.userId;
+
     // Validate required fields
     if (!userId) {
-      console.error('Missing userId in request');
-      return res.status(400).json({ error: "User ID is required" });
+      console.error('User not authenticated');
+      return res.status(401).json({ error: "Authentication required" });
     }
-    if (!planType || !['monthly', 'yearly'].includes(planType)) {
+    if (!planType || !['daily', 'monthly', 'yearly'].includes(planType)) {
       console.error('Invalid planType:', planType);
-      return res.status(400).json({ error: "Valid plan type (monthly/yearly) is required" });
+      return res.status(400).json({ error: "Valid plan type (daily/monthly/yearly) is required" });
     }
     if (!profiles || isNaN(profiles) || profiles < 1) {
       console.error('Invalid profiles count:', profiles);
       return res.status(400).json({ error: "Valid number of profiles is required" });
     }
 
-    const price = planType === "monthly" ? 99 * profiles * 100 : 599 * profiles * 100; // cents
-    console.log('Creating checkout session with:', { userId, planType, profiles, price });
+    // Fetch plan details from database
+    const plan = await Plan.findOne({ planType, isActive: true });
+    if (!plan) {
+      console.error('Plan not found for type:', planType);
+      return res.status(404).json({ error: "Plan configuration not found" });
+    }
+
+    // Calculate prices
+    const originalPricePerProfile = plan.pricePerProfile; // This is the base price from the plan
+    const discountAmount = (originalPricePerProfile * plan.discountPercent) / 100;
+    const discountedPricePerProfile = originalPricePerProfile - discountAmount;
+    const totalAmount = Math.round(discountedPricePerProfile * profiles * 100); // Convert to cents
+
+    console.log('Price calculation:', {
+      planType,
+      profiles,
+      originalPricePerProfile,
+      discountPercent: plan.discountPercent,
+      discountedPricePerProfile,
+      totalAmountCents: totalAmount
+    });
 
     // Get user data from database
     const user = await User.findById(userId);
@@ -239,29 +260,33 @@ export const createCheckoutSession = async (req, res) => {
           price_data: {
             currency: "usd",
             product_data: {
-              name: `${planType.toUpperCase()} Subscription (${profiles} Profile${profiles > 1 ? "s" : ""})`,
-              description: `Access to ${profiles} profile${profiles > 1 ? 's' : ''} on the ${planType} plan`
+              name: `${plan.name} Subscription (${profiles} Profile${profiles > 1 ? "s" : ""})`,
+              description: plan.description || `Access to ${profiles} profile${profiles > 1 ? 's' : ''} on the ${plan.name} plan`
             },
-            unit_amount: price,
+            unit_amount: Math.round(discountedPricePerProfile * 100), // Convert to cents
             recurring: {
-              interval: planType === "monthly" ? "month" : "year",
+              interval: planType === "daily" ? "day" : 
+                       planType === "monthly" ? "month" : "year",
             },
           },
-          quantity: 1,
+          quantity: profiles,
         },
       ],
       success_url: `${process.env.FRONTEND_URL}/dashboard/subscription/success?session_id={CHECKOUT_SESSION_ID}&verify=true`,
       cancel_url: `${process.env.FRONTEND_URL}/subscription?canceled=true`,
       metadata: { 
-        userId, 
-        planType, 
-        profiles: profiles.toString() 
+        userId: userId.toString(),
+        planType,
+        profiles: profiles.toString(),
+        originalPricePerProfile: originalPricePerProfile.toString(),
+        discountedPricePerProfile: discountedPricePerProfile.toString(),
+        discountPercent: plan.discountPercent.toString(),
+        totalAmount: (discountedPricePerProfile * profiles).toString()
       },
       customer_email: user.email,
-      client_reference_id: userId,
+      client_reference_id: userId.toString(),
     });
 
-    // Return the checkout URL for redirection
     res.json({ 
       url: session.url,
       sessionId: session.id 
@@ -324,6 +349,7 @@ export const verifyStripeWebhook = async (req, res) => {
         }
         
         const endDate = new Date(startDate);
+        if (planType === "daily") endDate.setDate(endDate.getDate() + 1);
         if (planType === "monthly") endDate.setMonth(endDate.getMonth() + 1);
         if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
 
@@ -394,6 +420,7 @@ export const verifyStripeWebhook = async (req, res) => {
         // No active subscription, create new one immediately
         const startDate = new Date();
         const endDate = new Date(startDate);
+        if (planType === "daily") endDate.setDate(endDate.getDate() + 1);
         if (planType === "monthly") endDate.setMonth(endDate.getMonth() + 1);
         if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
 
@@ -510,6 +537,7 @@ export const verifySubscription = async (req, res) => {
               }
               
               endDate = new Date(startDate);
+              if (planType === "daily") endDate.setDate(endDate.getDate() + 1);
               if (planType === "monthly") endDate.setMonth(endDate.getMonth() + 1);
               if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
               
@@ -548,6 +576,7 @@ export const verifySubscription = async (req, res) => {
               // No active subscription, create new one immediately
               startDate = new Date();
               endDate = new Date(startDate);
+              if (planType === "daily") endDate.setDate(endDate.getDate() + 1);
               if (planType === "monthly") endDate.setMonth(endDate.getMonth() + 1);
               if (planType === "yearly") endDate.setFullYear(endDate.getFullYear() + 1);
               
@@ -603,6 +632,15 @@ export const verifySubscription = async (req, res) => {
               user.subscription.activeSubscriptionId = subscription._id;
               await user.save();
             }
+            
+            // Return the subscription data with ID, amount, and currency
+            return res.status(200).json({
+              active: true,
+              id: subscription._id, // Explicitly include the ID
+              amount: session.amount_total, // Include amount in cents
+              currency: session.currency || 'usd', // Include currency
+              ...subscription._doc
+            });
           }
           
           return res.json({
@@ -726,5 +764,61 @@ export const getUserTransactions = async (req, res) => {
   } catch (err) {
     console.error('Error fetching user transactions:', err);
     res.status(500).json({ message: "Failed to fetch transaction data" });
+  }
+};
+
+// Get active subscription plans (for frontend pricing page)
+export const getPlans = async (req, res) => {
+  try {
+    const plans = await Plan.find({ isActive: true }).sort({
+      pricePerProfile: 1,
+    });
+    res.json(plans);
+  } catch (err) {
+    console.error("Error fetching plans:", err);
+    res.status(500).json({ message: "Failed to fetch subscription plans" });
+  }
+};
+
+// Create or update a subscription plan (for seeding via Postman / admin panel)
+export const createPlan = async (req, res) => {
+  try {
+    const { name, planType, description, pricePerProfile, discountPercent, features, isActive } =
+      req.body;
+
+    if (!name || !planType || pricePerProfile == null) {
+      return res
+        .status(400)
+        .json({ message: "name, planType and pricePerProfile are required" });
+    }
+
+    const allowedTypes = ["daily", "monthly", "yearly"];
+    if (!allowedTypes.includes(planType)) {
+      return res
+        .status(400)
+        .json({ message: "planType must be one of: daily, monthly, yearly" });
+    }
+
+    // Upsert by planType so you can safely hit this multiple times from Postman
+    const plan = await Plan.findOneAndUpdate(
+      { planType },
+      {
+        name,
+        planType,
+        description,
+        pricePerProfile,
+        discountPercent: discountPercent ?? 0,
+        features: Array.isArray(features) ? features : [],
+        isActive: isActive !== undefined ? isActive : true,
+      },
+      { new: true, upsert: true }
+    );
+
+    res.json(plan);
+  } catch (err) {
+    console.error("Error creating/updating plan:", err);
+    res
+      .status(500)
+      .json({ message: err.message || "Failed to create/update plan" });
   }
 };

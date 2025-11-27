@@ -22,6 +22,11 @@ export const AuthContextProvider = ({ children }) => {
   const [subscriptionLoading, setSubscriptionLoading] = useState(false)
   const [subscriptionError, setSubscriptionError] = useState(null)
 
+  // Subscription plans (pricing) loaded once and shared across app
+  const [plans, setPlans] = useState([])
+  const [plansLoading, setPlansLoading] = useState(false)
+  const [plansError, setPlansError] = useState(null)
+
   const API_BASE = import.meta.env.VITE_API_BASE
   console.log("Backend API Base", API_BASE)
 
@@ -158,6 +163,29 @@ export const AuthContextProvider = ({ children }) => {
       }
     }
   }, [user, token, checkSubscriptionStatus])
+
+  // Fetch subscription plans (pricing) once
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        setPlansLoading(true)
+        setPlansError(null)
+        const { data } = await axios.get(
+          `${import.meta.env.VITE_API_BASE}/api/subscription/plans`
+        )
+        setPlans(data || [])
+      } catch (error) {
+        console.error('Error fetching plans:', error)
+        setPlansError(
+          error?.response?.data?.message || 'Failed to load subscription plans'
+        )
+      } finally {
+        setPlansLoading(false)
+      }
+    }
+
+    fetchPlans()
+  }, [])
 
   useEffect(() => {
     const initializeAuth = async () => {
@@ -315,7 +343,11 @@ export const AuthContextProvider = ({ children }) => {
       subscriptionError,
       checkSubscriptionStatus,
       activateTrial,
-      getRemainingTrialDays
+      getRemainingTrialDays,
+      // Plans (pricing)
+      plans,
+      plansLoading,
+      plansError
     }}>
       {children}
     </userContext.Provider>

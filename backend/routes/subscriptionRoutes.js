@@ -6,8 +6,10 @@ import {
   verifySubscription,
   checkTrialEligibility,
   testTrialEndDate,
-  getUserSubscription, // Add this
-  getUserTransactions
+  getUserSubscription,
+  getUserTransactions,
+  getPlans,
+  createPlan,
 } from "../controllers/subscriptionController.js";
 import { triggerActivation } from "../controllers/subscriptionQueueController.js";
 import protect from "../middleware/auth.js";
@@ -32,6 +34,8 @@ router.post("/create-checkout-session", protect,createCheckoutSession);
 router.get("/verify", verifySubscription);
 router.get("/user/:userId", protect, getUserSubscription); // Add this
 router.get("/transactions/:userId", protect, getUserTransactions);
+router.get("/plans", getPlans);
+router.post("/plans", createPlan);
 
 // Queue management route
 router.post("/activate-queued", triggerActivation);
