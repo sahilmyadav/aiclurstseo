@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { loadStripe } from "@stripe/stripe-js";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 import { FiCheck, FiPlus, FiMinus, FiStar, FiUsers } from "react-icons/fi";
-
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
 const SubscriptionPage = () => {
   const { 
@@ -22,13 +19,18 @@ const SubscriptionPage = () => {
     subscriptionError,
     checkSubscriptionStatus, 
     activateTrial, 
-    getRemainingTrialDays
+    getRemainingTrialDays,
+    // Plans from AuthContext
+    plans,
+    plansLoading,
+    plansError,
   } = useAuth();
   
   const [profiles, setProfiles] = useState(1);
   const [loading, setLoading] = useState(false);
   const [monthlyLoading, setMonthlyLoading] = useState(false);
   const [yearlyLoading, setYearlyLoading] = useState(false);
+  const [dailyLoading, setDailyLoading] = useState(false);
   const navigate = useNavigate();
 
   // Check for successful payment redirection
@@ -97,8 +99,26 @@ const SubscriptionPage = () => {
     );
   }
 
-  const monthlyPrice = 99;
-  const yearlyPrice = 599;
+  const getPlanByType = (type) => {
+    const plan = plans.find((p) => p.planType === type && p.isActive !== false);
+    if (!plan) return null;
+    
+    // Calculate discounted price if discount is available
+    const discountPercent = plan.discountPercent || 0;
+    const hasDiscount = discountPercent > 0;
+    const originalPrice = plan.pricePerProfile || 0;
+    const discountedPrice = hasDiscount 
+      ? originalPrice * (1 - (discountPercent / 100))
+      : originalPrice;
+    
+    return {
+      ...plan,
+      originalPricePerProfile: originalPrice,
+      discountedPricePerProfile: discountedPrice,
+      hasDiscount,
+      discountPercent
+    };
+  };
 
   // Trial Activation
   const handleTrial = async () => {
@@ -132,6 +152,8 @@ const SubscriptionPage = () => {
         setMonthlyLoading(true);
       } else if (planType === 'yearly') {
         setYearlyLoading(true);
+      } else if (planType === 'daily') {
+        setDailyLoading(true);
       }
 
       // Get user ID - handle both _id and id fields
@@ -142,7 +164,7 @@ const SubscriptionPage = () => {
         return;
       }
 
-      if (!['monthly', 'yearly'].includes(planType)) {
+      if (!['daily', 'monthly', 'yearly'].includes(planType)) {
         throw new Error('Invalid plan type');
       }
 
@@ -150,13 +172,13 @@ const SubscriptionPage = () => {
         throw new Error('Invalid number of profiles');
       }
 
+      // Only send planType and profiles to backend
       const requestData = {
-        userId: userId,
         planType,
         profiles: Number(profiles)
       };
 
-      console.log('Sending request with:', requestData);
+      console.log('Sending request to create checkout session:', { planType, profiles });
 
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE}/api/subscription/create-checkout-session`,
@@ -169,7 +191,7 @@ const SubscriptionPage = () => {
         }
       );
 
-      console.log('Response:', response.data);
+      console.log('Checkout session created:', response.data);
       
       if (!response.data.url) {
         throw new Error('No checkout URL received from server');
@@ -192,6 +214,7 @@ const SubscriptionPage = () => {
       // Reset loading state for specific plan
       setMonthlyLoading(false);
       setYearlyLoading(false);
+      setDailyLoading(false);
     }
   };
 
@@ -330,101 +353,211 @@ const SubscriptionPage = () => {
           </div>
         </div>
 
-        {/* Subscription Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {/* Monthly Plan */}
-          <div className="bg-gray-800 rounded-2xl shadow-xl border border-gray-700 hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-            <div className="p-8">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-white">Monthly</h3>
-                  <p className="text-gray-300 mt-1">Perfect for getting started</p>
-                </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-                    ${(monthlyPrice * profiles).toFixed(0)}
-                  </div>
-                  <div className="text-sm text-gray-400">/month</div>
-                </div>
-              </div>
-
-              <div className="space-y-3 mb-8">
-                {[
-                  "Unlimited posts",
-                  "Analytics dashboard", 
-                  "Team collaboration",
-                  "24/7 support"
-                ].map((feature, index) => (
-                  <div key={index} className="flex items-center">
-                    <div className="w-5 h-5 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full flex items-center justify-center mr-3">
-                      <FiCheck className="w-3 h-3 text-white" />
-                    </div>
-                    <span className="text-gray-300">{feature}</span>
-                  </div>
-                ))}
-              </div>
-
-              <button
-                onClick={() => handleSubscribe("monthly")}
-                disabled={monthlyLoading}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {monthlyLoading ? "Processing..." : "Get Started"}
-              </button>
-            </div>
+        {/* Plans loading / error */}
+        {plansLoading && (
+          <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-4 mb-4 text-center text-gray-300">
+            Loading plans...
           </div>
+        )}
+        {plansError && (
+          <div className="bg-red-900/60 border border-red-600 text-red-200 rounded-2xl p-4 mb-4 text-center text-sm">
+            {plansError}
+          </div>
+        )}
+
+        {/* Subscription Plans */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Daily Plan */}
+          {getPlanByType("daily") && (
+            <div className={`bg-gray-800 rounded-2xl shadow-xl border ${getPlanByType("daily").isPopular ? 'border-blue-500 border-2' : 'border-gray-700'} hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden`}>
+              {/* Popular Badge */}
+              {getPlanByType("daily").isPopular && (
+                <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  {getPlanByType("daily").badgeText || 'POPULAR'}
+                </div>
+              )}
+              
+              {/* Discount Badge */}
+              {getPlanByType("daily").hasDiscount && (
+                <div className="absolute top-0 left-0 bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-br-lg">
+                  SAVE {getPlanByType("daily").discountPercent}%
+                </div>
+              )}
+              
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-white">
+                  {getPlanByType("daily").name}
+                </h3>
+                <p className="text-gray-300 mt-1">
+                  {getPlanByType("daily").description}
+                </p>
+                
+                <div className="my-6">
+                  {getPlanByType("daily").hasDiscount && (
+                    <span className="text-sm text-gray-400 line-through">
+                      ${(getPlanByType("daily").originalPricePerProfile * profiles).toFixed(2)}
+                    </span>
+                  )}
+                  <div className="text-3xl font-bold text-white my-2">
+                    ${(getPlanByType("daily").discountedPricePerProfile * profiles).toFixed(2)}
+                    <span className="text-sm text-gray-400">/day</span>
+                  </div>
+                  {getPlanByType("daily").hasDiscount && (
+                    <span className="text-sm text-emerald-400">
+                      Save {getPlanByType("daily").discountPercent}%
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  {(getPlanByType("daily").features || []).map((feature, index) => (
+                    <div key={index} className="flex items-center">
+                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                        <FiCheck className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-gray-300">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handleSubscribe("daily")}
+                  disabled={dailyLoading}
+                  className={`w-full ${getPlanByType("daily").isPopular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white py-3 px-6 rounded-lg font-semibold transition-colors`}
+                >
+                  {dailyLoading ? 'Processing...' : (getPlanByType("daily")?.buttonText || 'Get Started')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Monthly Plan */}
+          {getPlanByType("monthly") && (
+            <div className={`bg-gray-800 rounded-2xl shadow-xl border ${getPlanByType("monthly").isPopular ? 'border-blue-500 border-2' : 'border-gray-700'} hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden`}>
+              {/* Popular Badge */}
+              {getPlanByType("monthly").isPopular && (
+                <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  {getPlanByType("monthly").badgeText || 'POPULAR'}
+                </div>
+              )}
+              
+              {/* Discount Badge */}
+              {getPlanByType("monthly").hasDiscount && (
+                <div className="absolute top-0 left-0 bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-br-lg">
+                  SAVE {getPlanByType("monthly").discountPercent}%
+                </div>
+              )}
+              
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-white">
+                  {getPlanByType("monthly").name}
+                </h3>
+                <p className="text-gray-300 mt-1">
+                  {getPlanByType("monthly").description}
+                </p>
+                
+                <div className="my-6">
+                  {getPlanByType("monthly").hasDiscount && (
+                    <span className="text-sm text-gray-400 line-through">
+                      ${(getPlanByType("monthly").originalPricePerProfile * profiles).toFixed(2)}
+                    </span>
+                  )}
+                  <div className="text-3xl font-bold text-white my-2">
+                    ${(getPlanByType("monthly").discountedPricePerProfile * profiles).toFixed(2)}
+                    <span className="text-sm text-gray-400">/month</span>
+                  </div>
+                  {getPlanByType("monthly").hasDiscount && (
+                    <span className="text-sm text-emerald-400">
+                      Save {getPlanByType("monthly").discountPercent}%
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  {(getPlanByType("monthly").features || []).map((feature, index) => (
+                    <div key={index} className="flex items-center">
+                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                        <FiCheck className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-gray-300">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handleSubscribe("monthly")}
+                  disabled={monthlyLoading}
+                  className={`w-full ${getPlanByType("monthly").isPopular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white py-3 px-6 rounded-lg font-semibold transition-colors`}
+                >
+                  {monthlyLoading ? 'Processing...' : (getPlanByType("monthly")?.buttonText || 'Get Started')}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Yearly Plan */}
-          <div className="bg-gray-800 rounded-2xl shadow-xl border-2 border-emerald-600 hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-400 to-green-400"></div>
-            {/* Popular Badge */}
-            <div className="absolute -top-3 -right-3 bg-gradient-to-r from-emerald-500 to-green-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg">
-              SAVE 50%
-            </div>
-            
-            <div className="p-8">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-2xl font-bold text-white">Yearly</h3>
-                  <p className="text-gray-300 mt-1">Best value</p>
+          {getPlanByType("yearly") && (
+            <div className={`bg-gray-800 rounded-2xl shadow-xl border ${getPlanByType("yearly").isPopular ? 'border-blue-500 border-2' : 'border-gray-700'} hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden`}>
+              {/* Popular Badge */}
+              {getPlanByType("yearly").isPopular && (
+                <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  {getPlanByType("yearly").badgeText || 'POPULAR'}
                 </div>
-                <div className="text-right">
-                  <div className="text-3xl font-bold bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent">
-                    ${(yearlyPrice * profiles).toFixed(0)}
-                  </div>
-                  <div className="text-sm text-gray-400">/year</div>
-                  <div className="text-sm bg-gradient-to-r from-emerald-400 to-green-400 bg-clip-text text-transparent font-semibold">
-                    Save ${((monthlyPrice * 12 - yearlyPrice) * profiles).toFixed(0)}
-                  </div>
+              )}
+              
+              {/* Discount Badge */}
+              {getPlanByType("yearly").hasDiscount && (
+                <div className="absolute top-0 left-0 bg-emerald-600 text-white text-xs font-bold px-3 py-1 rounded-br-lg">
+                  SAVE {getPlanByType("yearly").discountPercent}%
                 </div>
-              </div>
+              )}
+              
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-white">
+                  {getPlanByType("yearly").name}
+                </h3>
+                <p className="text-gray-300 mt-1">
+                  {getPlanByType("yearly").description}
+                </p>
 
-              <div className="space-y-3 mb-8">
-                {[
-                  "Everything in Monthly",
-                  "AI content generation",
-                  "Custom branding",
-                  "Dedicated manager"
-                ].map((feature, index) => (
-                  <div key={index} className="flex items-center">
-                    <div className="w-5 h-5 bg-gradient-to-r from-emerald-400 to-green-400 rounded-full flex items-center justify-center mr-3">
-                      <FiCheck className="w-3 h-3 text-white" />
+                <div className="my-6">
+                  {getPlanByType("yearly").hasDiscount && (
+                    <span className="text-sm text-gray-400 line-through">
+                      ${(getPlanByType("yearly").originalPricePerProfile * profiles).toFixed(2)}
+                    </span>
+                  )}
+                  <div className="text-3xl font-bold text-white my-2">
+                    ${(getPlanByType("yearly").discountedPricePerProfile * profiles).toFixed(2)}
+                    <span className="text-sm text-gray-400">/year</span>
+                  </div>
+                  {getPlanByType("yearly").hasDiscount && (
+                    <span className="text-sm text-emerald-400">
+                      Save {getPlanByType("yearly").discountPercent}% vs monthly
+                    </span>
+                  )}
+                </div>
+
+                <div className="space-y-3 mb-6">
+                  {(getPlanByType("yearly").features || []).map((feature, index) => (
+                    <div key={index} className="flex items-center">
+                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-3">
+                        <FiCheck className="w-3 h-3 text-white" />
+                      </div>
+                      <span className="text-gray-300">{feature}</span>
                     </div>
-                    <span className="text-gray-300">{feature}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
 
-              <button
-                onClick={() => handleSubscribe("yearly")}
-                disabled={yearlyLoading}
-                className="w-full bg-gradient-to-r from-emerald-600 to-green-600 text-white py-4 px-6 rounded-xl font-semibold hover:from-emerald-700 hover:to-green-700 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {yearlyLoading ? "Processing..." : "Get 50% Off"}
-              </button>
+                <button
+                  onClick={() => handleSubscribe("yearly")}
+                  disabled={yearlyLoading}
+                  className={`w-full ${getPlanByType("yearly").isPopular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white py-3 px-6 rounded-lg font-semibold transition-colors`}
+                >
+                  {yearlyLoading ? 'Processing...' : (getPlanByType("yearly")?.buttonText || `Save ${getPlanByType("yearly")?.discountPercent}%`)}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Footer */}

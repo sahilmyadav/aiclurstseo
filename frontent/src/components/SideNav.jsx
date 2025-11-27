@@ -113,6 +113,7 @@ const SideNav = () => {
     { name: 'Settings', icon: Settings, path: '/dashboard/settings', active: location.pathname === '/dashboard/settings' },
     { name: 'Subscription', icon: CreditCard, path: '/dashboard/subscription', active: location.pathname === '/dashboard/subscription' },
     { name: 'Billing', icon: CreditCard, path: '/dashboard/billing', active: location.pathname === '/dashboard/billing' },
+    { name: 'Business Details', icon: CreditCard, path: '/dashboard/business-details', active: location.pathname === '/dashboard/business-details' },
   ];
 
   const adminNavItems = [

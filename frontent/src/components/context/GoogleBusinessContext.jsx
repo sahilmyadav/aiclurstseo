@@ -27,6 +27,8 @@ export const GoogleBusinessProvider = ({ children }) => {
     expiryDate: null,
     scopes: []
   });
+
+  console.log("Selected business",selectedBusiness)
   
   const [scheduledPosts, setScheduledPosts] = useState([]);
   const [loadingScheduled, setLoadingScheduled] = useState(false);
