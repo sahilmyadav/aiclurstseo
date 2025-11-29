@@ -1,8 +1,10 @@
 import express from 'express';
-import { getAuditAnalysis } from '../controllers/auditController.js';
+import { fetchPerformanceMetrics } from '../controllers/auditController.js';
+import { protect } from '../middleware/auth.js';
 
 const router = express.Router();
 
-router.post('/', getAuditAnalysis);
+// Fetch performance metrics for a business location
+router.post('/performance', protect, fetchPerformanceMetrics);
 
 export default router;

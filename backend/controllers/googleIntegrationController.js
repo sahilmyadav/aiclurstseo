@@ -166,6 +166,8 @@ export const getGoogleReviews = async (req, res) => {
 
     const { accountId, locationId } = req.params;
     const token = await getBearerToken();
+
+    console.log(">>>>>>>>>>>>>",token)
     const reviewsRes = await axios.get(
       `https://mybusiness.googleapis.com/v4/accounts/${accountId}/locations/${locationId}/reviews`,
       {
@@ -292,6 +294,7 @@ export const getGooglePosts = async (req, res) => {
     if (params.toString()) {
       url += `?${params.toString()}`;
     }
+    console.log("token",token)
 
     const response = await axios.get(url, {
       headers: {
