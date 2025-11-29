@@ -97,12 +97,12 @@ export const GoogleBusinessProvider = ({ children }) => {
       if (response.ok && data.success) {
         setPerformanceData(data.totals);
       } else {
-        throw new Error(data.error || 'Failed to fetch performance data');
+        // throw new Error(data.error || 'Failed to fetch performance data');
       }
     } catch (error) {
       console.error('Error fetching performance data:', error);
-      setPerformanceError(error.message);
-      toast.error('Failed to load performance data: ' + error.message);
+      // setPerformanceError(error.message);
+      // toast.error('Failed to load performance data: ' + error.message);
     } finally {
       setPerformanceLoading(false);
     }
