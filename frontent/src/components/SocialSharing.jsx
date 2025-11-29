@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaCalendarAlt, FaClock, FaRedo, FaPaperPlane, FaTimes, FaRobot } from 'react-icons/fa';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -8,7 +8,43 @@ import { generateAIPost } from '../utils/suggestion';
 const SocialSharing = () => {
   const { selectedBusiness, tokenDetails } = useGoogleBusiness();
 
- 
+  // Function to get auto keywords from selected business
+  const getAutoKeywords = () => {
+    const autoKeywords = [];
+    
+    // Add business name as a keyword
+    if (selectedBusiness && selectedBusiness.title) {
+      let businessName = '';
+      if (typeof selectedBusiness.title === 'string') {
+        businessName = selectedBusiness.title;
+      } else if (typeof selectedBusiness.title === 'object') {
+        businessName = selectedBusiness.title.name || selectedBusiness.title.displayName || '';
+      }
+      if (businessName) {
+        autoKeywords.push(businessName);
+      }
+    }
+    
+    // Add category as a keyword
+    if (selectedBusiness && selectedBusiness.categories && selectedBusiness.categories.primaryCategory) {
+      const category = selectedBusiness.categories.primaryCategory;
+      let categoryName = '';
+      if (typeof category === 'string') {
+        categoryName = category;
+      } else if (typeof category === 'object') {
+        categoryName = category.displayName || category.name || '';
+        // Handle nested objects
+        if (typeof categoryName === 'object' && categoryName !== null) {
+          categoryName = categoryName.name || categoryName.displayName || '';
+        }
+      }
+      if (categoryName) {
+        autoKeywords.push(categoryName);
+      }
+    }
+    
+    return autoKeywords;
+  };
 
   const [formData, setFormData] = useState({
     postText: '',
@@ -23,6 +59,17 @@ const SocialSharing = () => {
   });
 
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+
+  // Effect to automatically add business name and category as keywords when business changes
+  useEffect(() => {
+    if (selectedBusiness) {
+      const autoKeywords = getAutoKeywords();
+      setFormData(prev => ({
+        ...prev,
+        keywordsArray: [...autoKeywords]
+      }));
+    }
+  }, [selectedBusiness]);
 
   const handleKeywordChange = (e) => {
     const value = e.target.value;
@@ -47,6 +94,13 @@ const SocialSharing = () => {
   };
 
   const removeKeyword = (keywordToRemove) => {
+    // Prevent removal of auto keywords (business name and category)
+    const autoKeywords = getAutoKeywords();
+    if (autoKeywords.includes(keywordToRemove)) {
+      toast.error('Cannot remove auto-generated keywords');
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       keywordsArray: prev.keywordsArray.filter(keyword => keyword !== keywordToRemove)
@@ -60,7 +114,7 @@ const SocialSharing = () => {
     }
 
     if (formData.keywordsArray.length === 0) {
-      toast.error('Please add at least one keyword for AI generation');
+      toast.error('At least one keyword is required for AI generation');
       return;
     }
 
@@ -142,6 +196,12 @@ const SocialSharing = () => {
         return;
       }
       
+      // Check if we have at least one keyword (either user-added or auto-generated)
+      if (formData.keywordsArray.length === 0) {
+        toast.error('At least one keyword is required for scheduling a post');
+        return;
+      }
+      
       // Allow empty content if keywords are provided (AI will generate)
       if (!formData.postText.trim() && formData.keywordsArray.length === 0) {
         toast.error('Please either enter post content or add keywords for AI generation');
@@ -191,11 +251,12 @@ const SocialSharing = () => {
       // Show success message
       toast.success('Post scheduled successfully!');
       
-      // Reset form
+      // Reset form but keep auto keywords
+      const autoKeywords = getAutoKeywords();
       setFormData({
         postText: '',
         keywords: '',
-        keywordsArray: [],
+        keywordsArray: [...autoKeywords],
         scheduleType: 'now',
         scheduleDate: '',
         scheduleTime: '',
@@ -269,21 +330,36 @@ const SocialSharing = () => {
             {/* Keywords Tags Display */}
             {formData.keywordsArray.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
-                {formData.keywordsArray.map((keyword, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-600 text-white"
-                  >
-                    {keyword}
-                    <button
-                      type="button"
-                      onClick={() => removeKeyword(keyword)}
-                      className="ml-2 text-white hover:text-gray-200 focus:outline-none"
+                {formData.keywordsArray.map((keyword, index) => {
+                  // Check if this is an auto keyword
+                  const autoKeywords = getAutoKeywords();
+                  const isAutoKeyword = autoKeywords.includes(keyword);
+                  
+                  return (
+                    <span
+                      key={index}
+                      className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${
+                        isAutoKeyword 
+                          ? 'bg-purple-600 text-white' 
+                          : 'bg-blue-600 text-white'
+                      }`}
                     >
-                      <FaTimes className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
+                      {keyword}
+                      {!isAutoKeyword && (
+                        <button
+                          type="button"
+                          onClick={() => removeKeyword(keyword)}
+                          className="ml-2 text-white hover:text-gray-200 focus:outline-none"
+                        >
+                          <FaTimes className="w-3 h-3" />
+                        </button>
+                      )}
+                      {isAutoKeyword && (
+                        <span className="ml-2 text-xs opacity-75">(auto)</span>
+                      )}
+                    </span>
+                  );
+                })}
               </div>
             )}
             
@@ -297,7 +373,10 @@ const SocialSharing = () => {
               className="w-full bg-[#242538] border border-[#3a3b5a] rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Type keywords and press Enter or comma to add"
             />
-            <p className="text-gray-400 text-sm mt-1">Press Enter or comma to add keywords. AI will generate content based on these keywords if post content is empty. Click × to remove.</p>
+            <p className="text-gray-400 text-sm mt-1">
+              Press Enter or comma to add keywords. AI will generate content based on these keywords if post content is empty. 
+              Purple tags are auto-generated from your business name and category. Click × to remove user-added keywords.
+            </p>
           </div>
 
           {/* Schedule Options */}
