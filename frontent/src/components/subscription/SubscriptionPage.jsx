@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../context/AuthContext";
-import { FiCheck, FiPlus, FiMinus, FiStar, FiUsers } from "react-icons/fi";
+import { FiCheck, FiPlus, FiMinus, FiStar, FiUsers, FiX, FiAlertTriangle } from "react-icons/fi";
 
 const SubscriptionPage = () => {
   const { 
@@ -31,7 +31,43 @@ const SubscriptionPage = () => {
   const [monthlyLoading, setMonthlyLoading] = useState(false);
   const [yearlyLoading, setYearlyLoading] = useState(false);
   const [dailyLoading, setDailyLoading] = useState(false);
+  const [showSubscriptionDialog, setShowSubscriptionDialog] = useState(false);
+  const [dialogPlanType, setDialogPlanType] = useState('');
   const navigate = useNavigate();
+
+  // Check if a plan is active
+  const isPlanActive = (planType) => {
+    if (!subscriptionData?.active) return false;
+    return subscriptionData.planType === planType;
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    return new Date(dateString).toLocaleDateString('en-US', options);
+  };
+
+  // Handle plan button click
+  const handlePlanClick = (planType) => {
+    if (subscriptionData?.active && !isPlanActive(planType)) {
+      setDialogPlanType(planType);
+      setShowSubscriptionDialog(true);
+      return false;
+    }
+    return true;
+  };
+
+  // Get display name for plan type
+  const getPlanDisplayName = (planType) => {
+    const planMap = {
+      'daily': 'Daily',
+      'monthly': 'Monthly',
+      'yearly': 'Yearly',
+      'trial': 'Free Trial'
+    };
+    return planMap[planType] || planType;
+  };
 
   // Check for successful payment redirection
   useEffect(() => {
@@ -116,7 +152,8 @@ const SubscriptionPage = () => {
       originalPricePerProfile: originalPrice,
       discountedPricePerProfile: discountedPrice,
       hasDiscount,
-      discountPercent
+      discountPercent,
+      isActive: isPlanActive(type)
     };
   };
 
@@ -219,7 +256,6 @@ const SubscriptionPage = () => {
   };
 
   const remainingDays = getRemainingTrialDays();
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black py-8 px-4">
@@ -420,12 +456,27 @@ const SubscriptionPage = () => {
                   ))}
                 </div>
 
+                {getPlanByType("daily").isActive && (
+                  <div className="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
+                    ACTIVE
+                  </div>
+                )}
                 <button
-                  onClick={() => handleSubscribe("daily")}
-                  disabled={dailyLoading}
-                  className={`w-full ${getPlanByType("daily").isPopular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white py-3 px-6 rounded-lg font-semibold transition-colors`}
+                  onClick={() => handlePlanClick("daily") && handleSubscribe("daily")}
+                  disabled={dailyLoading || getPlanByType("daily").isActive}
+                  className={`w-full ${
+                    getPlanByType("daily").isActive 
+                      ? 'bg-gray-600 hover:bg-gray-700 cursor-not-allowed' 
+                      : getPlanByType("daily").isPopular 
+                        ? 'bg-blue-600 hover:bg-blue-700' 
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                  } text-white py-3 px-6 rounded-lg font-semibold transition-colors`}
                 >
-                  {dailyLoading ? 'Processing...' : (getPlanByType("daily")?.buttonText || 'Get Started')}
+                  {dailyLoading 
+                    ? 'Processing...' 
+                    : getPlanByType("daily").isActive 
+                      ? 'Current Plan' 
+                      : getPlanByType("daily")?.buttonText || 'Get Started'}
                 </button>
               </div>
             </div>
@@ -484,12 +535,27 @@ const SubscriptionPage = () => {
                   ))}
                 </div>
 
+                {getPlanByType("monthly").isActive && (
+                  <div className="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
+                    ACTIVE
+                  </div>
+                )}
                 <button
-                  onClick={() => handleSubscribe("monthly")}
-                  disabled={monthlyLoading}
-                  className={`w-full ${getPlanByType("monthly").isPopular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white py-3 px-6 rounded-lg font-semibold transition-colors`}
+                  onClick={() => handlePlanClick("monthly") && handleSubscribe("monthly")}
+                  disabled={monthlyLoading || getPlanByType("monthly").isActive}
+                  className={`w-full ${
+                    getPlanByType("monthly").isActive 
+                      ? 'bg-gray-600 hover:bg-gray-700 cursor-not-allowed' 
+                      : getPlanByType("monthly").isPopular 
+                        ? 'bg-blue-600 hover:bg-blue-700' 
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                  } text-white py-3 px-6 rounded-lg font-semibold transition-colors`}
                 >
-                  {monthlyLoading ? 'Processing...' : (getPlanByType("monthly")?.buttonText || 'Get Started')}
+                  {monthlyLoading 
+                    ? 'Processing...' 
+                    : getPlanByType("monthly").isActive 
+                      ? 'Current Plan' 
+                      : getPlanByType("monthly")?.buttonText || 'Get Started'}
                 </button>
               </div>
             </div>
@@ -548,12 +614,27 @@ const SubscriptionPage = () => {
                   ))}
                 </div>
 
+                {getPlanByType("yearly").isActive && (
+                  <div className="absolute top-2 right-2 bg-green-600 text-white text-xs font-bold px-2 py-1 rounded">
+                    ACTIVE
+                  </div>
+                )}
                 <button
-                  onClick={() => handleSubscribe("yearly")}
-                  disabled={yearlyLoading}
-                  className={`w-full ${getPlanByType("yearly").isPopular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'} text-white py-3 px-6 rounded-lg font-semibold transition-colors`}
+                  onClick={() => handlePlanClick("yearly") && handleSubscribe("yearly")}
+                  disabled={yearlyLoading || getPlanByType("yearly").isActive}
+                  className={`w-full ${
+                    getPlanByType("yearly").isActive 
+                      ? 'bg-gray-600 hover:bg-gray-700 cursor-not-allowed' 
+                      : getPlanByType("yearly").isPopular 
+                        ? 'bg-blue-600 hover:bg-blue-700' 
+                        : 'bg-emerald-600 hover:bg-emerald-700'
+                  } text-white py-3 px-6 rounded-lg font-semibold transition-colors`}
                 >
-                  {yearlyLoading ? 'Processing...' : (getPlanByType("yearly")?.buttonText || `Save ${getPlanByType("yearly")?.discountPercent}%`)}
+                  {yearlyLoading 
+                    ? 'Processing...' 
+                    : getPlanByType("yearly").isActive 
+                      ? 'Current Plan' 
+                      : (getPlanByType("yearly")?.buttonText || `Save ${getPlanByType("yearly")?.discountPercent}%`)}
                 </button>
               </div>
             </div>
@@ -567,6 +648,72 @@ const SubscriptionPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Subscription Dialog */}
+      {showSubscriptionDialog && (
+        <div className="fixed inset-0 backdrop-blur-sm bg-opacity-70 flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-800 rounded-2xl max-w-md w-full p-6 relative border border-gray-700">
+            <button 
+              onClick={() => setShowSubscriptionDialog(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-white"
+            >
+              <FiX className="w-6 h-6" />
+            </button>
+            
+            <div className="flex items-start mb-6">
+              <div className="bg-yellow-500/20 p-3 rounded-full mr-4">
+                <FiAlertTriangle className="w-6 h-6 text-yellow-500" />
+              </div>
+              <div>
+                <h3 className="text-xl font-bold text-white mb-1">Active Subscription</h3>
+                <p className="text-gray-300">You already have an active subscription.</p>
+              </div>
+            </div>
+            
+            <div className="bg-gray-700/50 rounded-xl p-4 mb-6">
+              <h4 className="font-semibold text-white mb-2">Current Plan Details</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-300">Plan:</span>
+                  <span className="font-medium text-white">
+                    {getPlanDisplayName(subscriptionData?.planType || '')}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-300">Status:</span>
+                  <span className="font-medium text-green-400">Active</span>
+                </div>
+                {subscriptionData?.startDate && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">Start Date:</span>
+                    <span className="text-white">{formatDate(subscriptionData.startDate)}</span>
+                  </div>
+                )}
+                {subscriptionData?.endDate && (
+                  <div className="flex justify-between">
+                    <span className="text-gray-300">Expires On:</span>
+                    <span className="text-white">{formatDate(subscriptionData.endDate)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            
+            <div className="bg-blue-900/20 border border-blue-800/50 rounded-lg p-4 mb-6">
+              <p className="text-blue-300 text-sm">
+                You cannot purchase a new subscription while you have an active plan. 
+                Please wait until your current plan expires on {subscriptionData?.endDate ? formatDate(subscriptionData.endDate) : 'the expiry date'}.
+              </p>
+            </div>
+            
+            <button
+              onClick={() => setShowSubscriptionDialog(false)}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-6 rounded-lg font-semibold transition-colors"
+            >
+              I Understand
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
