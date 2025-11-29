@@ -3,30 +3,99 @@ import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import QRCode from 'qrcode';
 import BusinessProfileDropdown from './common/BusinessProfileDropdown';
 
+const HowToGetReviewLinkModal = ({ isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-[#1e1b2e] rounded-xl max-w-md w-full p-6 shadow-2xl border border-white/10">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-xl font-bold text-white">How to Get Your Google Review Link</h3>
+          <button 
+            onClick={onClose}
+            className="text-gray-400 hover:text-white"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        
+        <div className="space-y-4 text-gray-300">
+          <div className="flex items-start gap-3">
+            <div className="bg-purple-500/20 text-purple-400 rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center text-sm font-bold">1</div>
+            <p>Open <a href="https://business.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Google Business Profile Manager</a></p>
+          </div>
+          
+          <div className="flex items-start gap-3">
+            <div className="bg-purple-500/20 text-purple-400 rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center text-sm font-bold">2</div>
+            <p>Select your business location from the dashboard</p>
+          </div>
+          
+          <div className="flex items-start gap-3">
+            <div className="bg-purple-500/20 text-purple-400 rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center text-sm font-bold">3</div>
+            <p>Click on <span className="bg-white/10 px-2 py-0.5 rounded">Home</span> or <span className="bg-white/10 px-2 py-0.5 rounded">Get more reviews</span></p>
+          </div>
+          
+          <div className="flex items-start gap-3">
+            <div className="bg-purple-500/20 text-purple-400 rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center text-sm font-bold">4</div>
+            <p>Copy the review link (it should look like: <code className="bg-black/30 px-1.5 py-0.5 rounded">https://g.page/r/YOUR_PLACE_ID/review</code>)</p>
+          </div>
+          
+          <div className="pt-2">
+            <p className="text-sm text-gray-400">
+              <span className="font-semibold">Note:</span> The link should be in the format: <code className="bg-black/30 px-1.5 py-0.5 rounded text-purple-300">https://g.page/r/YOUR_PLACE_ID/review</code>
+            </p>
+          </div>
+        </div>
+        
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+          >
+            Got it!
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const QRCodeComponent = () => {
-  const { businesses, selectedBusinesses, isConnected, loading } = useGoogleBusiness();
+  const { businesses, selectedBusinesses,selectedBusiness, isConnected, loading } = useGoogleBusiness();
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [reviewLink, setReviewLink] = useState('');
+  const [editablePath, setEditablePath] = useState('');
+  const [showHelpModal, setShowHelpModal] = useState(false);
+
+  console.log("selectedBusiness", selectedBusiness);
   
-  // Generate QR code when business is selected
+  // Generate QR code when business is selected or changes
   useEffect(() => {
-    if (selectedBusinesses) {
+    if (selectedBusiness) {
+      // Reset the editable path to force regeneration with new business
+      setEditablePath('');
       generateQRCode();
     }
-  }, [selectedBusinesses]);
+  }, [selectedBusiness]);
 
   const generateQRCode = async () => {
-    if (!selectedBusinesses) return;
+    if (!selectedBusiness) return;
     
-    // Extract location ID from business name
-    const locationId = selectedBusinesses.map(business => business.name.split('/').pop()).join(',');
-    const businessName = selectedBusinesses.map(business => business.title || 'Business').join(', ');
+    // Use the selected business
+    const business = selectedBusiness;
+    const locationId = business.name.split('/').pop();
+    const businessName = business.metadata?.newReviewUri || business.title || 'Business';
     
     // Get frontend URL from env or use current origin
     const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
     
+    // Always use the current business's location ID for the path
+    const pathToUse = locationId;
+    
     // Create review link with business info
-    const reviewUrl = `${frontendUrl}/review/${locationId}?name=${encodeURIComponent(businessName)}`;
+    const reviewUrl = `${frontendUrl}/review/${pathToUse}?name=${encodeURIComponent(businessName)}`;
     setReviewLink(reviewUrl);
     
     try {
@@ -94,9 +163,9 @@ const QRCodeComponent = () => {
   }
 
   return (
-    <div className="w-full max-w-lg mx-auto">
+    <div className="w-full max-w-6xl mx-auto px-4 py-6 h-[calc(100vh-2rem)] flex flex-col">
       {/* Main Container */}
-      <div className="bg-[#171624]/50 border border-white/5 rounded-lg p-6 sm:p-8 backdrop-blur-sm">
+      <div className="bg-[#171624]/50 border border-white/5 rounded-lg p-6 sm:p-8 backdrop-blur-sm flex-1 flex flex-col">
         {/* Header */}
         <div className="text-center mb-6">
           <div className="flex items-center justify-center gap-3 mb-3">
@@ -125,83 +194,147 @@ const QRCodeComponent = () => {
           />
         </div>
 
-        {/* Review Link Display */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-gray-300 mb-2">
-            Review Link
-          </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={reviewLink}
-              readOnly
-              className="w-full px-4 py-3 pr-10 border border-white/20 rounded-lg bg-white/10 text-white transition-all duration-200"
-            />
-            {reviewLink && (
-              <button
-                onClick={copyLink}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 hover:bg-white/10 rounded transition-colors"
-                title="Copy link"
-              >
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                  <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                  <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-                </svg>
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* QR Code Display */}
-        <div className="flex justify-center mb-6">
-          <div className="bg-white p-4 rounded-lg shadow-lg">
-            {qrCodeUrl ? (
-              <img src={qrCodeUrl} alt="QR Code" className="w-48 h-48" />
-            ) : (
-              <div className="w-48 h-48 bg-gray-100 flex items-center justify-center">
-                <span className="text-gray-400 text-sm">Generating QR...</span>
+        {/* Main Content Area - Side by Side Layout */}
+        <div className="flex flex-col md:flex-row gap-4 flex-1">
+          {/* Left Side - URL Input */}
+          <div className="w-full md:w-1/2">
+            <div className="h-full flex flex-col space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-gray-300">
+                  Google Review Link
+                </label>
+                <button 
+                  type="button" 
+                  onClick={() => setShowHelpModal(true)}
+                  className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                >
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  </svg>
+                  How to get review URL
+                </button>
               </div>
-            )}
+              <div className="space-y-4 flex-1 flex flex-col">
+                <div className="flex-1">
+                  <div className="flex items-center bg-white/5 border border-white/20 rounded-lg overflow-hidden">
+                    <input
+                      type="text"
+                      value={decodeURIComponent(reviewLink.split('name=')[1] || '')}
+                      onChange={(e) => {
+                        const newName = e.target.value;
+                        const baseUrl = reviewLink.split('?name=')[0];
+                        setReviewLink(`${baseUrl}?name=${encodeURIComponent(newName)}`);
+                      }}
+                      placeholder="Enter business name"
+                      className="flex-1 px-4 py-3 bg-transparent text-white focus:outline-none focus:ring-1 focus:ring-purple-500 w-full"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2">
+                    {reviewLink ? (
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span>If review link is not correct, click on "How to get review URL"</span>
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1">
+                        <svg className="w-3 h-3 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <span>Refer to "How to get review link" for assistance with review page setup</span>
+                      </span>
+                    )}
+                  </p>
+                </div>
+                
+                <div className="relative mt-auto">
+                  <input
+                    type="text"
+                    value={reviewLink}
+                    readOnly
+                    className="w-full px-4 py-3 pr-10 border border-white/20 rounded-lg bg-white/10 text-white text-sm"
+                  />
+                  {reviewLink && (
+                    <button
+                      onClick={copyLink}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2 hover:bg-white/10 rounded transition-colors"
+                      title="Copy link"
+                    >
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                        <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="mt-6 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    onClick={downloadQRCode}
+                    disabled={!qrCodeUrl}
+                    className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M3 17a1 1 0 01-1-1v-5a1 1 0 112 0v5a1 1 0 01-1 1zm9-15a1 1 0 011 1v10.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L11 13.586V3a1 1 0 011-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>Download</span>
+                  </button>
+
+                  <button
+                    onClick={copyLink}
+                    disabled={!reviewLink}
+                    className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
+                      <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
+                    </svg>
+                    <span>Copy Link</span>
+                  </button>
+                </div>
+
+                <button
+                  onClick={openReviewLink}
+                  disabled={!reviewLink}
+                  className="flex items-center justify-center gap-2 w-full text-blue-400 hover:text-blue-300 font-medium py-2 px-4 rounded-lg border border-blue-400 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                    <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                  </svg>
+                  <span>Open Review Link</span>
+                </button>
+              </div>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={downloadQRCode}
-              disabled={!qrCodeUrl}
-              className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
-              </svg>
-              <span>Download</span>
-            </button>
-
-            <button
-              onClick={copyLink}
-              disabled={!reviewLink}
-              className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z" />
-                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z" />
-              </svg>
-              <span>Copy Link</span>
-            </button>
+          {/* Right Side - QR Code */}
+          <div className="w-full md:w-1/2">
+            <div className="bg-white p-4 rounded-lg shadow-lg h-full flex flex-col items-center justify-center">
+              <div className="text-center mb-4">
+                <h3 className="font-medium text-gray-800">Scan to Review</h3>
+                <p className="text-sm text-gray-500">Share this QR code</p>
+              </div>
+              <div className="bg-white p-2 rounded border border-gray-200">
+                {qrCodeUrl ? (
+                  <img 
+                    src={qrCodeUrl} 
+                    alt="QR Code" 
+                    className="w-40 h-40 object-contain"
+                  />
+                ) : (
+                  <div className="w-40 h-40 bg-gray-50 flex items-center justify-center rounded">
+                    <span className="text-xs text-gray-400 text-center px-2">QR Code will appear here</span>
+                  </div>
+                )}
+              </div>
+              <div className="mt-4 text-center">
+                <p className="text-xs text-gray-500">Scan this code with your phone's camera</p>
+              </div>
+            </div>
           </div>
-
-          <button
-            onClick={openReviewLink}
-            disabled={!reviewLink}
-            className="flex items-center justify-center gap-2 w-full text-blue-400 hover:text-blue-300 font-medium py-3 px-4 rounded-lg border border-blue-400 hover:border-blue-300 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
-              <path d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
-            </svg>
-            <span>Open Review Link</span>
-          </button>
         </div>
 
         {/* Footer */}
@@ -211,8 +344,13 @@ const QRCodeComponent = () => {
           </p>
         </div>
       </div>
+      
+      <HowToGetReviewLinkModal 
+        isOpen={showHelpModal}
+        onClose={() => setShowHelpModal(false)}
+      />
     </div>
   )
 }
 
-export default QRCodeComponent
+export default QRCodeComponent;

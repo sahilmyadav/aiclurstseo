@@ -27,6 +27,11 @@ export const GoogleBusinessProvider = ({ children }) => {
     expiryDate: null,
     scopes: []
   });
+  // Performance metrics state
+  const [performanceData, setPerformanceData] = useState(null);
+  const [performanceLoading, setPerformanceLoading] = useState(false);
+  const [performanceError, setPerformanceError] = useState(null);
+  console.log("performance data",performanceData)
 
   console.log("Selected business",selectedBusiness)
   
@@ -40,6 +45,68 @@ export const GoogleBusinessProvider = ({ children }) => {
     Authorization: token ? `Bearer ${token}` : undefined,
     'Content-Type': 'application/json',
   });
+
+  // Fetch performance metrics for selected business
+  const fetchPerformanceMetrics = async (dateRange = null) => {
+    if (!selectedBusiness?.name || !tokenDetails?.accessToken) {
+      return;
+    }
+
+    setPerformanceLoading(true);
+    setPerformanceError(null);
+    
+    try {
+      // Default to last 30 days if no date range provided
+      const endDate = dateRange?.endDate || new Date();
+      const startDate = dateRange?.startDate || new Date(new Date().setDate(new Date().getDate() - 30));
+      
+      // Extract location ID from the business name
+      const locationId = selectedBusiness.name.split('/')[1];
+      
+      if (!locationId) {
+        throw new Error('Invalid business location ID');
+      }
+      
+      // Format dates for the API
+      const formattedStartDate = {
+        year: startDate.getFullYear(),
+        month: startDate.getMonth() + 1, // Months are 0-indexed
+        day: startDate.getDate()
+      };
+      
+      const formattedEndDate = {
+        year: endDate.getFullYear(),
+        month: endDate.getMonth() + 1, // Months are 0-indexed
+        day: endDate.getDate()
+      };
+      
+      const response = await fetch(`${BACKEND_URL}/api/audit/performance`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          locationId,
+          startDate: formattedStartDate,
+          endDate: formattedEndDate,
+          accessToken: tokenDetails.accessToken
+        })
+      });
+      
+      const data = await response.json();
+      console.log("Performance data",data)
+      
+      if (response.ok && data.success) {
+        setPerformanceData(data.totals);
+      } else {
+        throw new Error(data.error || 'Failed to fetch performance data');
+      }
+    } catch (error) {
+      console.error('Error fetching performance data:', error);
+      setPerformanceError(error.message);
+      toast.error('Failed to load performance data: ' + error.message);
+    } finally {
+      setPerformanceLoading(false);
+    }
+  };
 
   // Fetch scheduled posts for the selected business location
   const fetchScheduledPosts = async () => {
@@ -220,6 +287,7 @@ export const GoogleBusinessProvider = ({ children }) => {
       setReviews([]);
       setLocalReviews([]); // Reset local reviews
       setIsConnected(false);
+      setPerformanceData(null); // Reset performance data
       
       toast.success("Disconnected successfully");
     } catch (err) {
@@ -242,6 +310,8 @@ export const GoogleBusinessProvider = ({ children }) => {
     await fetchReviews(accountId, locationId);
     // Also fetch local reviews when business is selected
     await fetchLocalReviews(locationId);
+    // Fetch performance metrics for the selected business
+    await fetchPerformanceMetrics();
   };
 
   // Select multiple businesses
@@ -264,11 +334,14 @@ export const GoogleBusinessProvider = ({ children }) => {
       await fetchReviews(accountId, locationId);
       // Also fetch local reviews when business is selected
       await fetchLocalReviews(locationId);
+      // Fetch performance metrics for the selected business
+      await fetchPerformanceMetrics();
     } else {
       // If no businesses selected, clear the primary selection
       setSelectedBusiness(null);
       setReviews([]);
       setLocalReviews([]);
+      setPerformanceData(null); // Clear performance data
     }
   };
 
@@ -323,6 +396,11 @@ export const GoogleBusinessProvider = ({ children }) => {
     };
   };
 
+  // Calculate performance totals
+  const getPerformanceStats = () => {
+    return performanceData || { websiteClicks: 0, callClicks: 0 };
+  };
+
   // Refresh all data when needed
   const refreshData = async () => {
     if (isConnected && selectedBusiness) {
@@ -333,6 +411,7 @@ export const GoogleBusinessProvider = ({ children }) => {
       await fetchReviews(selectedBusiness.accountId, locationId);
       await fetchLocalReviews(locationId);
       await fetchScheduledPosts();
+      await fetchPerformanceMetrics();
     }
   };
 
@@ -344,6 +423,8 @@ export const GoogleBusinessProvider = ({ children }) => {
   useEffect(() => {
     if (selectedBusiness) {
       fetchScheduledPosts();
+      // Fetch performance metrics when business is selected
+      fetchPerformanceMetrics();
     }
   }, [selectedBusiness]);
 
@@ -361,6 +442,10 @@ export const GoogleBusinessProvider = ({ children }) => {
     tokenDetails,
     scheduledPosts,
     loadingScheduled,
+    // Performance metrics
+    performanceData,
+    performanceLoading,
+    performanceError,
     // Actions
     setBusinesses,
     setSelectedBusiness,
@@ -379,8 +464,10 @@ export const GoogleBusinessProvider = ({ children }) => {
     toggleBusinessSelection, // Toggle selection
     refreshData,
     fetchScheduledPosts,
+    fetchPerformanceMetrics,
     // Computed values
-    reviewStats: getReviewStats()
+    reviewStats: getReviewStats(),
+    performanceStats: getPerformanceStats()
   };
 
   return (
