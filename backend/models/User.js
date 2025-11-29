@@ -9,12 +9,61 @@ const UserSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     
+    // Subscription information
+    subscription: {
+      activeSubscriptionId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Subscription' 
+      },
+      nextPendingSubscriptionId: { 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'Subscription' 
+      },
+      pendingSubscriptions: [{
+        subscriptionId: { 
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: 'Subscription' 
+        },
+        status: { 
+          type: String, 
+          enum: ['pending'],
+          default: 'pending'
+        },
+        addedAt: { 
+          type: Date, 
+          default: Date.now 
+        }
+      }],
+      hasUsedTrial: { 
+        type: Boolean, 
+        default: false 
+      },
+      trialUsedAt: { 
+        type: Date 
+      },
+      previousSubscriptions: [{
+        subscriptionId: { 
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: 'Subscription' 
+        },
+        status: { 
+          type: String, 
+          enum: ['active', 'expired', 'cancelled'],
+          default: 'active'
+        },
+        changedAt: { 
+          type: Date, 
+          default: Date.now 
+        }
+      }]
+    },
+    
     // Firebase fields
     firebaseUid: { type: String },
     avatar: { type: String },
     provider: { type: String, enum: ['local', 'google', 'firebase'], default: 'local' },
     isEmailVerified: { type: Boolean, default: false },
-    
+    isBlocked: { type: Boolean, default: false },
     // Login tracking
     lastLogin: { type: Date, default: Date.now },
     loginCount: { type: Number, default: 0 }

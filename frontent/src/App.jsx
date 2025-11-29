@@ -31,6 +31,10 @@ import AllUsers from './components/admin/AllUsers'
 import { AdminProvider } from './context/AdminContext'
 import Reviews from './components/Reviews'
 import SubscriptionPage from './components/subscription/SubscriptionPage'
+import SubscriptionSuccess from './components/subscription/SubscriptionSuccess'
+import About from './pages/About'
+import Billing from './components/subscription/Billing'
+import BusinessDetails from './components/BusinessDetails'
 
 
 const AppContent = () => {
@@ -57,6 +61,7 @@ const AppContent = () => {
             <Features />
           </>
         } />
+        <Route path="/about" element={<About />} />
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
         <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />
         <Route path="/review/:locationId" element={<MakeReview />} />
@@ -81,6 +86,10 @@ const AppContent = () => {
             <Route path="social-sharing" element={<Posts />} />
             <Route path="schedule-post" element={<SocialSharing />} />
             <Route path="subscription" element={<SubscriptionPage />} />
+            <Route path="subscription/success" element={<SubscriptionSuccess />} />
+            <Route path="billing" element={<Billing />} />
+            <Route path="business-details" element={<BusinessDetails />} />
+            
             
             <Route path="notifications" element={<Notifications />} />
             <Route path="settings" element={<Settings />} />
@@ -92,7 +101,7 @@ const AppContent = () => {
         {
           isAuthenticated && user.role === 'admin' && (
             <Route
-              path='/dashboard'
+              path='/ad-dashboard'
               element={
                 <AdminProvider>
                   <DashboardLayout />
@@ -103,20 +112,22 @@ const AppContent = () => {
               <Route path="settings" element={<Settings />} />
               <Route path="users" element={<AllUsers />} />
               <Route path="analytics" element={<AnalyticsDashboard />} />
+              <Route path="billing" element={<Billing />} />
             </Route>
           )
         }
         {/* 
-
-
-      
         {/* Catch-all route for non-existent paths */}
         {/* Only handle 404 redirects after auth is initialized */}
         <Route 
           path="*" 
           element={
             isInitialized ? (
-              <Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />
+              isAuthenticated ? (
+                user.role === 'admin' ? 
+                <Navigate to="/ad-dashboard" replace /> : 
+                <Navigate to="/dashboard" replace />
+              ) : <Navigate to="/login" replace />
             ) : null
           } 
         />

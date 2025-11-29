@@ -1,6 +1,8 @@
-import { BarChart3, Brain, ChevronDown, TrendingUp, Star, Target, Sparkles, AlertCircle, RefreshCw } from "lucide-react";
+import { BarChart3, Brain, ChevronDown, TrendingUp, Star, Target, Sparkles, AlertCircle, RefreshCw, Calendar, Phone, Globe } from "lucide-react";
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import {
   Bar,
   BarChart,
@@ -18,10 +20,18 @@ import { toast } from 'sonner';
 import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 import fetchWithAuth from '../utils/fetchWithAuth';
+import BusinessProfileDropdown from './common/BusinessProfileDropdown';
 
 const Audit = () => {
-  const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [dateRange, setDateRange] = useState([
+    new Date(new Date().setDate(new Date().getDate() - 30)), // 30 days ago
+    new Date() // today
+  ]);
+  const [tempDateRange, setTempDateRange] = useState([
+    new Date(new Date().setDate(new Date().getDate() - 30)), // 30 days ago
+    new Date() // today
+  ]);
   const [aiInsights, setAIInsights] = useState(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
   const [insightsError, setInsightsError] = useState(null);
@@ -31,16 +41,38 @@ const Audit = () => {
   const {
     businesses,
     selectedBusiness,
+    selectedBusinesses, // Add this
     reviews,
     loading,
     isConnected,
     selectBusiness,
-    reviewStats
+    selectMultipleBusinesses, // Add this
+    reviewStats,
+    performanceData,
+    performanceLoading,
+    performanceError,
+    fetchPerformanceMetrics
   } = useGoogleBusiness();
   
-  const { isCollapsed } = useSidebar();
+  // const { isCollapsed } = useSidebar();
 
   const timerRef = useRef(null);
+
+  // Handle date range change for temp state
+  const handleDateRangeChange = (dates) => {
+    if (dates && dates[0] && dates[1]) {
+      setTempDateRange(dates);
+    }
+  };
+
+  // Apply date range and fetch new performance data
+  const applyDateRange = () => {
+    setDateRange(tempDateRange);
+    fetchPerformanceMetrics({
+      startDate: tempDateRange[0],
+      endDate: tempDateRange[1]
+    });
+  };
 
   // Cooldown timer effect
   useEffect(() => {
@@ -66,18 +98,16 @@ const Audit = () => {
     };
   }, []);
 
-  const handleBusinessSelect = useCallback(async (business) => {
-    try {
-      await selectBusiness(business);
-      setShowBusinessDropdown(false);
-      // Reset insights when business changes
-      setAIInsights(null);
-      setInsightsError(null);
-      setCooldownTimer(0); // Reset cooldown when business changes
-    } catch (error) {
-      toast.error('Failed to select business');
+  // Handle business selection
+  const handleBusinessSelect = (businessOrBusinesses) => {
+    if (Array.isArray(businessOrBusinesses)) {
+      // Multiple selections
+      selectMultipleBusinesses(businessOrBusinesses);
+    } else {
+      // Single selection
+      selectBusiness(businessOrBusinesses);
     }
-  }, [selectBusiness]);
+  };
 
   const monthlyData = useMemo(() => {
     if (!reviews?.length) return [];
@@ -251,47 +281,15 @@ const Audit = () => {
               </div>
             )}
             
-            {/* Business Selection Only */}
+            {/* Business Selection */}
             {businesses && businesses.length > 0 && (
               <div className="flex justify-center sm:justify-start">
-                <div className="relative w-full sm:w-auto max-w-sm">
-                  <button
-                    onClick={() => setShowBusinessDropdown(!showBusinessDropdown)}
-                    className="flex items-center justify-between w-full px-4 py-3 bg-[#1a1b2e]/90 border border-white/10 rounded-lg text-white hover:bg-[#1a1b2e] transition-colors"
-                  >
-                    <span className="text-sm truncate mr-2">{selectedBusiness ? selectedBusiness.title : 'Select Business'}</span>
-                    <ChevronDown className="w-4 h-4 flex-shrink-0" />
-                  </button>
-                
-                  {showBusinessDropdown && (
-                    <div className="absolute left-0 sm:right-0 mt-2 w-full sm:w-64 bg-[#1a1b2e] border border-white/10 rounded-lg shadow-lg z-50">
-                      <div className="p-2 border-b border-white/10">
-                        <p className="text-xs text-white/60">1 of {businesses.length} profiles available</p>
-                      </div>
-                      {businesses.map((business, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleBusinessSelect(business)}
-                          className={`w-full text-left px-4 py-3 text-sm text-white hover:bg-white/5 transition-colors ${
-                            selectedBusiness?.name === business.name ? 'bg-green-400/10' : ''
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="min-w-0 flex-1">
-                              <div className="font-medium flex items-center">
-                                {selectedBusiness?.name === business.name && <div className="w-2 h-2 rounded-full bg-green-400 mr-2 flex-shrink-0"></div>}
-                                <span className="truncate">{business.title}</span>
-                              </div>
-                              <div className="text-xs text-white/60 mt-1 truncate">{business.primaryCategory?.displayName || 'Business'}</div>
-                            </div>
-                            {selectedBusiness?.name === business.name && (
-                              <span className="text-xs text-green-400 px-2 py-1 bg-green-400/20 rounded ml-2 flex-shrink-0">Active</span>
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                <div className="w-full sm:w-64">
+                  <BusinessProfileDropdown 
+                    onSelect={handleBusinessSelect}
+                    showLabel={false}
+                    multiple={selectedBusinesses && selectedBusinesses.length > 1}
+                  />
                 </div>
               </div>
             )}
@@ -349,6 +347,32 @@ const Audit = () => {
                 <div className="flex-1 overflow-y-auto pr-2 pb-4" style={{scrollbarWidth: 'thin'}}>
                   {activeTab === 'overview' && (
                     <div className="space-y-6 pb-8">
+                      {/* Date Range Picker for Overview */}
+                      <div className="bg-[#1a1b2e]/90 border border-white/10 rounded-lg p-4">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                          <h3 className="text-lg font-semibold">Performance Metrics Filter</h3>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-white/60" />
+                            <div className="custom-datepicker">
+                              <DatePicker
+                                selectsRange={true}
+                                startDate={tempDateRange[0]}
+                                endDate={tempDateRange[1]}
+                                onChange={handleDateRangeChange}
+                                maxDate={new Date()}
+                                className="bg-[#242538] border border-[#3a3b5a] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                              />
+                            </div>
+                            <button
+                              onClick={applyDateRange}
+                              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg text-white text-sm font-medium transition-all"
+                            >
+                              Apply
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
                       {loading ? (
                         <div className="flex items-center justify-center py-12">
                           <div className="text-center space-y-4">
@@ -414,6 +438,41 @@ const Audit = () => {
                                   <span className="text-red-400">{ratingTrend.change}%</span>
                                 )}
                                 <span className="text-white/60 ml-1">vs last 30 days</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Performance Metrics in Overview */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30 p-5">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm text-white/60">Website Clicks</p>
+                                  <p className="text-3xl font-bold text-blue-400 mt-1">
+                                    {performanceLoading ? (
+                                      <span className="text-sm">Loading...</span>
+                                    ) : (
+                                      performanceData?.websiteClicks || 0
+                                    )}
+                                  </p>
+                                </div>
+                                <Globe className="w-10 h-10 text-blue-400" />
+                              </div>
+                            </div>
+
+                            <div className="rounded-lg bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30 p-5">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <p className="text-sm text-white/60">Call Clicks</p>
+                                  <p className="text-3xl font-bold text-green-400 mt-1">
+                                    {performanceLoading ? (
+                                      <span className="text-sm">Loading...</span>
+                                    ) : (
+                                      performanceData?.callClicks || 0
+                                    )}
+                                  </p>
+                                </div>
+                                <Phone className="w-10 h-10 text-green-400" />
                               </div>
                             </div>
                           </div>
