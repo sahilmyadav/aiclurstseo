@@ -62,7 +62,7 @@ const getStarRating = (starRating) => {
 
 const Integrations = () => {
   const navigate = useNavigate();
-  const { user: authUser } = useAuth();
+  const { user: authUser, subscriptionData } = useAuth();
   const {
     user,
     businesses,
@@ -87,7 +87,17 @@ const Integrations = () => {
   }, [selectedBusiness]);
 
   const handleConnect = async () => {
-   
+    if (!authUser) {
+      toast.error('Please log in to connect Google Business Profile');
+      return;
+    }
+
+    if (!subscriptionData?.active) {
+      toast.error('Please subscribe to a plan to connect Google Business Profile');
+      navigate('/dashboard/subscription'); // Or your subscription page path
+      return;
+    }
+
     await connectGoogle();
   };
 

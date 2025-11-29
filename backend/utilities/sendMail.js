@@ -56,19 +56,99 @@ export async function sendThanksEmail(to, reviewerName = '', businessName = '', 
   return sendMail({ to, subject, text, html });
 }
 
-export async function sendReviewInvitation(to, customerName = '', businessName = '', inviteLink = '') {
+export async function sendReviewInvitation(to, customerName = '', businessName = '', inviteLink = '', content = '') {
   if (!to) throw new Error('Recipient email required');
+  
   const name = customerName || 'Customer';
-  const subject = `Please leave a review for ${businessName || 'our business'}`;
-  const text = `Hi ${name},\n\nWe'd love your feedback for ${businessName || 'our business'}. Please click the link below to leave a review:\n\n${inviteLink || ''}\n\nThanks,\n${APP_NAME}`;
+  const subject = `Share Your Experience with ${businessName || 'Us'}`;
+  
+  const defaultContent = `We'd love your feedback for ${businessName || 'our business'}.`;
+  const emailContent = content || defaultContent;
+  
+  const text = `Hi ${name},\n\n${emailContent}\n\nPlease click the link below to leave a review:\n\n${inviteLink || ''}\n\nThanks,\n${businessName || 'Our Team'}`;
+  
   const html = `
-    <div style="font-family: Arial, sans-serif; color:#111">
-      <p>Hi ${name},</p>
-      <p>We'd love your feedback for <strong>${businessName || 'our business'}</strong>.</p>
-      <p><a href="${inviteLink || '#'}" style="display:inline-block;padding:10px 16px;background:#4f46e5;color:#fff;border-radius:6px;text-decoration:none;">Leave a review</a></p>
-      <p>If the button above doesn't work, use this link: <a href="${inviteLink || '#'}">${inviteLink || ''}</a></p>
-      <p>Thanks,<br/>${APP_NAME}</p>
-    </div>
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { 
+          font-family: Arial, sans-serif; 
+          line-height: 1.6; 
+          color: #333333; 
+          max-width: 600px; 
+          margin: 0 auto; 
+          padding: 0;
+        }
+        .email-container { 
+          max-width: 600px; 
+          margin: 0 auto; 
+          border: 1px solid #e5e7eb;
+          border-radius: 8px;
+          overflow: hidden;
+        }
+        .header { 
+          background-color: #4f46e5; 
+          padding: 20px; 
+          text-align: center; 
+          color: white; 
+        }
+        .content { 
+          padding: 25px; 
+          background-color: #ffffff; 
+        }
+        .button { 
+          display: inline-block; 
+          padding: 12px 24px; 
+          background-color: #4f46e5; 
+          color: white; 
+          text-decoration: none; 
+          border-radius: 6px; 
+          margin: 20px 0;
+          font-weight: 500;
+        }
+        .footer { 
+          margin-top: 25px; 
+          padding-top: 20px; 
+          border-top: 1px solid #e5e7eb; 
+          color: #6b7280;
+          font-size: 14px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="email-container">
+        <div class="header">
+          <h2>Share Your Experience</h2>
+        </div>
+        <div class="content">
+          <p>Hi ${name},</p>
+          <p>${emailContent}</p>
+          
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${inviteLink || '#'}" class="button">Leave a Review</a>
+          </div>
+          
+          <p>Or copy and paste this link into your browser:</p>
+          <a href="${inviteLink || '#'}" style="color: #4f46e5; word-break: break-all; margin: 15px 0; display: inline-block;">
+            ${inviteLink || ''}
+          </a>
+          
+          <div class="footer">
+            <p>Thank you for your time and support!</p>
+            <p>Best regards,<br><strong>${businessName || 'Our Team'}</strong></p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
   `;
-  return sendMail({ to, subject, text, html });
+  
+  return sendMail({
+    from: `"${businessName || 'Review System'}" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    text,
+    html
+  });
 }
