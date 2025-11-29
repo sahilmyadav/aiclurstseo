@@ -16,6 +16,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [businesses, setBusinesses] = useState([]);
   const [selectedBusiness, setSelectedBusiness] = useState(null);
+  const [selectedBusinesses, setSelectedBusinesses] = useState([]); // For multiple selections
   const [reviews, setReviews] = useState([]);
   const [localReviews, setLocalReviews] = useState([]); // New state for local reviews
   const [loading, setLoading] = useState(false);
@@ -26,6 +27,13 @@ export const GoogleBusinessProvider = ({ children }) => {
     expiryDate: null,
     scopes: []
   });
+  // Performance metrics state
+  const [performanceData, setPerformanceData] = useState(null);
+  const [performanceLoading, setPerformanceLoading] = useState(false);
+  const [performanceError, setPerformanceError] = useState(null);
+  console.log("performance data",performanceData)
+
+  console.log("Selected business",selectedBusiness)
   
   const [scheduledPosts, setScheduledPosts] = useState([]);
   const [loadingScheduled, setLoadingScheduled] = useState(false);
@@ -38,21 +46,91 @@ export const GoogleBusinessProvider = ({ children }) => {
     'Content-Type': 'application/json',
   });
 
-  // Fetch scheduled posts for the current user
+  // Fetch performance metrics for selected business
+  const fetchPerformanceMetrics = async (dateRange = null) => {
+    if (!selectedBusiness?.name || !tokenDetails?.accessToken) {
+      return;
+    }
+
+    setPerformanceLoading(true);
+    setPerformanceError(null);
+    
+    try {
+      // Default to last 30 days if no date range provided
+      const endDate = dateRange?.endDate || new Date();
+      const startDate = dateRange?.startDate || new Date(new Date().setDate(new Date().getDate() - 30));
+      
+      // Extract location ID from the business name
+      const locationId = selectedBusiness.name.split('/')[1];
+      
+      if (!locationId) {
+        throw new Error('Invalid business location ID');
+      }
+      
+      // Format dates for the API
+      const formattedStartDate = {
+        year: startDate.getFullYear(),
+        month: startDate.getMonth() + 1, // Months are 0-indexed
+        day: startDate.getDate()
+      };
+      
+      const formattedEndDate = {
+        year: endDate.getFullYear(),
+        month: endDate.getMonth() + 1, // Months are 0-indexed
+        day: endDate.getDate()
+      };
+      
+      const response = await fetch(`${BACKEND_URL}/api/audit/performance`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({
+          locationId,
+          startDate: formattedStartDate,
+          endDate: formattedEndDate,
+          accessToken: tokenDetails.accessToken
+        })
+      });
+      
+      const data = await response.json();
+      console.log("Performance data",data)
+      
+      if (response.ok && data.success) {
+        setPerformanceData(data.totals);
+      } else {
+        // throw new Error(data.error || 'Failed to fetch performance data');
+      }
+    } catch (error) {
+      console.error('Error fetching performance data:', error);
+      // setPerformanceError(error.message);
+      // toast.error('Failed to load performance data: ' + error.message);
+    } finally {
+      setPerformanceLoading(false);
+    }
+  };
+
+  // Fetch scheduled posts for the selected business location
   const fetchScheduledPosts = async () => {
-    if (!authUser?.id) return;
+    if (!selectedBusiness) return;
+    
+    const locationId = selectedBusiness.name.split("/")[1];
+    
+    console.log('Frontend: Fetching scheduled posts for locationId:', locationId);
     
     setLoadingScheduled(true);
     try {
-      const response = await fetch(`${BACKEND_URL}/api/post/user/${authUser.id}`, {
+      const response = await fetch(`${BACKEND_URL}/api/post/user/${locationId}`, {
         headers: authHeaders(),
       });
       
+      console.log('Frontend: Response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Frontend: Received data:', data);
         setScheduledPosts(data.data || []);
       } else {
         const errorData = await response.json().catch(() => ({}));
+        console.error('Frontend: Error response:', errorData);
         throw new Error(errorData.message || 'Failed to fetch scheduled posts');
       }
     } catch (error) {
@@ -76,8 +154,6 @@ export const GoogleBusinessProvider = ({ children }) => {
         if (data.authenticated) {
           setUser(data.user);
           setIsConnected(true);
-          // Fetch scheduled posts when user is authenticated
-          fetchScheduledPosts();
           
           console.log("data.tokenDetails",data)
           // Update token details if available
@@ -116,6 +192,7 @@ export const GoogleBusinessProvider = ({ children }) => {
         if (data.businesses && data.businesses.length > 0 && !selectedBusiness) {
           const firstBusiness = data.businesses[0];
           setSelectedBusiness(firstBusiness);
+          setSelectedBusinesses([firstBusiness]); // Also add to multiple selections
           
           // Set review URI from first business metadata if available
           if (firstBusiness.metadata?.newReviewUri) {
@@ -126,6 +203,7 @@ export const GoogleBusinessProvider = ({ children }) => {
           await fetchReviews(firstBusiness.accountId, firstBusiness.name.split("/")[1]);
           // Also fetch local reviews
           await fetchLocalReviews(firstBusiness.name.split("/")[1]);
+          // fetchScheduledPosts will be called by useEffect when selectedBusiness changes
         }
       }
     } catch (err) {
@@ -205,9 +283,11 @@ export const GoogleBusinessProvider = ({ children }) => {
       setUser(null);
       setBusinesses([]);
       setSelectedBusiness(null);
+      setSelectedBusinesses([]); // Reset multiple selections
       setReviews([]);
       setLocalReviews([]); // Reset local reviews
       setIsConnected(false);
+      setPerformanceData(null); // Reset performance data
       
       toast.success("Disconnected successfully");
     } catch (err) {
@@ -216,7 +296,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     }
   };
 
-  // Select a business and fetch its reviews
+  // Select a single business and fetch its reviews
   const selectBusiness = async (business) => {
     setSelectedBusiness(business);
     const accountId = business.accountId;
@@ -230,6 +310,55 @@ export const GoogleBusinessProvider = ({ children }) => {
     await fetchReviews(accountId, locationId);
     // Also fetch local reviews when business is selected
     await fetchLocalReviews(locationId);
+    // Fetch performance metrics for the selected business
+    await fetchPerformanceMetrics();
+  };
+
+  // Select multiple businesses
+  const selectMultipleBusinesses = async (businesses) => {
+    setSelectedBusinesses(businesses);
+    
+    // If there's at least one business selected, use the first one as the primary
+    if (businesses.length > 0) {
+      const primaryBusiness = businesses[0];
+      setSelectedBusiness(primaryBusiness);
+      
+      // Set review URI from business metadata if available
+      if (primaryBusiness.metadata?.newReviewUri) {
+        setReviewUri(primaryBusiness.metadata.newReviewUri);
+      }
+      
+      // Fetch reviews for the primary business
+      const accountId = primaryBusiness.accountId;
+      const locationId = primaryBusiness.name.split("/")[1];
+      await fetchReviews(accountId, locationId);
+      // Also fetch local reviews when business is selected
+      await fetchLocalReviews(locationId);
+      // Fetch performance metrics for the selected business
+      await fetchPerformanceMetrics();
+    } else {
+      // If no businesses selected, clear the primary selection
+      setSelectedBusiness(null);
+      setReviews([]);
+      setLocalReviews([]);
+      setPerformanceData(null); // Clear performance data
+    }
+  };
+
+  // Toggle selection of a business (for multiple selections)
+  const toggleBusinessSelection = async (business) => {
+    const isSelected = selectedBusinesses.some(b => b.name === business.name);
+    
+    let newSelections;
+    if (isSelected) {
+      // Remove from selection
+      newSelections = selectedBusinesses.filter(b => b.name !== business.name);
+    } else {
+      // Add to selection
+      newSelections = [...selectedBusinesses, business];
+    }
+    
+    await selectMultipleBusinesses(newSelections);
   };
 
   // Calculate review statistics
@@ -267,12 +396,22 @@ export const GoogleBusinessProvider = ({ children }) => {
     };
   };
 
+  // Calculate performance totals
+  const getPerformanceStats = () => {
+    return performanceData || { websiteClicks: 0, callClicks: 0 };
+  };
+
   // Refresh all data when needed
   const refreshData = async () => {
     if (isConnected && selectedBusiness) {
+      // Ensure the selected business is set
+      console.log('Refreshing data for selected business:', selectedBusiness.title || selectedBusiness.name);
+      
       const locationId = selectedBusiness.name.split("/")[1];
       await fetchReviews(selectedBusiness.accountId, locationId);
       await fetchLocalReviews(locationId);
+      await fetchScheduledPosts();
+      await fetchPerformanceMetrics();
     }
   };
 
@@ -280,11 +419,21 @@ export const GoogleBusinessProvider = ({ children }) => {
     checkAuthStatus();
   }, [authUser]);
 
+  // Fetch scheduled posts when selected business changes
+  useEffect(() => {
+    if (selectedBusiness) {
+      fetchScheduledPosts();
+      // Fetch performance metrics when business is selected
+      fetchPerformanceMetrics();
+    }
+  }, [selectedBusiness]);
+
   const value = {
     // State
     user,
     businesses,
     selectedBusiness,
+    selectedBusinesses, // For multiple selections
     reviews,
     localReviews,
     loading,
@@ -293,9 +442,14 @@ export const GoogleBusinessProvider = ({ children }) => {
     tokenDetails,
     scheduledPosts,
     loadingScheduled,
+    // Performance metrics
+    performanceData,
+    performanceLoading,
+    performanceError,
     // Actions
     setBusinesses,
     setSelectedBusiness,
+    setSelectedBusinesses, // For multiple selections
     setReviews,
     setLocalReviews,
     setLoading,
@@ -306,10 +460,14 @@ export const GoogleBusinessProvider = ({ children }) => {
     fetchReviews,
     fetchLocalReviews,
     selectBusiness,
+    selectMultipleBusinesses, // For multiple selections
+    toggleBusinessSelection, // Toggle selection
     refreshData,
     fetchScheduledPosts,
+    fetchPerformanceMetrics,
     // Computed values
-    reviewStats: getReviewStats()
+    reviewStats: getReviewStats(),
+    performanceStats: getPerformanceStats()
   };
 
   return (

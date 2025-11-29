@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useAuth } from "./context/AuthContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 import BulkUploadComponent from "./BulkUploadComponent";
+import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
 
 const SMSComponent = () => {
   const { user, token } = useAuth();
@@ -29,7 +30,7 @@ const SMSComponent = () => {
   const [isSending, setIsSending] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const BACKEND_URL =
-    import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ||
+    import.meta.env.VITE_API_BASE?.replace(/\/$/, "") ||
     "http://localhost:8000";
 
   // Set the selected business when businesses are loaded or changed
@@ -187,29 +188,23 @@ const SMSComponent = () => {
         ) : (
           <form onSubmit={handleSendSMS} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="mb-4">
-                <label
-                  htmlFor="businessId"
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
+              <div className="w-full mb-4">
+                <label className="block text-sm font-medium text-gray-300 mb-1">
                   Select Business
                 </label>
-                <select
-                  id="businessId"
-                  name="businessId"
-                  value={formData.businessId}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-600 bg-gray-800 text-white rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 [&_option]:bg-gray-800 [&_option]:text-white"
-                  disabled={businessesLoading}
-                  required
-                >
-                  <option value="">Select a business</option>
-                  {businesses.map((business, index) => (
-                    <option key={`${business.id}-${index}`} value={business.id}>
-                      {getBusinessDisplayName(business)}
-                    </option>
-                  ))}
-                </select>
+                <BusinessProfileDropdown
+                  onSelect={(business) => {
+                    const businessId = business?.id || business?.locationId || business?.placeId || business?.place_id || business?.name || '';
+                    const businessName = business?.title || business?.locationName || business?.name || '';
+                    
+                    setFormData(prev => ({
+                      ...prev,
+                      businessId,
+                      businessName
+                    }));
+                  }}
+                  className="w-full"
+                />
               </div>
               <div>
                 <label

@@ -14,8 +14,8 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import invitationRoutes from './routes/invitationRoutes.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
-
-
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import { startSubscriptionJobs } from './jobs/subscriptionJobs.js';
 dotenv.config();
 
 const app = express();
@@ -53,6 +53,11 @@ app.use(bodyParser.json({ limit: '200kb' }));
 connectDB();
 initializeFirebase();
 
+// Start subscription jobs
+if (process.env.NODE_ENV !== 'test') {
+  startSubscriptionJobs();
+}
+
 // Start the post scheduler (runs every 5 minutes)
 if (process.env.NODE_ENV !== 'test') {
   import('./services/postScheduler.js')
@@ -60,7 +65,16 @@ if (process.env.NODE_ENV !== 'test') {
     .catch(err => console.error('Failed to start post scheduler:', err));
 }
 
-// Routes
+
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/subscription/webhook") {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
+
+app.use("/api/subscription", subscriptionRoutes);
 app.use("/auth/google", googleRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints

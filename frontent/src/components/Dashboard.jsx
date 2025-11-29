@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
+import BusinessProfileDropdown from './common/BusinessProfileDropdown';
 
 const Dashboard = () => {
-  const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
   const [monthlyChartData, setMonthlyChartData] = useState([]);
 
   // Get real data from GoogleBusinessContext
   const {
     businesses,
     selectedBusiness,
+    selectedBusinesses, // For multiple selections
     reviews,
     loading,
     isConnected,
     reviewStats,
-    selectBusiness
+    selectBusiness,
+    selectMultipleBusinesses // For multiple selections
   } = useGoogleBusiness();
 
   // Process monthly chart data from reviews
@@ -41,9 +43,14 @@ const Dashboard = () => {
 
 
   // Handle business selection
-  const handleBusinessSelect = (business) => {
-    selectBusiness(business);
-    setShowBusinessDropdown(false);
+  const handleBusinessSelect = (businessOrBusinesses) => {
+    if (Array.isArray(businessOrBusinesses)) {
+      // Multiple selections
+      selectMultipleBusinesses(businessOrBusinesses);
+    } else {
+      // Single selection
+      selectBusiness(businessOrBusinesses);
+    }
   };
 
   // Convert Google star rating to number for display
@@ -79,39 +86,20 @@ const Dashboard = () => {
                 {selectedBusiness && (
                   <p className="text-sm text-white/60">Showing data for: {selectedBusiness.title || selectedBusiness.locationName}</p>
                 )}
+                {selectedBusinesses && selectedBusinesses.length > 1 && (
+                  <p className="text-sm text-white/60">
+                    {selectedBusinesses.length} business profiles selected
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center space-x-3">
-                {businesses && businesses.length > 1 && (
-                  <div className="relative">
-                    <button
-                      onClick={() => setShowBusinessDropdown(!showBusinessDropdown)}
-                      className="flex items-center space-x-2 px-4 py-2 bg-[#1a1b2e]/90 border border-white/10 rounded-lg text-white hover:bg-[#1a1b2e] transition-colors"
-                    >
-                      <span className="text-sm">
-                        {selectedBusiness ? (selectedBusiness.title || selectedBusiness.locationName) : 'Select Business'}
-                      </span>
-                      <span className="text-xs">▼</span>
-                    </button>
-
-                    {showBusinessDropdown && (
-                      <div className="absolute right-0 mt-2 w-64 bg-[#1a1b2e] border border-white/10 rounded-lg shadow-lg z-50">
-                        {businesses.map((business, index) => (
-                          <button
-                            key={index}
-                            onClick={() => handleBusinessSelect(business)}
-                            className="w-full text-left px-4 py-3 text-sm text-white hover:bg-white/5 first:rounded-t-lg last:rounded-b-lg transition-colors"
-                          >
-                            <div className="font-medium">{business.title || business.locationName}</div>
-                            <div className="text-xs text-white/60 mt-1">
-                              {business.primaryCategory?.displayName || business.storefrontAddress?.locality || 'Business'}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                )}
+                <BusinessProfileDropdown 
+                  onSelect={handleBusinessSelect}
+                  className="w-64"
+                  showLabel={false}
+                  multiple={selectedBusinesses && selectedBusinesses.length > 1}
+                />
               </div>
             </div>
           </div>

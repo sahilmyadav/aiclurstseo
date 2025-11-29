@@ -8,6 +8,92 @@ const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
  * @param {Array} existingReviews - Array of existing reviews for context
  * @returns {Promise<Array<string>>} - Array of generated review suggestions
  */
+/**
+ * Generates AI-powered social media posts based on keywords and business data
+ * @param {Object} businessData - Business data from GoogleBusinessContext
+ * @param {Array} keywords - Array of keywords for the post
+ * @param {string} postType - Type of post (e.g., 'promotional', 'informative', 'engagement')
+ * @returns {Promise<string>} - Generated post content
+ */
+export const generateAIPost = async (businessData, keywords = [], postType = 'promotional') => {
+  try {
+    const { name, primaryCategory, location, websiteUri, regularHours, priceInfo } = businessData;
+    
+    // Prepare the prompt for Gemini
+    const prompt = `Generate a compelling social media post for a business with the following details:
+
+Business Name: ${name || 'a local business'}
+Category: ${primaryCategory || 'various services'}
+Location: ${location?.address?.locality || ''}, ${location?.address?.regionCode || ''}
+Website: ${websiteUri || 'Not specified'}
+Price Level: ${priceInfo?.priceLevel ? '$'.repeat(parseInt(priceInfo.priceLevel)) : 'Not specified'}
+
+Keywords to focus on: ${keywords.join(', ') || 'general business promotion'}
+Post Type: ${postType}
+
+Guidelines for generating the post:
+1. Keep the post between 50-150 words for optimal social media engagement
+2. Make it sound authentic and human-like, not overly promotional
+3. Naturally incorporate the keywords provided
+4. Include relevant emojis to increase engagement
+5. Add a call-to-action at the end
+6. For promotional posts: highlight special offers, unique features, or benefits
+7. For informative posts: share useful tips, industry insights, or educational content
+8. For engagement posts: ask questions, encourage comments, or create interactive content
+9. Mention the business location if relevant
+10. Make it engaging and shareable
+
+Return ONLY the post content, no other text or formatting.`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.8,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 1024,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Error from Gemini API:', errorData);
+      throw new Error('Failed to generate post');
+    }
+
+    const data = await response.json();
+    const textResponse = data.candidates[0].content.parts[0].text;
+    
+    // Clean up the response
+    return textResponse.trim();
+  } catch (error) {
+    console.error('Error generating AI post:', error);
+    return getFallbackPost(keywords, name);
+  }
+};
+
+// Fallback post in case the API call fails
+const getFallbackPost = (keywords, businessName) => {
+  const keywordText = keywords.length > 0 ? keywords.join(', ') : 'our services';
+  return `🌟 Exciting things happening at ${businessName || 'our business'}! 
+
+We're passionate about ${keywordText} and committed to bringing you the best experience. 
+
+Visit us today and discover what makes us special! ✨
+
+#CustomerExperience #QualityService`;
+};
+
 export const generateReviewSuggestions = async (businessData, rating, existingReviews = []) => {
   try {
     const { name, primaryCategory, location, websiteUri, regularHours, priceInfo } = businessData;

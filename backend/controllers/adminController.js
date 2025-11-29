@@ -107,13 +107,13 @@ export const getAllUsers = async (req, res) => {
         const { page = 1, limit = 10 } = req.query;
         const skip = (page - 1) * limit;
         
-        const users = await User.find({ role: 'user' })
+        const users = await User.find()
             .select('-password')
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));
             
-        const totalUsers = await User.countDocuments({ role: 'user' });
+        const totalUsers = await User.countDocuments();
         
         res.status(200).json({
             success: true,
@@ -163,6 +163,101 @@ export const getAllReviews = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Error fetching reviews',
+            error: error.message
+        });
+    }
+};
+
+
+export const assignRole = async (req, res) => {
+    try {
+        const { userId, role } = req.body;
+        
+        const user = await User.findByIdAndUpdate(userId, { role });
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+        
+    } catch (error) {
+        console.error('Error assigning role:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error assigning role',
+            error: error.message
+        });
+    }
+};
+
+
+export const deleteUser = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        console.log(userId)
+        console.log(req.body)
+        
+        
+        const user = await User.findByIdAndDelete(userId);
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        res.status(200).json({
+            success: true,
+            data: user
+        });
+        
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting user',
+            error: error.message
+        });
+    }
+};
+
+export const blockUnblockUser = async (req, res) => {
+    try {
+        const { userId } = req.body;
+        
+        // First find the user to get current isBlocked status
+        const user = await User.findById(userId);
+        
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+        
+        // Toggle the isBlocked status
+        user.isBlocked = !user.isBlocked;
+        await user.save();
+        
+        res.status(200).json({
+            success: true,
+            message: `User ${user.isBlocked ? 'blocked' : 'unblocked'} successfully`,
+            data: user
+        });
+        
+    } catch (error) {
+        console.error('Error blocking/unblocking user:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error blocking/unblocking user',
             error: error.message
         });
     }

@@ -3,28 +3,22 @@ import { toast } from "sonner";
 import { FaPaperPlane, FaSpinner, FaUser, FaUpload } from "react-icons/fa";
 import { useAuth } from "./context/AuthContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
-import BulkUploadEmailComponent from "./BulkUploadEmailComponent";
+import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
 
 const EmailComponent = () => {
   const { token } = useAuth();
   const { businesses = [], loading: businessesLoading } = useGoogleBusiness();
-
   const [form, setForm] = useState({
     businessId: "",
     businessName: "",
     customerName: "",
     customerEmail: "",
+    content: "We would love to hear your feedback about your recent experience with us. Your opinion is valuable to us and helps us improve our services."
   });
   const [isSending, setIsSending] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
-  const BACKEND_URL =
-    import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ||
-    "http://localhost:8000";
-
-  const FRONTEND_URL =
-    import.meta.env.VITE_FRONTEND_URL ||
-    import.meta.env.VITE_APP_URL ||
-    "http://localhost:5173";
+  const BACKEND_URL = import.meta.env.VITE_API_BASE?.replace(/\/$/, "") || "http://localhost:8000";
+  const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || import.meta.env.VITE_APP_URL || "http://localhost:5173";
 
   useEffect(() => {
     if (businesses && businesses.length > 0) {
@@ -47,13 +41,7 @@ const EmailComponent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    console.log(form);
-
-    if (
-      !form.businessId ||
-      !form.customerName.trim() ||
-      !form.customerEmail.trim()
-    ) {
+    if (!form.businessId || !form.customerName.trim() || !form.customerEmail.trim()) {
       toast.error("Please select a business and enter customer name & email");
       return;
     }
@@ -76,6 +64,7 @@ const EmailComponent = () => {
           businessName: form.businessName,
           customerName: form.customerName.trim(),
           customerEmail: form.customerEmail.toLowerCase().trim(),
+          content: form.content
         }),
       });
 
@@ -142,59 +131,23 @@ const EmailComponent = () => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
+              <div className="w-full">
                 <label className="block text-sm text-gray-300 mb-1">
                   Business
                 </label>
-                <select
-                  name="businessId"
-                  value={form.businessId}
-                  onChange={(e) => {
-                    const id = e.target.value;
-                    const sel =
-                      businesses.find((b) => {
-                        const bid =
-                          b?.id ??
-                          b?.locationId ??
-                          b?.placeId ??
-                          b?.place_id ??
-                          b?.name;
-                        return String(bid) === String(id);
-                      }) || businesses[0];
-                    const selId = sel
-                      ? sel?.id ??
-                        sel?.locationId ??
-                        sel?.placeId ??
-                        sel?.place_id ??
-                        sel?.name
-                      : id;
-                    setForm((f) => ({
+                <BusinessProfileDropdown
+                  onSelect={(business) => {
+                    const businessId = business?.id || business?.locationId || business?.placeId || business?.place_id || business?.name || '';
+                    const businessName = business?.title || business?.locationName || business?.name || '';
+                    
+                    setForm(f => ({
                       ...f,
-                      businessId: selId,
-                      businessName: sel
-                        ? sel.title || sel.locationName || sel.name
-                        : "",
+                      businessId,
+                      businessName
                     }));
                   }}
-                  className="w-full px-3 py-2 rounded bg-gray-800 text-white"
-                  required
-                >
-                  {businesses.map((b, idx) => {
-                    const bid =
-                      b?.id ??
-                      b?.locationId ??
-                      b?.placeId ??
-                      b?.place_id ??
-                      b?.name ??
-                      String(idx);
-                    const label = b.title || b.locationName || b.name || bid;
-                    return (
-                      <option key={bid} value={bid}>
-                        {label}
-                      </option>
-                    );
-                  })}
-                </select>
+                  className="w-full"
+                />
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm text-gray-300 mb-1">
@@ -247,33 +200,54 @@ const EmailComponent = () => {
         )}
       </div>
 
-      {/* Email Preview */}
+      <div className="mb-6">
+        <label className="block text-sm font-medium text-gray-300 mb-2">
+          Email Content
+        </label>
+        <textarea
+          name="content"
+          value={form.content}
+          onChange={handleChange}
+          rows={6}
+          className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          placeholder="Enter your email content here..."
+        />
+        <p className="mt-1 text-xs text-gray-400">
+          You can use plain text or basic HTML for formatting
+        </p>
+      </div>
+
       <div className="bg-gray-800 rounded-lg shadow-lg p-6 mt-6">
-        <h3 className="text-md font-semibold mb-3">Email Preview</h3>
-        <div className="bg-gray-900 p-4 rounded border border-gray-700">
-          <p className="text-gray-300 mb-3">
-            Hi {form.customerName || "there"}, we'd love your feedback! Please
-            take a moment to leave us a review for{" "}
-            <strong>{form.businessName || "our business"}</strong>.
-          </p>
-          <p className="mb-4">
-            <a
-              href={`${FRONTEND_URL}/business/${encodeURIComponent(
-                form.businessName || ""
-              )}`}
-              className="inline-block px-4 py-2 bg-indigo-600 text-white rounded"
-            >
-              Leave a review
-            </a>
-          </p>
-          <p className="text-sm text-gray-400">
-            Sent from: {form.businessName || "Our Business"}
-          </p>
-          <p className="text-sm text-gray-400 mt-2">
-            Best regards,
-            <br />
-            Our Team
-          </p>
+        <h3 className="text-lg font-semibold text-gray-200 mb-4">Email Preview</h3>
+        <div className="bg-white p-6 rounded-lg">
+          <div className="bg-indigo-600 text-white p-4 rounded-t-lg">
+            <h2 className="text-xl font-bold text-center">Share Your Experience</h2>
+          </div>
+          <div className="p-6">
+            <p className="text-gray-800 mb-4">Hi {form.customerName || "there"},</p>
+            <div className="text-gray-700 mb-6" style={{ whiteSpace: 'pre-line' }}>
+              {form.content || "We'd love to hear your feedback about your recent experience with us."}
+            </div>
+            
+            <div className="text-center my-8">
+              <a
+                href={`${FRONTEND_URL}/business/${encodeURIComponent(form.businessName || "")}`}
+                className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+              >
+                Leave a Review
+              </a>
+            </div>
+            
+            <div className="mt-8 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-500">
+                Thank you for your time and support!
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Best regards,<br />
+                <span className="font-medium">{form.businessName || "Our Team"}</span>
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

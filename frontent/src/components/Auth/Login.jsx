@@ -27,10 +27,14 @@ const Login = () => {
       return;
     }
 
-    const { success, error, message } = await login(identifier, password);
+    const { success, error, message,user } = await login(identifier, password);
     if (success) {
       setAlert({ type: 'success', message: message || 'Login successful!' });
-      navigate("/dashboard");
+      if(user.role === 'admin'){
+        navigate("/ad-dashboard");
+      }else{
+        navigate("/dashboard");
+      }
     } else if (error) {
       setAlert({ type: 'error', message: error });
     }

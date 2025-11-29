@@ -6,6 +6,10 @@ const scheduledPostSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  keywords: [{
+    type: String,
+    trim: true
+  }],
   accountId: {
     type: String,
     required: true
@@ -88,91 +92,153 @@ const scheduledPostSchema = new mongoose.Schema({
 scheduledPostSchema.index({ accountId: 1, locationId: 1 });
 scheduledPostSchema.index({ status: 1, nextRun: 1 });
 
-// Calculate next run date
+// Calculate next run date based on recurrence type
 scheduledPostSchema.methods.calculateNextRun = function() {
   if (!this.isRecurring || !this.scheduledFor) return null;
   
-  // Get current time in UTC
   const now = new Date();
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
   
-  // Create a date object for the scheduled time (stored in UTC)
-  let nextRun = new Date(this.scheduledFor);
+  // Start with the scheduled time or last run time
+  let nextRun = this.lastRun ? new Date(this.lastRun) : new Date(this.scheduledFor);
   
-  // For recurring posts, find the next occurrence
-  if (this.isRecurring) {
-    if (this.repeatType === 'daily') {
-      // For daily, add 1 day from now
-      nextRun = new Date(now);
+  // Calculate next occurrence based on repeat type
+  switch (this.repeatType) {
+    case 'daily':
+      // For daily, add 1 day to the last run time
       nextRun.setDate(nextRun.getDate() + 1);
+      break;
       
-    } else if (this.repeatType === 'weekly' && this.repeatDays && this.repeatDays.length > 0) {
-      // For weekly, find the next occurrence of the selected day(s)
-      const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-      const today = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-      
-      // Convert day names to numbers (0-6)
-      const repeatDayNumbers = this.repeatDays.map(day => days.indexOf(day));
-      
-      // Find the next occurrence of any of the selected days
-      let daysToAdd = 1;
-      let nextDay = (today + daysToAdd) % 7;
-      
-      // Find the next scheduled day
-      while (!repeatDayNumbers.includes(nextDay)) {
-        daysToAdd++;
-        nextDay = (today + daysToAdd) % 7;
+    case 'weekly':
+      if (this.repeatDays && this.repeatDays.length > 0) {
+        const currentDay = nextRun.getDay(); // 0 = Sunday
+        const repeatDayNumbers = this.repeatDays.map(day => days.indexOf(day.toLowerCase()));
         
-        // Prevent infinite loop if no valid days are selected (shouldn't happen due to validation)
-        if (daysToAdd > 7) {
+        // Find the next occurrence of any selected day after today
+        let daysToAdd = 1; // Start checking from tomorrow
+        let nextDay = (currentDay + daysToAdd) % 7;
+        
+        // Find the next valid day
+        let found = false;
+        for (let i = 1; i <= 7; i++) {
+          const checkDay = (currentDay + i) % 7;
+          if (repeatDayNumbers.includes(checkDay)) {
+            daysToAdd = i;
+            found = true;
+            break;
+          }
+        }
+        
+        if (!found) {
+          // If no days found in the next 7 days (shouldn't happen if repeatDays is valid)
           console.error('No valid days selected for weekly recurrence');
           return null;
         }
+        
+        // If we've wrapped around to next week, add the days
+        nextRun.setDate(nextRun.getDate() + daysToAdd);
+        
+        // Preserve the original time
+        const originalTime = this.lastRun ? new Date(this.lastRun) : new Date(this.scheduledFor);
+        nextRun.setHours(
+          originalTime.getHours(),
+          originalTime.getMinutes(),
+          originalTime.getSeconds(),
+          originalTime.getMilliseconds()
+        );
+        
+        console.log(`📅 Next run calculated for ${this._id}:`, {
+          currentDay: days[currentDay],
+          repeatDays: this.repeatDays,
+          daysToAdd: daysToAdd,
+          nextRunDay: days[nextRun.getDay()],
+          nextRun: nextRun.toISOString()
+        });
+        
+      } else {
+        // If no specific days, add 7 days
+        nextRun.setDate(nextRun.getDate() + 7);
       }
+      break;
       
-      // Set the next run date
-      nextRun = new Date(now);
-      nextRun.setDate(now.getDate() + daysToAdd);
-      
-    } else if (this.repeatType === 'monthly') {
-      // For monthly, add 1 month from now
-      nextRun = new Date(now);
+    case 'monthly':
+      // For monthly, add 1 month while preserving the day of month
+      const originalDay = nextRun.getDate();
       nextRun.setMonth(nextRun.getMonth() + 1);
       
       // Handle month overflow (e.g., Jan 31 -> Feb 28/29)
-      const originalDate = new Date(this.scheduledFor).getDate();
-      const lastDayOfNextMonth = new Date(nextRun.getFullYear(), nextRun.getMonth() + 1, 0).getDate();
-      nextRun.setDate(Math.min(originalDate, lastDayOfNextMonth));
-    }
-    
-    // Set the time to the original scheduled time for all recurrence types
-    if (nextRun) {
-      const originalTime = new Date(this.scheduledFor);
-      nextRun.setHours(
-        originalTime.getHours(),
-        originalTime.getMinutes(),
-        originalTime.getSeconds(),
-        originalTime.getMilliseconds()
-      );
+      const lastDayOfMonth = new Date(nextRun.getFullYear(), nextRun.getMonth() + 1, 0).getDate();
+      nextRun.setDate(Math.min(originalDay, lastDayOfMonth));
+      break;
       
-      // Ensure the next run is in the future
-      if (nextRun <= now) {
-        if (this.repeatType === 'daily') {
-          nextRun.setDate(nextRun.getDate() + 1);
-        } else if (this.repeatType === 'weekly') {
+    default:
+      return null;
+  }
+  
+  // Preserve the original time
+  const originalTime = this.lastRun ? new Date(this.lastRun) : new Date(this.scheduledFor);
+  nextRun.setHours(
+    originalTime.getHours(),
+    originalTime.getMinutes(),
+    originalTime.getSeconds(),
+    originalTime.getMilliseconds()
+  );
+  
+  // If the calculated time is in the past, move to the next occurrence
+  while (nextRun <= now) {
+    switch (this.repeatType) {
+      case 'daily':
+        nextRun.setDate(nextRun.getDate() + 1);
+        break;
+        
+      case 'weekly':
+        if (this.repeatDays && this.repeatDays.length > 0) {
+          // Find the next valid day in the next week
           nextRun.setDate(nextRun.getDate() + 7);
-        } else if (this.repeatType === 'monthly') {
-          nextRun.setMonth(nextRun.getMonth() + 1);
+        } else {
+          nextRun.setDate(nextRun.getDate() + 7);
         }
-      }
+        break;
+        
+      case 'monthly':
+        const day = nextRun.getDate();
+        nextRun.setMonth(nextRun.getMonth() + 1);
+        
+        // Handle month overflow again after incrementing
+        const lastDay = new Date(nextRun.getFullYear(), nextRun.getMonth() + 1, 0).getDate();
+        nextRun.setDate(Math.min(day, lastDay));
+        break;
     }
   }
+  
+  console.log(`🔄 Calculated next run for ${this._id}:`, {
+    type: this.repeatType,
+    scheduledFor: this.scheduledFor,
+    lastRun: this.lastRun,
+    nextRun: nextRun,
+    now: now,
+    days: this.repeatDays
+  });
   
   return nextRun;
 };
 
 // Pre-save hook to set nextRun
+// Check if the post should run now
+scheduledPostSchema.methods.shouldRun = function() {
+  if (!this.scheduledFor) return false;
+  
+  // Get current time in UTC
+  const now = new Date();
+  
+  // Check if scheduled time has passed
+  return new Date(this.scheduledFor) <= now;
+};
+
+// Pre-save hook to set nextRun
 scheduledPostSchema.pre('save', function(next) {
-  if (this.isModified('isRecurring') || this.isModified('scheduledFor') || this.isModified('repeatType') || this.isModified('repeatDays')) {
+  if (this.isModified('isRecurring') || this.isModified('scheduledFor') || 
+      this.isModified('repeatType') || this.isModified('repeatDays')) {
     this.nextRun = this.calculateNextRun();
   }
   next();

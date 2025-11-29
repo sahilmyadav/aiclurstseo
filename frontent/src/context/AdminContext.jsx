@@ -1,183 +1,140 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { createContext, useState, useCallback } from "react";
+import axios from "axios";
 
 export const AdminContext = createContext();
 
 export const AdminProvider = ({ children }) => {
-  const [metrics, setMetrics] = useState(null);
-  
   const [users, setUsers] = useState([]);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState({
-    metrics: false,
-    users: false,
-    reviews: false
-  });
-  const [error, setError] = useState({
-    metrics: null,
-    users: null,
-    reviews: null
-  });
+  const [allUsers, setAllUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [pagination, setPagination] = useState({
-    users: { page: 1, limit: 10, total: 0, pages: 1 },
-    reviews: { page: 1, limit: 10, total: 0, pages: 1 }
+    total: 0,
+    page: 1,
+    pages: 1
   });
 
-  const VITE_API_BASE = import.meta.env.VITE_API_BASE;
-  console.log("VITE_API_BASE", VITE_API_BASE);
   
-  // Axios instance with default config
   const api = axios.create({
-    baseURL: VITE_API_BASE || 'http://localhost:8000',
-    headers: { 'Content-Type': 'application/json' },
-    withCredentials: false,
+    baseURL: import.meta.env.VITE_API_BASE || "http://localhost:8000",
+    headers: { "Content-Type": "application/json" },
   });
 
-  // Add request interceptor to include auth token
+
   api.interceptors.request.use((config) => {
-    const raw = localStorage.getItem('auth');
-    let token = null;
-    try {
-      if (raw) token = JSON.parse(raw)?.token;
-    } catch (_) {}
-    
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const raw = localStorage.getItem("auth");
+    if (raw) {
+      const token = JSON.parse(raw)?.token;
+      if (token) config.headers.Authorization = `Bearer ${token}`;
     }
-      return config;
-    },
-    (error) => {
-      return Promise.reject(error);
-    }
-  );
+    return config;
+  });
 
-  // Handle API errors
-  const handleError = (error, type) => {
-    console.error(`Error fetching ${type}:`, error);
-    const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
-    
-    setError(prev => ({
-      ...prev,
-      [type]: errorMessage
-    }));
-    
-    setLoading(prev => ({
-      ...prev,
-      [type]: false
-    }));
-  };
 
-  // Fetch dashboard metrics
-  const fetchMetrics = async () => {
+  const fetchUsers = useCallback(async (url) => {
     try {
-      setLoading(prev => ({ ...prev, metrics: true }));
-      setError(prev => ({ ...prev, metrics: null }));
+      setLoading(true);
+      setError(null);
+
+      const res = await api.get(url);
+      const usersData = res.data?.data || [];
       
-      const response = await api.get('/admin/metrics');
-      setMetrics(response.data.data.metrics);
+      // Update pagination info
+      if (res.data?.pagination) {
+        setPagination(res.data.pagination);
+      }
+
+      setUsers(Array.isArray(usersData) ? usersData : []);
       
-      return response.data.data;
-    } catch (error) {
-      handleError(error, 'metrics');
-      throw error;
+      // Fetch all users for counts (without pagination)
+      const allRes = await api.get("/api/admin/users?limit=1000");
+      setAllUsers(Array.isArray(allRes.data?.data) ? allRes.data.data : []);
+      
+      return res;
+    } catch (err) {
+      console.error("Error fetching users:", err);
+      setError(err.response?.data?.message || "Failed to fetch users");
+      throw err;
     } finally {
-      setLoading(prev => ({ ...prev, metrics: false }));
+      setLoading(false);
     }
-  };
+  }, []);
 
-  // Fetch users with pagination
-//   const fetchUsers = async (page = 1, limit = 10) => {
-//     try {
-//       setLoading(prev => ({ ...prev, users: true }));
-//       setError(prev => ({ ...prev, users: null }));
-      
-//       const response = await api.get('/admin/users', {
-//         params: { page, limit }
-//       });
-      
-//       setUsers(response.data.data);
-//       setPagination(prev => ({
-//         ...prev,
-//         users: {
-//           ...response.data.pagination,
-//           page: parseInt(page),
-//           limit: parseInt(limit)
-//         }
-//       }));
-      
-//       return response.data.data;
-//     } catch (error) {
-//       handleError(error, 'users');
-//       throw error;
-//     } finally {
-//       setLoading(prev => ({ ...prev, users: false }));
-//     }
-//   };
+  const updateUserRole = useCallback(async (userId, newRole) => {
+    try {
+      await api.put(`/api/admin/assign-role`, { userId, role: newRole });
+      setUsers((prev) =>
+        prev.map((user) =>
+          user._id === userId ? { ...user, role: newRole } : user
+        )
+      );
+    } catch (err) {
+      console.error(" Error updating role:", err);
+      throw err;
+    }
+  }, []);
 
-  // Fetch reviews with pagination
-//   const fetchReviews = async (page = 1, limit = 10) => {
-//     try {
-//       setLoading(prev => ({ ...prev, reviews: true }));
-//       setError(prev => ({ ...prev, reviews: null }));
-      
-//       const response = await api.get('/admin/reviews', {
-//         params: { page, limit }
-//       });
-      
-//       setReviews(response.data.data);
-//       setPagination(prev => ({
-//         ...prev,
-//         reviews: {
-//           ...response.data.pagination,
-//           page: parseInt(page),
-//           limit: parseInt(limit)
-//         }
-//       }));
-      
-//       return response.data.data;
-//     } catch (error) {
-//       handleError(error, 'reviews');
-//       throw error;
-//     } finally {
-//       setLoading(prev => ({ ...prev, reviews: false }));
-//     }
-//   };
 
-  // Initial data load
-  useEffect(() => {
-    fetchMetrics();
-    // fetchUsers();
-    // fetchReviews();
-  }, [users.role === 'admin']);
+  const deleteUser = useCallback(async (userId) => {
+    try {
+      await api.delete('/api/admin/delete-user', { 
+        data: { userId } 
+      });
+      // Update the users list by removing the deleted user
+      setUsers((prev) => prev.filter((user) => user._id !== userId));
+      // Also update allUsers to keep counts in sync
+      setAllUsers((prev) => prev.filter((user) => user._id !== userId));
+    } catch (err) {
+      console.error("Error deleting user:", err);
+      throw err;
+    }
+  }, []);
 
-  // Context value
-  const value = {
-    metrics,
-    users,
-    reviews,
-    loading,
-    error,
-    pagination,
-    // fetchMetrics,
-    // fetchUsers,
-    // fetchReviews,
-    // setPagination
-  };
+  const blockUnblockUser = useCallback(async (userId) => {
+    try {
+      const response = await api.put('/api/admin/block-user', { userId });
+      const updatedUser = response.data.data;
+      
+      // Update users list
+      setUsers(prev => 
+        prev.map(user => 
+          user._id === userId 
+            ? { ...user, isBlocked: updatedUser.isBlocked } 
+            : user
+        )
+      );
+      
+      // Also update allUsers to keep counts in sync
+      setAllUsers(prev => 
+        prev.map(user => 
+          user._id === userId 
+            ? { ...user, isBlocked: updatedUser.isBlocked } 
+            : user
+        )
+      );
+      
+      return updatedUser;
+    } catch (err) {
+      console.error("Error toggling user block status:", err);
+      throw err;
+    }
+  }, []);
 
   return (
-    <AdminContext.Provider value={value}>
+    <AdminContext.Provider
+      value={{
+        users,
+        allUsers,
+        loading,
+        error,
+        pagination,
+        fetchUsers,
+        updateUserRole,
+        deleteUser,
+        blockUnblockUser
+      }}
+    >
       {children}
     </AdminContext.Provider>
   );
 };
-
-// Custom hook to use the admin context
-export const useAdmin = () => {
-  const context = useContext(AdminContext);
-  if (!context) {
-    throw new Error('useAdmin must be used within an AdminProvider');
-  }
-  return context;
-};
-
-export default AdminContext;
