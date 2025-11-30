@@ -1,8 +1,11 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from './AuthContext';
 
 const GoogleBusinessContext = createContext();
+
+// Helper function to get storage key for current user
+const getStorageKey = (userId) => `google_business_data_${userId || 'guest'}`;
 
 export const useGoogleBusiness = () => {
   const context = useContext(GoogleBusinessContext);
@@ -13,33 +16,104 @@ export const useGoogleBusiness = () => {
 };
 
 export const GoogleBusinessProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
-  const [businesses, setBusinesses] = useState([]);
-  const [selectedBusiness, setSelectedBusiness] = useState(null);
-  const [selectedBusinesses, setSelectedBusinesses] = useState([]); // For multiple selections
-  const [reviews, setReviews] = useState([]);
-  const [localReviews, setLocalReviews] = useState([]); // New state for local reviews
-  const [loading, setLoading] = useState(false);
-  const [isConnected, setIsConnected] = useState(false);
-  const [reviewUri, setReviewUri] = useState('');
-  const [tokenDetails, setTokenDetails] = useState({
-    accessToken: null,
-    expiryDate: null,
-    scopes: []
-  });
-  // Performance metrics state
-  const [performanceData, setPerformanceData] = useState(null);
-  const [performanceLoading, setPerformanceLoading] = useState(false);
-  const [performanceError, setPerformanceError] = useState(null);
-  console.log("performance data",performanceData)
-
-  console.log("Selected business",selectedBusiness)
-  
-  const [scheduledPosts, setScheduledPosts] = useState([]);
-  const [loadingScheduled, setLoadingScheduled] = useState(false);
-  
   const { user: authUser, token } = useAuth();
   const BACKEND_URL = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
+  
+  // Initialize state with user-specific data from localStorage
+  const [state, setState] = useState(() => {
+    const saved = localStorage.getItem(getStorageKey(authUser?.id));
+    return saved ? JSON.parse(saved) : {
+      user: null,
+      businesses: [],
+      selectedBusiness: null,
+      selectedBusinesses: [],
+      reviews: [],
+      localReviews: [],
+      loading: false,
+      isConnected: false,
+      reviewUri: '',
+      tokenDetails: {
+        accessToken: null,
+        expiryDate: null,
+        scopes: []
+      },
+      performanceData: null,
+      performanceLoading: false,
+      performanceError: null,
+      scheduledPosts: [],
+      loadingScheduled: false
+    };
+  });
+
+  // State updater function
+  const updateState = useCallback((updates) => {
+    setState(prev => {
+      const newState = { ...prev, ...updates };
+      localStorage.setItem(getStorageKey(authUser?.id), JSON.stringify(newState));
+      return newState;
+    });
+  }, [authUser?.id]);
+
+  // Create individual state setters
+  const setUser = useCallback((user) => updateState({ user }), [updateState]);
+  const setBusinesses = useCallback((businesses) => updateState({ businesses }), [updateState]);
+  const setSelectedBusiness = useCallback((selectedBusiness) => updateState({ selectedBusiness }), [updateState]);
+  const setSelectedBusinesses = useCallback((selectedBusinesses) => updateState({ selectedBusinesses }), [updateState]);
+  const setReviews = useCallback((reviews) => updateState({ reviews }), [updateState]);
+  const setLocalReviews = useCallback((localReviews) => updateState({ localReviews }), [updateState]);
+  const setLoading = useCallback((loading) => updateState({ loading }), [updateState]);
+  const setIsConnected = useCallback((isConnected) => updateState({ isConnected }), [updateState]);
+  const setReviewUri = useCallback((reviewUri) => updateState({ reviewUri }), [updateState]);
+  const setTokenDetails = useCallback((tokenDetails) => updateState({ tokenDetails }), [updateState]);
+  const setPerformanceData = useCallback((performanceData) => updateState({ performanceData }), [updateState]);
+  const setPerformanceLoading = useCallback((performanceLoading) => updateState({ performanceLoading }), [updateState]);
+  const setPerformanceError = useCallback((performanceError) => updateState({ performanceError }), [updateState]);
+  const setScheduledPosts = useCallback((scheduledPosts) => updateState({ scheduledPosts }), [updateState]);
+  const setLoadingScheduled = useCallback((loadingScheduled) => updateState({ loadingScheduled }), [updateState]);
+
+  // Destructure state for easier access
+  const {
+    user,
+    businesses,
+    selectedBusiness,
+    selectedBusinesses,
+    reviews,
+    localReviews,
+    loading,
+    isConnected,
+    reviewUri,
+    tokenDetails,
+    performanceData,
+    performanceLoading,
+    performanceError,
+    scheduledPosts,
+    loadingScheduled
+  } = state;
+
+  // Reset state when user changes
+  useEffect(() => {
+    setState({
+      user: null,
+      businesses: [],
+      selectedBusiness: null,
+      selectedBusinesses: [],
+      reviews: [],
+      localReviews: [],
+      loading: false,
+      isConnected: false,
+      reviewUri: '',
+      tokenDetails: {
+        accessToken: null,
+        expiryDate: null,
+        scopes: []
+      },
+      performanceData: null,
+      performanceLoading: false,
+      performanceError: null,
+      scheduledPosts: [],
+      loadingScheduled: false
+    });
+  }, [authUser?.id]);
 
   const authHeaders = () => ({
     Authorization: token ? `Bearer ${token}` : undefined,
