@@ -126,7 +126,7 @@ export async function sendReviewInvitation(to, customerName = '', businessName =
           <p>${emailContent}</p>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${inviteLink || '#'}" class="button">Leave a Review</a>
+            <a href="${inviteLink || '#'}" class="button" style="color: white !important;">Leave a Review</a>
           </div>
           
           <p>Or copy and paste this link into your browser:</p>
