@@ -1,4 +1,4 @@
-import { BarChart3, Brain, ChevronDown, TrendingUp, Star, Target, Sparkles, AlertCircle, RefreshCw, Calendar, Phone, Globe } from "lucide-react";
+import { BarChart3, Brain, TrendingUp, Star, Target, Sparkles, AlertCircle, RefreshCw, Calendar, Phone, Globe } from "lucide-react";
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import DatePicker from "react-datepicker";
@@ -18,9 +18,7 @@ import {
 } from "recharts";
 import { toast } from 'sonner';
 
-import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
-import fetchWithAuth from '../utils/fetchWithAuth';
 import BusinessProfileDropdown from './common/BusinessProfileDropdown';
 
 const Audit = () => {
@@ -51,11 +49,8 @@ const Audit = () => {
     reviewStats,
     performanceData,
     performanceLoading,
-    performanceError,
     fetchPerformanceMetrics
   } = useGoogleBusiness();
-
-  // const { isCollapsed } = useSidebar();
 
   const timerRef = useRef(null);
 
