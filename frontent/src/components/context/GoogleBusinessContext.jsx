@@ -18,7 +18,7 @@ export const useGoogleBusiness = () => {
 export const GoogleBusinessProvider = ({ children }) => {
   const { user: authUser, token } = useAuth();
   const BACKEND_URL = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
-  
+  const { subscriptionData } = useAuth();
   // Initialize state with user-specific data from localStorage
   const [state, setState] = useState(() => {
     const saved = localStorage.getItem(getStorageKey(authUser?.id));
@@ -305,7 +305,7 @@ export const GoogleBusinessProvider = ({ children }) => {
       }
     } catch (err) {
       console.error('Error fetching reviews:', err);
-      toast.error("Failed to fetch reviews");
+      // toast.error("Failed to fetch reviews");
       setReviews([]);
     } finally {
       setLoading(false);
@@ -488,6 +488,24 @@ export const GoogleBusinessProvider = ({ children }) => {
       await fetchPerformanceMetrics();
     }
   };
+
+  useEffect(() => {
+  // Wait until subscription data is loaded
+  if (subscriptionData === undefined) return;
+  
+  // Only proceed if we have a user and the account is currently connected
+  if (!authUser || !isConnected) return;
+  
+  // Only disconnect if we're certain the subscription is not active
+  if (subscriptionData === null || subscriptionData.active === false) {
+    const timeoutId = setTimeout(() => {
+      console.log('Disconnecting due to no active subscription');
+      disconnectGoogle().catch(console.error);
+    }, 1000); // Small delay to ensure other auth processes complete
+    
+    return () => clearTimeout(timeoutId);
+  }
+}, [subscriptionData, authUser, disconnectGoogle, isConnected]); // Added isConnected to dependencies
 
   useEffect(() => {
     checkAuthStatus();
