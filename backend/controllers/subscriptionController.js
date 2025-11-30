@@ -223,6 +223,19 @@ export const createCheckoutSession = async (req, res) => {
       return res.status(400).json({ error: "Valid number of profiles is required" });
     }
 
+    // Check if user already has an active subscription
+    const activeSubscription = await Subscription.findOne({
+      userId,
+      status: "active",
+      endDate: { $gt: new Date() }
+    });
+
+    if (activeSubscription) {
+      return res.status(400).json({ 
+        error: "You already have an active subscription. Please wait for it to expire before purchasing a new one." 
+      });
+    }
+
     // Fetch plan details from database
     const plan = await Plan.findOne({ planType, isActive: true });
     if (!plan) {
