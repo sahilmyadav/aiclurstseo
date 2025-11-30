@@ -58,7 +58,7 @@ export const AuthContextProvider = ({ children }) => {
       
       // Check trial eligibility
       const eligibilityResponse = await axios.get(
-        `${API_BASE}/subscription/check-trial-eligibility/${userId}`,
+        `${API_BASE}/api/subscription/check-trial-eligibility/${userId}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       )
       console.log(eligibilityResponse.data)
@@ -69,7 +69,7 @@ export const AuthContextProvider = ({ children }) => {
 
       // Check for active subscription
       const subscriptionResponse = await axios.get(
-        `${API_BASE}/subscription/verify?userId=${userId}`,
+        `${API_BASE}/api/subscription/verify?userId=${userId}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       )
       
@@ -104,7 +104,7 @@ export const AuthContextProvider = ({ children }) => {
     try {
       setSubscriptionLoading(true)
       const res = await axios.post(
-        `${API_BASE}/subscription/start-trial`, 
+        `${API_BASE}/api/subscription/start-trial`, 
         { userId },
         { headers: { 'Authorization': `Bearer ${token}` } }
       )
@@ -170,8 +170,8 @@ export const AuthContextProvider = ({ children }) => {
       try {
         setPlansLoading(true)
         setPlansError(null)
-        const { data } = await api.get(
-          `/subscription/plans`
+        const { data } = await axios.get(
+          `${API_BASE}/api/subscription/plans`
         )
         setPlans(data || [])
       } catch (error) {
