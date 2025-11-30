@@ -170,7 +170,7 @@ const SubscriptionPage = () => {
       setLoading(true);
       const res = await activateTrial(userId, token);
       
-      alert(res.data.message || "14-day trial activated!");
+      // alert(res.data.message || "14-day trial activated!");
       
       // Optionally redirect to dashboard
       // navigate('/dashboard');
@@ -247,7 +247,7 @@ const SubscriptionPage = () => {
         response: error.response?.data,
         status: error.response?.status,
       });
-      alert(`Error: ${error.message || 'Failed to process subscription'}`);
+      alert(`You Already have an active subscription. Please refresh the page .`);
       // Reset loading state for specific plan
       setMonthlyLoading(false);
       setYearlyLoading(false);
