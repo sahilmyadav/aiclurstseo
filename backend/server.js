@@ -85,7 +85,7 @@ app.use('/api/post', scheduleRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Test routes
-app.get('/test', (req, res) => {
+app.get('/run', (req, res) => {
     res.json({ 
         status: 'ok', 
         service: 'backend',
