@@ -58,7 +58,7 @@ export const AuthContextProvider = ({ children }) => {
       
       // Check trial eligibility
       const eligibilityResponse = await axios.get(
-        `${import.meta.env.VITE_API_BASE}/api/subscription/check-trial-eligibility/${userId}`,
+        `${import.meta.env.VITE_API_BASE}/subscription/check-trial-eligibility/${userId}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       )
       console.log(eligibilityResponse.data)
@@ -69,7 +69,7 @@ export const AuthContextProvider = ({ children }) => {
 
       // Check for active subscription
       const subscriptionResponse = await axios.get(
-        `${import.meta.env.VITE_API_BASE}/api/subscription/verify?userId=${userId}`,
+        `${import.meta.env.VITE_API_BASE}/subscription/verify?userId=${userId}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       )
       
@@ -104,7 +104,7 @@ export const AuthContextProvider = ({ children }) => {
     try {
       setSubscriptionLoading(true)
       const res = await axios.post(
-        `${import.meta.env.VITE_API_BASE}/api/subscription/start-trial`, 
+        `${import.meta.env.VITE_API_BASE}/subscription/start-trial`, 
         { userId },
         { headers: { 'Authorization': `Bearer ${token}` } }
       )
@@ -171,7 +171,7 @@ export const AuthContextProvider = ({ children }) => {
         setPlansLoading(true)
         setPlansError(null)
         const { data } = await axios.get(
-          `${import.meta.env.VITE_API_BASE}/api/subscription/plans`
+          `${import.meta.env.VITE_API_BASE}/subscription/plans`
         )
         setPlans(data || [])
       } catch (error) {
