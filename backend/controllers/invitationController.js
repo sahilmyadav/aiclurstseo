@@ -2,7 +2,7 @@ import { sendReviewInvitation } from '../utilities/sendMail.js';
 
 export const sendInvitationEmail = async (req, res) => {
   try {
-    const { businessName, customerName, customerEmail, content } = req.body;
+    const { businessName, customerName, customerEmail, content, reviewLink } = req.body;
 
     if (!businessName || !customerName || !customerEmail) {
       return res.status(400).json({ 
@@ -11,8 +11,10 @@ export const sendInvitationEmail = async (req, res) => {
       });
     }
 
-    const frontUrl = process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:5173';
-    const inviteLink = `${frontUrl}/business/${encodeURIComponent(businessName)}`;
+    // Use the reviewLink provided from the frontend or fallback to the old format
+    const inviteLink = reviewLink || `${process.env.FRONTEND_URL || 'http://localhost:5173'}/business/${encodeURIComponent(businessName)}`;
+    
+    console.log('Using invite link:', inviteLink);
 
     await sendReviewInvitation(
       customerEmail,

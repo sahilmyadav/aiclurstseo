@@ -7,7 +7,13 @@ import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
 
 const EmailComponent = () => {
   const { token } = useAuth();
-  const { businesses = [], loading: businessesLoading } = useGoogleBusiness();
+  const { 
+    businesses = [], 
+    selectedBusiness, 
+    loading: businessesLoading, 
+    selectBusiness 
+  } = useGoogleBusiness();
+  
   const [form, setForm] = useState({
     businessId: "",
     businessName: "",
@@ -15,23 +21,35 @@ const EmailComponent = () => {
     customerEmail: "",
     content: "We would love to hear your feedback about your recent experience with us. Your opinion is valuable to us and helps us improve our services."
   });
+  
   const [isSending, setIsSending] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
   const BACKEND_URL = import.meta.env.VITE_API_BASE?.replace(/\/$/, "") || "http://localhost:8000";
   const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || import.meta.env.VITE_APP_URL || "http://localhost:5173";
 
+  // Update form when selectedBusiness changes
   useEffect(() => {
-    if (businesses && businesses.length > 0) {
-      const b = businesses[0];
-      const bid =
-        b?.id ?? b?.locationId ?? b?.placeId ?? b?.place_id ?? b?.name ?? "";
-      setForm((f) => ({
+    if (selectedBusiness) {
+      const businessId = selectedBusiness?.id || 
+                        selectedBusiness?.locationId || 
+                        selectedBusiness?.placeId || 
+                        selectedBusiness?.place_id || 
+                        selectedBusiness?.name || '';
+      
+      const businessName = selectedBusiness?.title || 
+                          selectedBusiness?.locationName || 
+                          selectedBusiness?.name || '';
+      
+      setForm(f => ({
         ...f,
-        businessId: bid,
-        businessName: b.title || b.locationName || b.name || "",
+        businessId,
+        businessName
       }));
+    } else if (businesses?.length > 0) {
+      // If no business is selected but businesses are available, select the first one
+      selectBusiness(businesses[0]);
     }
-  }, [businesses]);
+  }, [selectedBusiness, businesses, selectBusiness]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,19 +59,24 @@ const EmailComponent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!form.businessId || !form.customerName.trim() || !form.customerEmail.trim()) {
+    if (!selectedBusiness || !form.customerName.trim() || !form.customerEmail.trim()) {
       toast.error("Please select a business and enter customer name & email");
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(form.customerEmail.trim())) {
-      toast.error("Enter a valid email");
+      toast.error("Please enter a valid email address");
       return;
     }
 
     setIsSending(true);
     try {
+      // Generate the same link format as in QRCodeComponent
+      const locationId = selectedBusiness.name?.split('/').pop() || '';
+      const businessName = selectedBusiness.metadata?.newReviewUri || selectedBusiness.title || '';
+      const reviewLink = `${FRONTEND_URL}/review/${locationId}?name=${encodeURIComponent(businessName)}`;
+
       const res = await fetch(`${BACKEND_URL}/api/invitations/email`, {
         method: "POST",
         headers: {
@@ -64,7 +87,8 @@ const EmailComponent = () => {
           businessName: form.businessName,
           customerName: form.customerName.trim(),
           customerEmail: form.customerEmail.toLowerCase().trim(),
-          content: form.content
+          content: form.content,
+          reviewLink: reviewLink  // Send the generated review link
         }),
       });
 
@@ -136,16 +160,7 @@ const EmailComponent = () => {
                   Business
                 </label>
                 <BusinessProfileDropdown
-                  onSelect={(business) => {
-                    const businessId = business?.id || business?.locationId || business?.placeId || business?.place_id || business?.name || '';
-                    const businessName = business?.title || business?.locationName || business?.name || '';
-                    
-                    setForm(f => ({
-                      ...f,
-                      businessId,
-                      businessName
-                    }));
-                  }}
+                  onSelect={selectBusiness}
                   className="w-full"
                 />
               </div>

@@ -170,7 +170,7 @@ const SubscriptionPage = () => {
       setLoading(true);
       const res = await activateTrial(userId, token);
       
-      alert(res.data.message || "14-day trial activated!");
+      // alert(res.data.message || "14-day trial activated!");
       
       // Optionally redirect to dashboard
       // navigate('/dashboard');
@@ -247,7 +247,7 @@ const SubscriptionPage = () => {
         response: error.response?.data,
         status: error.response?.status,
       });
-      alert(`Error: ${error.message || 'Failed to process subscription'}`);
+      alert(`You Already have an active subscription. Please refresh the page .`);
       // Reset loading state for specific plan
       setMonthlyLoading(false);
       setYearlyLoading(false);
@@ -271,91 +271,77 @@ const SubscriptionPage = () => {
         </div>
 
         {/* Trial Status */}
-        {trialData && remainingDays > 0 ? (
-          // Active Trial Progress
-          <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-white flex items-center">
-                  <div className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse"></div>
-                  Free Trial Active
-                </h3>
-                <p className="text-gray-300 mt-1">
-                  Your 14-day free trial is currently active.
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">{remainingDays}</div>
-                <div className="text-sm text-gray-400">days left</div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
-              <div 
-                className="bg-gradient-to-r from-green-400 to-emerald-400 rounded-full h-3 transition-all duration-500 shadow-sm"
-                style={{ width: `${(remainingDays / 14) * 100}%` }}
-              ></div>
-            </div>
+    {/* Trial Status */}
+{!subscriptionData?.active || subscriptionData?.planType === 'trial' ? (
+  trialData && remainingDays > 0 ? (
+    // Active Trial Progress
+    <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-xl font-bold text-white flex items-center">
+            <div className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse"></div>
+            Free Trial Active
+          </h3>
+          <p className="text-gray-300 mt-1">
+            Your 14-day free trial is currently active.
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+            {remainingDays}
           </div>
-        ) : trialData && remainingDays === 0 ? (
-          // Trial Expired
-          <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-white">Free Trial Used</h3>
-                <p className="text-gray-300 mt-1">
-                  Your 14-day free trial has expired. Please choose a subscription plan below.
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-gray-500">0</div>
-                <div className="text-sm text-gray-400">days left</div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
-              <div className="bg-gradient-to-r from-gray-500 to-gray-600 rounded-full h-3 w-full"></div>
-            </div>
-          </div>
-        ) : trialEligible ? (
-          // Trial Available
-          <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 text-white rounded-2xl shadow-xl p-6 mb-8 relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm"></div>
-            <div className="relative flex items-center justify-between">
-              <div>
-                <h3 className="text-xl font-bold flex items-center">
-                  <FiStar className="w-6 h-6 mr-2 text-yellow-400" />
-                  14-Day Free Trial
-                </h3>
-                <p className="text-blue-100 mt-1">No credit card required • Full access</p>
-              </div>
-              <button
-                onClick={handleTrial}
-                disabled={loading}
-                className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {loading ? "Starting..." : "Start Free Trial"}
-              </button>
-            </div>
-          </div>
-        ) : (
-          // Trial Not Available
-          <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-xl font-bold text-white">Free Trial Used</h3>
-                <p className="text-gray-300 mt-1">
-                  Your 14-day free trial has expired. Please choose a subscription plan below.
-                </p>
-              </div>
-              <div className="text-right">
-                <div className="text-3xl font-bold text-gray-500">0</div>
-                <div className="text-sm text-gray-400">days left</div>
-              </div>
-            </div>
-            <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
-              <div className="bg-gradient-to-r from-gray-500 to-gray-600 rounded-full h-3 w-full"></div>
-            </div>
-          </div>
-        )}
+          <div className="text-sm text-gray-400">days left</div>
+        </div>
+      </div>
+      <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
+        <div 
+          className="bg-gradient-to-r from-green-400 to-emerald-400 rounded-full h-3 transition-all duration-500 shadow-sm"
+          style={{ width: `${(remainingDays / 14) * 100}%` }}
+        ></div>
+      </div>
+    </div>
+  ) : trialData && remainingDays === 0 ? (
+    // Trial Expired
+    <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-xl font-bold text-white">Free Trial Used</h3>
+          <p className="text-gray-300 mt-1">
+            Your 14-day free trial has expired. Please choose a subscription plan below.
+          </p>
+        </div>
+        <div className="text-right">
+          <div className="text-3xl font-bold text-gray-500">0</div>
+          <div className="text-sm text-gray-400">days left</div>
+        </div>
+      </div>
+      <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
+        <div className="bg-gradient-to-r from-gray-500 to-gray-600 rounded-full h-3 w-full"></div>
+      </div>
+    </div>
+  ) : trialEligible ? (
+    // Trial Available
+    <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 text-white rounded-2xl shadow-xl p-6 mb-8 relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm"></div>
+      <div className="relative flex items-center justify-between">
+        <div>
+          <h3 className="text-xl font-bold flex items-center">
+            <FiStar className="w-6 h-6 mr-2 text-yellow-400" />
+            14-Day Free Trial
+          </h3>
+          <p className="text-blue-100 mt-1">No credit card required • Full access</p>
+        </div>
+        <button
+          onClick={handleTrial}
+          disabled={loading}
+          className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? "Starting..." : "Start Free Trial"}
+        </button>
+      </div>
+    </div>
+  ) : null
+) : null}
 
         {/* Profile Selector */}
         <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
