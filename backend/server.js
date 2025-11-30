@@ -74,7 +74,7 @@ app.use((req, res, next) => {
   }
 });
 
-app.use("/subscription", subscriptionRoutes);
+app.use("/api/subscription", subscriptionRoutes);
 app.use("/auth/google", googleRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
