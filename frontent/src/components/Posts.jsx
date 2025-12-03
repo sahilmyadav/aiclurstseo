@@ -15,8 +15,10 @@ import {
   FaSpinner, 
   FaCheckCircle,
   FaSync,
-  FaInfoCircle 
+  FaInfoCircle,
+  FaRobot
 } from "react-icons/fa";
+import { generateAIPost } from '../utils/suggestion';
 import { toast } from 'sonner';     
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -43,17 +45,7 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
     });
   };
 
-  const getDisplayStatus = (status) => {
-    if (status === 'scheduled') {
-      if (post.isRecurring) {
-        return `Recurring - ${post.repeatType}`;
-      }
-      return `Scheduled for ${formatDate(post.scheduledFor)}`;
-    }
-    if (status === 'published' && post.statusFromApi === 'processing') return `Status: Processing`;
-    if (status === 'published') return `Posted on ${formatDate(post.postedAt)}`;
-    return 'Draft';
-  };
+
 
   // Get business name from the selected business in the dropdown
   const displayBusinessName = selectedBusiness?.title || 
@@ -136,9 +128,9 @@ const Posts = () => {
     isConnected: isGoogleConnected, 
     businesses, 
     selectedBusiness, 
-    selectedBusinesses, // Add this
+    selectedBusinesses, 
     selectBusiness,
-    selectMultipleBusinesses, // Add this
+    selectMultipleBusinesses, 
     scheduledPosts,
     loadingScheduled
   } = useGoogleBusiness();
@@ -150,7 +142,7 @@ const Posts = () => {
     hasMore: false,
     nextPageToken: null,
     loadingMore: false,
-    pageSize: 20, // Default page size
+    pageSize: 20, 
     totalItems: 0,
     currentPage: 1
   });
@@ -164,11 +156,15 @@ const Posts = () => {
     content: '',
     scheduledFor: null,
     media: null,
-    isRecurring: false,
+    isRecurring: false, 
     frequency: 'daily',
     time: '09:00',
-    days: [1, 2, 3, 4, 5]
+    days: [1, 2, 3, 4, 5],
+    keywords: '',
+    keywordsArray: []
   });
+
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
 
   const [businessDetails, setBusinessDetails] = useState(null);
   
@@ -298,6 +294,150 @@ const Posts = () => {
     }
   }, [isGoogleConnected, businesses, selectedBusiness]);
 
+  useEffect(() => {
+    if (selectedBusiness) {
+      const autoKeywords = getAutoKeywords();
+      console.log('Auto keywords for selected business:', autoKeywords);
+      
+      setCurrentPost(prev => ({
+        ...prev,
+        keywordsArray: [...autoKeywords],
+        keywords: ''
+      }));
+    }
+  }, [selectedBusiness]);
+
+  // Function to get auto keywords from selected business
+  const getAutoKeywords = () => {
+    const autoKeywords = [];
+    
+    if (!selectedBusiness) return autoKeywords;
+
+    // Add business name as a keyword - handle different possible properties
+    let businessName = '';
+    
+    // Get business name (only the main name, not variations)
+    if (selectedBusiness.locationName) {
+      businessName = selectedBusiness.locationName;
+    } else if (selectedBusiness.title) {
+      businessName = typeof selectedBusiness.title === 'string' 
+        ? selectedBusiness.title 
+        : selectedBusiness.title?.name || selectedBusiness.title?.displayName || '';
+    } else if (selectedBusiness.name) {
+      businessName = selectedBusiness.name.split('/').pop() || '';
+    }
+    
+    // Clean up and add business name if found
+    if (businessName) {
+      const cleanName = businessName
+        .replace(/[^\w\s-]/g, '') // Keep hyphens
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      if (cleanName) {
+        autoKeywords.push(cleanName);
+      }
+    }
+
+    // Add primary category - only add the main category, not individual words
+    let categoryName = '';
+    
+    if (selectedBusiness.primaryCategory) {
+      categoryName = typeof selectedBusiness.primaryCategory === 'string'
+        ? selectedBusiness.primaryCategory
+        : selectedBusiness.primaryCategory.displayName || selectedBusiness.primaryCategory.name || '';
+    } else if (selectedBusiness.categories?.primaryCategory) {
+      const category = selectedBusiness.categories.primaryCategory;
+      categoryName = typeof category === 'string'
+        ? category
+        : category.displayName || category.name || '';
+      
+      if (typeof categoryName === 'object' && categoryName !== null) {
+        categoryName = categoryName.name || categoryName.displayName || '';
+      }
+    }
+    
+    // Clean up and add category if found
+    if (categoryName) {
+      const cleanCategory = categoryName
+        .replace(/[^\w\s-]/g, '') // Keep hyphens
+        .replace(/\s+/g, ' ')
+        .trim();
+      
+      if (cleanCategory && !autoKeywords.includes(cleanCategory)) {
+        autoKeywords.push(cleanCategory);
+      }
+    }
+    
+    return autoKeywords;
+  };
+
+  const handleKeywordChange = (e) => {
+    const value = e.target.value;
+    setCurrentPost(prev => ({
+      ...prev,
+      keywords: value
+    }));
+  };
+
+  const handleKeywordKeyPress = (e) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const keyword = currentPost.keywords.trim();
+      if (keyword && !currentPost.keywordsArray.includes(keyword)) {
+        setCurrentPost(prev => ({
+          ...prev,
+          keywordsArray: [...prev.keywordsArray, keyword],
+          keywords: ''
+        }));
+      }
+    }
+  };
+
+  const removeKeyword = (keywordToRemove) => {
+    // Prevent removal of auto keywords (business name and category)
+    const autoKeywords = getAutoKeywords();
+    if (autoKeywords.includes(keywordToRemove)) {
+      toast.error('Cannot remove auto-generated keywords');
+      return;
+    }
+    
+    setCurrentPost(prev => ({
+      ...prev,
+      keywordsArray: prev.keywordsArray.filter(keyword => keyword !== keywordToRemove)
+    }));
+  };
+
+  const generateAIPostContent = async () => {
+    if (!selectedBusiness) {
+      toast.error('Please select a business location first');
+      return;
+    }
+
+    if (currentPost.keywordsArray.length === 0) {
+      toast.error('At least one keyword is required for AI generation');
+      return;
+    }
+
+    setIsGeneratingAI(true);
+    try {
+      const postType = currentPost.scheduledFor ? 'promotional' : 'engagement';
+      const aiContent = await generateAIPost(selectedBusiness, currentPost.keywordsArray, postType);
+      
+      setCurrentPost(prev => ({
+        ...prev,
+        content: aiContent
+      }));
+      
+      toast.success('AI post generated successfully!');
+    } catch (error) {
+      console.error('Error generating AI post:', error);
+      toast.error('Failed to generate AI post. Please try again.');
+    } finally {
+      setIsGeneratingAI(false);
+    }
+  };
+
   const handleSavePost = async (e) => {
     e.preventDefault();
     
@@ -318,11 +458,17 @@ const Posts = () => {
       if (!locationId) {
         throw new Error('Invalid location ID');
       }
+      
+      // Include keywords in the post data if present
+      const postKeywords = currentPost.keywordsArray.length > 0 
+        ? currentPost.keywordsArray.join(', ') 
+        : undefined;
 
       const postData = {
         languageCode: 'en-US',
         summary: currentPost.content,
         topicType: 'STANDARD',
+        ...(postKeywords && { keywords: postKeywords }),
         ...(currentPost.media && typeof currentPost.media === 'string' && {
           media: [{
             mediaFormat: 'PHOTO',
@@ -422,7 +568,9 @@ const Posts = () => {
         isRecurring: false, 
         frequency: 'daily', 
         time: '09:00', 
-        days: [1, 2, 3, 4, 5]
+        days: [1, 2, 3, 4, 5],
+        keywords: '',
+        keywordsArray: []
       });
       
       // Show success message
@@ -459,7 +607,9 @@ const Posts = () => {
       isRecurring: false, 
       frequency: 'daily',
       time: '09:00',
-      days: [1, 2, 3, 4, 5]
+      days: [1, 2, 3, 4, 5],
+      keywords: '',
+      keywordsArray: []
     });
     setShowEditor(true);
   };
@@ -535,9 +685,20 @@ const Posts = () => {
                 <div>
                   <button
                     onClick={() => {
+                      // Get auto keywords if business is selected
+                      const autoKeywords = selectedBusiness ? getAutoKeywords() : [];
+                      
                       setCurrentPost({
-                        id: null, content: '', scheduledFor: null, media: null, isRecurring: false, 
-                        frequency: 'daily', time: '09:00', days: [1, 2, 3, 4, 5]
+                        id: null, 
+                        content: '', 
+                        scheduledFor: null, 
+                        media: null, 
+                        isRecurring: false, 
+                        frequency: 'daily', 
+                        time: '09:00', 
+                        days: [1, 2, 3, 4, 5],
+                        keywords: '',
+                        keywordsArray: [...autoKeywords] // Initialize with auto-keywords
                       });
                       setShowEditor(true);
                     }}
@@ -703,16 +864,70 @@ const Posts = () => {
 
                 <form onSubmit={handleSavePost}>
                   <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2">Post Content</label>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="block text-sm font-medium">Post Content</label>
+                      <button
+                        type="button"
+                        onClick={generateAIPostContent}
+                        disabled={isGeneratingAI || !selectedBusiness || currentPost.keywordsArray.length === 0}
+                        className="text-xs flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <FaRobot className="text-xs" />
+                        {isGeneratingAI ? 'Generating...' : 'Generate with AI'}
+                      </button>
+                    </div>
                     <textarea
                       value={currentPost.content}
                       onChange={(e) => setCurrentPost({...currentPost, content: e.target.value})}
                       className="w-full bg-[#1a1a2e] border border-white/10 rounded-lg p-3 text-white/90 h-40 resize-none"
                       placeholder="What would you like to post?"
-                      required
+                      required={currentPost.keywordsArray.length === 0}
                     />
                     <div className="text-xs text-white/50 mt-1">
                       {currentPost.content.length}/1500 characters
+                    </div>
+                    
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium mb-2">Keywords for AI Generation</label>
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {currentPost.keywordsArray.map((keyword, index) => {
+                          const autoKeywords = getAutoKeywords();
+                          const isAutoKeyword = autoKeywords.includes(keyword);
+                          
+                          return (
+                            <div 
+                              key={index} 
+                              className={`${isAutoKeyword ? 'bg-purple-600/30 text-purple-200' : 'bg-blue-600/20 text-blue-300'} text-xs px-2 py-1 rounded-full flex items-center gap-1`}
+                            >
+                              {keyword}
+                              {isAutoKeyword ? (
+                                <span className="text-[10px] opacity-70 ml-0.5">(auto)</span>
+                              ) : (
+                                <button 
+                                  type="button" 
+                                  onClick={() => removeKeyword(keyword)}
+                                  className="text-white/60 hover:text-white"
+                                >
+                                  &times;
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={currentPost.keywords}
+                          onChange={handleKeywordChange}
+                          onKeyDown={handleKeywordKeyPress}
+                          className="w-full bg-[#1a1a2e] border border-white/10 rounded-lg px-3 py-2 text-white/90 pr-8"
+                          placeholder="Add keywords and press Enter"
+                        />
+                        <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-white/50">
+                          Press Enter to add
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -859,7 +1074,7 @@ const Posts = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={isCreatingPost}
+                      disabled={isCreatingPost || (currentPost.keywordsArray.length === 0 && !currentPost.content)}
                       className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                     >
                       {isCreatingPost && <FaSpinner className="animate-spin" />}
