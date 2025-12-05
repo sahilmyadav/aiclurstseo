@@ -16,6 +16,7 @@ export const AuthContextProvider = ({ children }) => {
   
   // Subscription-related state
   const [subscriptionData, setSubscriptionData] = useState(null)
+  console.log("Subs >>>>>>>",subscriptionData)
   const [trialEligible, setTrialEligible] = useState(true)
   const [trialMessage, setTrialMessage] = useState("")
   const [trialData, setTrialData] = useState(null)
@@ -61,7 +62,7 @@ export const AuthContextProvider = ({ children }) => {
         `${API_BASE}/api/subscription/check-trial-eligibility/${userId}`,
         { headers: { 'Authorization': `Bearer ${token}` } }
       )
-      console.log(eligibilityResponse.data)
+      console.log('Trial eligibility:', eligibilityResponse.data)
       setTrialEligible(eligibilityResponse.data.eligible)
       if (!eligibilityResponse.data.eligible) {
         setTrialMessage(eligibilityResponse.data.reason)
@@ -73,16 +74,35 @@ export const AuthContextProvider = ({ children }) => {
         { headers: { 'Authorization': `Bearer ${token}` } }
       )
       
-      if (subscriptionResponse.data.active && subscriptionResponse.data.planType === 'trial') {
+      console.log('Subscription response:', subscriptionResponse.data)
+      
+      // Reset subscription data if no active subscription
+      if (!subscriptionResponse.data || !subscriptionResponse.data.active) {
+        setSubscriptionData({
+          active: false,
+          planType: null,
+          endDate: null,
+          profiles: 0
+        })
+        setTrialData(null)
+        return
+      }
+      
+      // Handle trial subscription
+      if (subscriptionResponse.data.planType === 'trial') {
         setTrialData({
           endDate: new Date(subscriptionResponse.data.endDate),
-          planType: subscriptionResponse.data.planType
+          planType: 'trial'
         })
-        setSubscriptionData(subscriptionResponse.data)
       } else {
         setTrialData(null)
-        setSubscriptionData(subscriptionResponse.data)
       }
+      
+      // Update subscription data
+      setSubscriptionData({
+        ...subscriptionResponse.data,
+        active: true // Ensure active is set to true for active subscriptions
+      })
     } catch (error) {
       console.error('Error checking subscription status:', error)
       setSubscriptionError(error.response?.data?.message || "Failed to check subscription status")

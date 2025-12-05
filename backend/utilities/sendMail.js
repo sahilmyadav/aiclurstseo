@@ -56,6 +56,77 @@ export async function sendThanksEmail(to, reviewerName = '', businessName = '', 
   return sendMail({ to, subject, text, html });
 }
 
+export async function sendSubscriptionConfirmation(to, customerName = '', planName = '', amount = 0, expiryDate = '') {
+  if (!to) throw new Error('Recipient email required');
+  const name = customerName || 'Valued Customer';
+  const subject = `Subscription Confirmation - ${planName}`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; color:#111; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #4CAF50; padding: 20px; color: white; text-align: center;">
+        <h1>Subscription Confirmed!</h1>
+      </div>
+      <div style="padding: 20px;">
+        <p>Hello ${name},</p>
+        <p>Thank you for subscribing to our <strong>${planName}</strong> plan.</p>
+        <div style="background-color: #f9f9f9; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0;">
+          <p><strong>Subscription Details:</strong></p>
+          <p>Plan: ${planName}</p>
+          <p>Amount: $${amount}</p>
+          <p>Expiry Date: ${expiryDate}</p>
+        </div>
+        <p>You now have access to all the premium features. If you have any questions, feel free to contact our support team.</p>
+        <p>Best regards,<br>${APP_NAME} Team</p>
+      </div>
+      <div style="background-color: #f0f0f0; padding: 10px; text-align: center; font-size: 12px; color: #666;">
+        <p>This is an automated message, please do not reply directly to this email.</p>
+      </div>
+    </div>`;
+
+  return sendMail({
+    to,
+    subject,
+    html,
+    text: `Hello ${name},\n\nThank you for subscribing to our ${planName} plan.\n\nSubscription Details:\nPlan: ${planName}\nAmount: $${amount}\nExpiry Date: ${expiryDate}\n\nYou now have access to all the premium features. If you have any questions, feel free to contact our support team.\n\nBest regards,\n${APP_NAME} Team`
+  });
+}
+
+export async function sendSubscriptionReminder(to, customerName = '', planName = '', expiryDate = '') {
+  if (!to) throw new Error('Recipient email required');
+  const name = customerName || 'Valued Customer';
+  const subject = `Subscription Expiring Soon - ${planName}`;
+  
+  const html = `
+    <div style="font-family: Arial, sans-serif; color:#111; max-width: 600px; margin: 0 auto;">
+      <div style="background-color: #FFA000; padding: 20px; color: white; text-align: center;">
+        <h1>Subscription Expiring Soon</h1>
+      </div>
+      <div style="padding: 20px;">
+        <p>Hello ${name},</p>
+        <p>This is a friendly reminder that your <strong>${planName}</strong> subscription will expire on <strong>${expiryDate}</strong>.</p>
+        <p>To continue enjoying uninterrupted service, please renew your subscription before the expiration date.</p>
+        <div style="text-align: center; margin: 25px 0;">
+          <a href="${process.env.FRONTEND_URL || 'https://yourapp.com'}/subscription" 
+             style="background-color: #4CAF50; color: white; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+            Renew Subscription
+          </a>
+        </div>
+        <p>If you have any questions or need assistance, please contact our support team.</p>
+        <p>Best regards,<br>${APP_NAME} Team</p>
+      </div>
+      <div style="background-color: #f0f0f0; padding: 10px; text-align: center; font-size: 12px; color: #666;">
+        <p>This is an automated message, please do not reply directly to this email.</p>
+      </div>
+    </div>`;
+
+  return sendMail({
+    to,
+    subject,
+    html,
+    text: `Hello ${name},\n\nThis is a friendly reminder that your ${planName} subscription will expire on ${expiryDate}.\n\nTo continue enjoying uninterrupted service, please renew your subscription before the expiration date.\n\nRenew now: ${process.env.FRONTEND_URL || 'https://yourapp.com'}/subscription\n\nIf you have any questions or need assistance, please contact our support team.\n\nBest regards,\n${APP_NAME} Team`
+  });
+}
+
 export async function sendReviewInvitation(to, customerName = '', businessName = '', inviteLink = '', content = '') {
   if (!to) throw new Error('Recipient email required');
   

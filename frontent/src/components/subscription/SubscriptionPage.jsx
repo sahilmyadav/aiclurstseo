@@ -48,13 +48,10 @@ const SubscriptionPage = () => {
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
-  // Handle plan button click
+  // Handle plan button click - directly proceed to checkout
   const handlePlanClick = (planType) => {
-    if (subscriptionData?.active && !isPlanActive(planType)) {
-      setDialogPlanType(planType);
-      setShowSubscriptionDialog(true);
-      return false;
-    }
+    // Directly proceed to checkout without subscription check
+    handleSubscribe(planType);
     return true;
   };
 
