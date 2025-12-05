@@ -63,7 +63,15 @@ const HowToGetReviewLinkModal = ({ isOpen, onClose }) => {
 };
 
 const QRCodeComponent = () => {
-  const { businesses, selectedBusinesses,selectedBusiness, isConnected, loading } = useGoogleBusiness();
+  const { 
+    businesses, 
+    selectedBusinesses,
+    selectedBusiness, 
+    isConnected, 
+    loading, 
+    reviewUri: contextReviewUri = '',
+    setReviewUri = () => {}
+  } = useGoogleBusiness();
   const [qrCodeUrl, setQrCodeUrl] = useState('');
   const [reviewLink, setReviewLink] = useState('');
   const [editablePath, setEditablePath] = useState('');
@@ -72,32 +80,41 @@ const QRCodeComponent = () => {
 
   console.log("selectedBusiness", selectedBusiness);
   
-  // Set initial manualReviewUri when business is selected
+  // Set initial manualReviewUri when business is selected or contextReviewUri changes
   useEffect(() => {
     if (selectedBusiness) {
-      // Extract just the review URI part from the stored URL if it exists
-      const storedUri = extractReviewUri(selectedBusiness.metadata?.newReviewUri) || '';
+      // Use the reviewUri from context if available, otherwise extract from business metadata
+      const storedUri = contextReviewUri || extractReviewUri(selectedBusiness.metadata?.newReviewUri) || '';
       setManualReviewUri(storedUri);
       setEditablePath('');
-      // Don't generate QR code here, it will be handled by the manualReviewUri effect
     }
-  }, [selectedBusiness]);
+  }, [selectedBusiness, contextReviewUri]);
 
-  // Update QR code when manualReviewUri changes
+  // Update QR code and context reviewUri when manualReviewUri changes
   useEffect(() => {
     if (selectedBusiness) {
+      // Update the context's reviewUri when manualReviewUri changes
+      if (manualReviewUri !== contextReviewUri) {
+        setReviewUri(manualReviewUri);
+      }
       generateQRCode();
     }
-  }, [manualReviewUri, selectedBusiness]);
+  }, [manualReviewUri, selectedBusiness, contextReviewUri, setReviewUri]);
 
   // Function to extract just the review URI part from a full URL
   const extractReviewUri = (url) => {
     if (!url) return '';
     try {
-      const urlObj = new URL(url);
+      // If it's already a review URI (starts with http), return it as is
+      if (url.startsWith('http')) {
+        return url;
+      }
+      // Otherwise, try to extract from URL params
+      const urlObj = new URL(url, window.location.origin);
       return urlObj.searchParams.get('reviewUri') || '';
     } catch (e) {
-      return '';
+      // If it's not a valid URL but has content, return it as is
+      return url || '';
     }
   };
 
@@ -240,9 +257,9 @@ const QRCodeComponent = () => {
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    {/* <label className="block text-sm font-medium text-gray-300 mb-1">
                       Google Review URL
-                    </label>
+                    </label> */}
                     <div className="flex items-center bg-white/5 border border-white/20 rounded-lg overflow-hidden">
                       <input
                         type="text"
