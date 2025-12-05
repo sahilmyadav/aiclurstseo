@@ -873,7 +873,42 @@ const verifySubscription = async (req, res) => {
 };
 
 // Get user subscription data
+const getUserSubscription = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    // Find the most recent subscription (active or expired)
+    const subscription = await Subscription.findOne({ userId })
+      .sort({ createdAt: -1 })  // Get the most recent one
+      .lean();
 
+    if (!subscription) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'No subscription found for this user'
+      });
+    }
+
+    // Check if the subscription is active
+    const isActive = subscription.status === 'active' && new Date(subscription.endDate) > new Date();
+    
+    res.json({
+      success: true,
+      subscription: {
+        ...subscription,
+        isActive
+      }
+    });
+
+  } catch (error) {
+    console.error('Error fetching subscription:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Error fetching subscription data',
+      error: error.message 
+    });
+  }
+};
 
 // Export all controller functions
 export {
@@ -884,6 +919,7 @@ export {
   verifySubscription,
   getPlans,
   createPlan,
+  getUserSubscription,
   getUserTransactions,
   handleCheckoutSessionCompleted,
   handleSubscriptionUpdate,
