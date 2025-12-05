@@ -7,6 +7,7 @@ import {
   checkTrialEligibility,
   getPlans,
   createPlan,
+  getUserSubscription,
 } from "../controllers/subscriptionController.js";
 import protect from "../middleware/auth.js";
 
@@ -29,6 +30,9 @@ router.post("/create-checkout-session", protect,createCheckoutSession);
 router.get("/verify", verifySubscription);
 router.get("/plans", getPlans);
 router.post("/plans", createPlan);
+
+// Get user's subscription (active or most recent)
+router.get("/user/:userId", protect, getUserSubscription);
 
 // Queue management route
 
