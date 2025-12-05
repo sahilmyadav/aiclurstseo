@@ -76,6 +76,7 @@ export const handleGoogleCallback = async (req, res) => {
     oauth2Client.setCredentials(tokens);
     const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
     const userInfo = await oauth2.userinfo.get();
+    console.log("userInfo",userInfo.data)
     global.googleTokens = tokens;
     global.googleUser = userInfo.data;
     const frontendUrl = process.env.FRONTEND_URL;
