@@ -7,7 +7,7 @@ import { useGoogleBusiness } from '../components/context/GoogleBusinessContext';
 function MakeReview() {
   const { locationId } = useParams();
   const [searchParams] = useSearchParams();
-  const businessName = searchParams.get('name') || 'Business';
+  const businessName = 'Our Business'; // Default business name
   
   const [selectedRating, setSelectedRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -105,21 +105,27 @@ function MakeReview() {
     }
   };
 
-  // Get reviewUri from GoogleBusinessContext
-  const { reviewUri } = useGoogleBusiness();
-
+  // Get reviewUri from URL parameters
+  const reviewUri = searchParams.get('reviewUri');
+  
   const handleGoogleReview = () => {
-    // Use reviewUri from context if available, otherwise fall back to constructed URL
-    const googleReviewUrl = reviewUri || 
-      `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(businessName)}&query_place_id=${locationId}`;
-    
-    // Open in new window
-    const reviewWindow = window.open(googleReviewUrl, '_blank', 'noopener,noreferrer');
-    
-    // Fallback: If popup blocked, show alternative
-    if (!reviewWindow || reviewWindow.closed || typeof reviewWindow.closed === 'undefined') {
-      // Redirect in same window if popup is blocked
-      window.location.href = googleReviewUrl;
+    if (!reviewUri) {
+      console.error('No review URL provided');
+      return;
+    }
+
+    try {
+      console.log('Opening review URL:', reviewUri);
+      
+      // Open the review URL in a new tab
+      const reviewWindow = window.open(reviewUri, '_blank', 'noopener,noreferrer');
+      
+      // Fallback if popup is blocked
+      if (!reviewWindow || reviewWindow.closed || typeof reviewWindow.closed === 'undefined') {
+        window.location.href = reviewUri;
+      }
+    } catch (error) {
+      console.error('Error opening review URL:', error);
     }
   };
 
