@@ -65,6 +65,7 @@ const AppContent = () => {
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
         <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />
         <Route path="/review/:locationId" element={<MakeReview />} />
+        <Route path="/subscription/success" element={<SubscriptionSuccess />} />
         <Route path="/analytics-dashboard" element={isAuthenticated ? <AnalyticsDashboard /> : <Navigate to="/login" />} />
         <Route path="/seo-dashboard" element={isAuthenticated ? <SeoDashboard /> : <Navigate to="/login" />} />
         <Route path="/reviews" element={isAuthenticated ? <Allreviews /> : <Navigate to="/login" />} />
@@ -86,7 +87,6 @@ const AppContent = () => {
             <Route path="social-sharing" element={<Posts />} />
             <Route path="schedule-post" element={<SocialSharing />} />
             <Route path="subscription" element={<SubscriptionPage />} />
-            <Route path="subscription/success" element={<SubscriptionSuccess />} />
             <Route path="billing" element={<Billing />} />
             <Route path="business-details" element={<BusinessDetails />} />
             
