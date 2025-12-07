@@ -35,6 +35,7 @@ import SubscriptionSuccess from './components/subscription/SubscriptionSuccess'
 import About from './pages/About'
 import Billing from './components/subscription/Billing'
 import BusinessDetails from './components/BusinessDetails'
+import UserSubscriptionDetails from './components/subscription/UserSubsriptionDetails'
 
 
 const AppContent = () => {
@@ -112,7 +113,7 @@ const AppContent = () => {
               <Route path="settings" element={<Settings />} />
               <Route path="users" element={<AllUsers />} />
               <Route path="analytics" element={<AnalyticsDashboard />} />
-              <Route path="billing" element={<Billing />} />
+              <Route path="billing" element={<UserSubscriptionDetails />} />
             </Route>
           )
         }
