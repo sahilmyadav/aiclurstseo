@@ -51,109 +51,176 @@ export const AuthContextProvider = ({ children }) => {
 
   // Check trial eligibility and active trial status
   const checkSubscriptionStatus = useCallback(async (userId, token) => {
-    if (!userId) return
+    if (!userId) return;
     
     try {
-      setSubscriptionLoading(true)
-      setSubscriptionError(null)
+      setSubscriptionLoading(true);
+      setSubscriptionError(null);
       
-      // Check trial eligibility
-      const eligibilityResponse = await axios.get(
-        `${API_BASE}/api/subscription/check-trial-eligibility/${userId}`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      )
-      console.log('Trial eligibility:', eligibilityResponse.data)
-      setTrialEligible(eligibilityResponse.data.eligible)
-      if (!eligibilityResponse.data.eligible) {
-        setTrialMessage(eligibilityResponse.data.reason)
+      // Check trial eligibility first
+      try {
+        const eligibilityResponse = await axios.get(
+          `${API_BASE}/api/subscription/check-trial-eligibility/${userId}`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        console.log('Trial eligibility:', eligibilityResponse.data);
+        setTrialEligible(eligibilityResponse.data.eligible);
+        if (!eligibilityResponse.data.eligible) {
+          setTrialMessage(eligibilityResponse.data.reason);
+        }
+      } catch (error) {
+        console.error('Error checking trial eligibility:', error);
+        // Don't fail the whole process if trial check fails
       }
 
-      // Check for active subscription
-      const subscriptionResponse = await axios.get(
-        `${API_BASE}/api/subscription/verify?userId=${userId}`,
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      )
-      
-      console.log('Subscription response:', subscriptionResponse.data)
-      
-      // Reset subscription data if no active subscription
-      if (!subscriptionResponse.data || !subscriptionResponse.data.active) {
+      // Check for subscription (active or expired)
+      try {
+        const response = await axios.get(
+          `${API_BASE}/api/subscription/verify?userId=${userId}`,
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        );
+        
+        console.log('Subscription response:', response.data);
+        
+        if (response.data.success) {
+          if (response.data.subscription) {
+            // Subscription found (could be active or expired)
+            const sub = response.data.subscription;
+            const now = new Date();
+            const endDate = new Date(sub.endDate);
+            const isActive = sub.status === 'active' && endDate > now;
+            
+            const subscription = {
+              active: isActive,
+              id: sub.id,
+              planType: sub.planType,
+              status: sub.status,
+              profiles: sub.profiles || 1,
+              startDate: sub.startDate,
+              endDate: sub.endDate,
+              daysRemaining: Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)),
+              isTrial: sub.planType === 'trial',
+              pricePerProfile: sub.pricePerProfile || 0,
+              totalPrice: sub.totalPrice || 0,
+              // Include all subscription data from the server
+              ...sub
+            };
+            
+            console.log('Setting subscription data:', subscription);
+            setSubscriptionData(subscription);
+            
+            if (subscription.isTrial) {
+              setTrialData({
+                endDate: new Date(subscription.endDate),
+                planType: 'trial',
+                status: subscription.status,
+                isActive: isActive
+              });
+            } else {
+              setTrialData(null);
+            }
+          } else {
+            // No subscription found
+            console.log('No subscription data found');
+            setSubscriptionData({
+              active: false,
+              planType: null,
+              status: null,
+              endDate: null,
+              profiles: 0
+            });
+            setTrialData(null);
+          }
+        } else {
+          // API returned success: false
+          console.error('Subscription verification failed:', response.data.error);
+          setSubscriptionError(response.data.error || 'Failed to verify subscription');
+          setSubscriptionData({
+            active: false,
+            planType: null,
+            endDate: null,
+            profiles: 0
+          });
+        }
+      } catch (error) {
+        console.error('Error checking subscription status:', error);
+        setSubscriptionError(error.response?.data?.error || error.message || 'Failed to check subscription status');
         setSubscriptionData({
           active: false,
           planType: null,
           endDate: null,
           profiles: 0
-        })
-        setTrialData(null)
-        return
+        });
       }
-      
-      // Handle trial subscription
-      if (subscriptionResponse.data.planType === 'trial') {
-        setTrialData({
-          endDate: new Date(subscriptionResponse.data.endDate),
-          planType: 'trial'
-        })
-      } else {
-        setTrialData(null)
-      }
-      
-      // Update subscription data
-      setSubscriptionData({
-        ...subscriptionResponse.data,
-        active: true // Ensure active is set to true for active subscriptions
-      })
     } catch (error) {
-      console.error('Error checking subscription status:', error)
-      setSubscriptionError(error.response?.data?.message || "Failed to check subscription status")
+      console.error('Error in subscription check:', error);
+      setSubscriptionError(error.message || 'Failed to process subscription check');
     } finally {
-      setSubscriptionLoading(false)
+      setSubscriptionLoading(false);
     }
-  }, [])
+  }, [API_BASE]);
 
   // Activate trial
   const activateTrial = async (userId, token) => {
     if (!userId) {
-      throw new Error("User not found")
+      throw new Error("User not found");
     }
 
     if (!trialEligible) {
-      throw new Error(trialMessage || "You are not eligible for a free trial.")
+      throw new Error(trialMessage || "You are not eligible for a free trial.");
     }
 
     try {
-      setSubscriptionLoading(true)
-      const res = await axios.post(
+      setSubscriptionLoading(true);
+      console.log('Sending trial activation request...', { userId });
+      
+      const response = await axios.post(
         `${API_BASE}/api/subscription/start-trial`, 
         { userId },
-        { headers: { 'Authorization': `Bearer ${token}` } }
-      )
+        { 
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      
+      console.log('Trial activation response:', response.data);
       
       // Update trial status
-      setTrialEligible(false)
-      setTrialMessage("Trial has been used")
+      setTrialEligible(false);
+      setTrialMessage("Trial has been used");
       
-      if (res.data.endDate) {
+      if (response.data.endDate) {
         setTrialData({
-          endDate: new Date(res.data.endDate),
+          endDate: new Date(response.data.endDate),
           planType: 'trial'
-        })
+        });
         
         // Update subscription data
-        setSubscriptionData({
+        setSubscriptionData(prev => ({
+          ...prev,
           active: true,
           planType: 'trial',
-          endDate: res.data.endDate,
-          profiles: 1
-        })
+          endDate: response.data.endDate,
+          profiles: 1,
+          status: 'active'
+        }));
       }
       
-      return res.data
+      return response.data;
     } catch (error) {
-      console.error('Error activating trial:', error)
-      throw new Error(error.response?.data?.message || "Failed to activate trial")
+      console.error('Error activating trial:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        headers: error.response?.headers,
+        config: error.config
+      });
+      throw error;
     } finally {
-      setSubscriptionLoading(false)
+      setSubscriptionLoading(false);
     }
   }
 

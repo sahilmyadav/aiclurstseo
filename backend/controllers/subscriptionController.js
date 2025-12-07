@@ -66,6 +66,13 @@ const startTrial = async (req, res) => {
       startDate: startDate,
       endDate: endDate,
       status: "active",
+      pricePerProfile: 0, // Free trial
+      totalPrice: 0,      // Free trial
+      metadata: {
+        isTrial: true,
+        trialStart: startDate,
+        trialEnd: endDate
+      }
     });
 
     console.log('Trial subscription saved with endDate:', {
@@ -77,12 +84,27 @@ const startTrial = async (req, res) => {
 
     // Update user's subscription info
     if (!user.subscription) {
-      user.subscription = {};
+      user.subscription = {
+        currentSubscriptionId: null,
+        stripeCustomerId: null,
+        hasUsedTrial: false,
+        trialUsedAt: null,
+        previousSubscriptions: []
+      };
     }
-    user.subscription.activeSubscriptionId = trialSubscription._id;
+    user.subscription.currentSubscriptionId = trialSubscription._id;
     user.subscription.hasUsedTrial = true;
     user.subscription.trialUsedAt = new Date();
-    await user.save();
+    
+    try {
+      await user.save();
+      console.log('User subscription updated successfully');
+    } catch (saveError) {
+      console.error('Error saving user subscription:', saveError);
+      // If saving fails, clean up the trial subscription we just created
+      await Subscription.findByIdAndDelete(trialSubscription._id);
+      throw new Error('Failed to update user subscription');
+    }
 
     // Record trial usage permanently (even if user is deleted later)
     await TrialUsage.create({

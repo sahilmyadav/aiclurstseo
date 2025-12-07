@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
@@ -48,10 +49,13 @@ const SubscriptionPage = () => {
     return new Date(dateString).toLocaleDateString('en-US', options);
   };
 
-  // Handle plan button click - directly proceed to checkout
+  // Handle plan button click
   const handlePlanClick = (planType) => {
-    // Directly proceed to checkout without subscription check
-    handleSubscribe(planType);
+    if (subscriptionData?.active && !isPlanActive(planType)) {
+      setDialogPlanType(planType);
+      setShowSubscriptionDialog(true);
+      return false;
+    }
     return true;
   };
 
@@ -269,53 +273,74 @@ const SubscriptionPage = () => {
 
         {/* Trial Status */}
     {/* Trial Status */}
-{!subscriptionData?.active || subscriptionData?.planType === 'trial' ? (
-  trialData && remainingDays > 0 ? (
-    // Active Trial Progress
-    <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-xl font-bold text-white flex items-center">
-            <div className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse"></div>
-            Free Trial Active
-          </h3>
-          <p className="text-gray-300 mt-1">
-            Your 14-day free trial is currently active.
-          </p>
-        </div>
-        <div className="text-right">
-          <div className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-            {remainingDays}
+  {!subscriptionData?.active || subscriptionData?.planType === 'trial' ? (
+    // Show subscription status from subscriptionData if available
+    subscriptionData?.status === 'expired' ? (
+      // Expired Status
+      <div className="bg-gray-800 rounded-2xl shadow-lg border border-red-900/50 p-6 mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-white flex items-center">
+              <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+              Trial Expired
+            </h3>
+            <p className="text-gray-300 mt-1">
+              Your 14-day free trial has ended. Please choose a subscription plan.
+            </p>
           </div>
-          <div className="text-sm text-gray-400">days left</div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-red-400">Expired</div>
+          </div>
         </div>
       </div>
-      <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
-        <div 
-          className="bg-gradient-to-r from-green-400 to-emerald-400 rounded-full h-3 transition-all duration-500 shadow-sm"
-          style={{ width: `${(remainingDays / 14) * 100}%` }}
-        ></div>
-      </div>
-    </div>
-  ) : trialData && remainingDays === 0 ? (
-    // Trial Expired
-    <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="text-xl font-bold text-white">Free Trial Used</h3>
-          <p className="text-gray-300 mt-1">
-            Your 14-day free trial has expired. Please choose a subscription plan below.
-          </p>
+    ) : subscriptionData?.status === 'active' && trialData && remainingDays > 0 ? (
+      // Active Trial with Remaining Days
+      <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h3 className="text-xl font-bold text-white flex items-center">
+              <div className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse"></div>
+              {subscriptionData.planType === 'trial' ? 'Free Trial Active' : 'Subscription Active'}
+            </h3>
+            <p className="text-gray-300 mt-1">
+              {subscriptionData.planType === 'trial' 
+                ? 'Your 14-day free trial is currently active.'
+                : 'Your subscription is active.'}
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+              {remainingDays}
+            </div>
+            <div className="text-sm text-gray-400">days left</div>
+          </div>
         </div>
-        <div className="text-right">
-          <div className="text-3xl font-bold text-gray-500">0</div>
-          <div className="text-sm text-gray-400">days left</div>
+        <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
+          <div 
+            className="bg-gradient-to-r from-green-400 to-emerald-400 rounded-full h-3 transition-all duration-500 shadow-sm"
+            style={{ width: `${(remainingDays / 14) * 100}%` }}
+          ></div>
         </div>
       </div>
-      <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
-        <div className="bg-gradient-to-r from-gray-500 to-gray-600 rounded-full h-3 w-full"></div>
+    ) : (
+      // Trial Expired
+      <div className="bg-gray-800 rounded-2xl shadow-lg border border-red-900/50 p-6 mb-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl font-bold text-white flex items-center">
+              <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+              Trial Expired
+            </h3>
+            <p className="text-gray-300 mt-1">
+              Your 14-day free trial has ended. Please choose a subscription plan to continue.
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="text-2xl font-bold text-red-400">Expired</div>
+          </div>
+        </div>
       </div>
-    </div>
+    )
   ) : trialEligible ? (
     // Trial Available
     <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 text-white rounded-2xl shadow-xl p-6 mb-8 relative overflow-hidden">
@@ -337,8 +362,7 @@ const SubscriptionPage = () => {
         </button>
       </div>
     </div>
-  ) : null
-) : null}
+  ) : null}
 
         {/* Profile Selector */}
         <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
