@@ -12,8 +12,6 @@ const Billing = () => {
     transactionsError
   } = useAuth();
 
-  console.log("transactions", transactions)
-
   if (subscriptionLoading || transactionsLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 dark:bg-gray-900 rounded-xl p-6">
@@ -126,7 +124,7 @@ const Billing = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-4 md:p-6">
-      <div className="max-w-5xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Billing & Subscription</h1>
@@ -137,11 +135,11 @@ const Billing = () => {
           {getStatusBadge()}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* Plan Details Card */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="p-6">
+              <div className="p-5">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Plan Details</h2>
                   <div className="flex flex-wrap items-center gap-2">
@@ -164,7 +162,7 @@ const Billing = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-4">
                     <div className="flex items-start space-x-3">
                       <div className="p-2 bg-blue-100 dark:bg-blue-900/40 rounded-lg">
@@ -219,8 +217,8 @@ const Billing = () => {
 
             {/* Transaction History */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-              <div className="p-6">
-                <div className="flex items-center justify-between mb-6">
+              <div className="p-5">
+                <div className="flex items-center justify-between mb-5">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Transaction History</h2>
                 </div>
                 
@@ -244,57 +242,77 @@ const Billing = () => {
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                       <thead className="bg-gray-50 dark:bg-gray-700/50">
                         <tr>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Date
                           </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Description
+                          <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Plan
                           </th>
-                          <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Amount
+                          <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Profiles
                           </th>
-                          <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                          <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Price/Profile
+                          </th>
+                          <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Total
+                          </th>
+                          <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                             Status
                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {transactions.map((transaction) => {
-                          // Determine amount and currency
-                          let amount = 0;
-                          let currency = 'USD';
-                          
-                          if (transaction.amountInUSD) {
-                            amount = transaction.amountInUSD;
-                            currency = 'USD';
-                          } else if (transaction.amountInCents) {
-                            amount = transaction.amountInCents / 100;
-                            currency = transaction.currency || 'USD';
-                          } else if (transaction.amount) {
-                            amount = transaction.amount;
-                            currency = transaction.currency || 'USD';
+                          // Determine plan type
+                          let planType = 'N/A';
+                          if (transaction.metadata?.planType) {
+                            planType = transaction.metadata.planType.charAt(0).toUpperCase() + transaction.metadata.planType.slice(1);
                           }
                           
-                          // Determine description
-                          let description = 'Subscription Payment';
-                          if (transaction.metadata?.planType) {
-                            description = `${transaction.metadata.planType.charAt(0).toUpperCase() + transaction.metadata.planType.slice(1)} Plan`;
-                          } else if (transaction.description) {
-                            description = transaction.description;
+                          // Determine profiles
+                          let profiles = 1;
+                          if (transaction.metadata?.profiles) {
+                            profiles = transaction.metadata.profiles;
+                          }
+                          
+                          // Determine price per profile
+                          let pricePerProfile = 0;
+                          if (transaction.metadata?.pricePerProfile) {
+                            pricePerProfile = transaction.metadata.pricePerProfile;
+                          }
+                          
+                          // Calculate total amount
+                          let totalAmount = pricePerProfile * profiles;
+                          let currency = transaction.currency || 'USD';
+                          
+                          // If we have amountInUSD, use that instead
+                          if (transaction.amountInUSD) {
+                            totalAmount = transaction.amountInUSD;
+                          } else if (transaction.amountInCents) {
+                            totalAmount = transaction.amountInCents / 100;
+                          } else if (transaction.amount) {
+                            totalAmount = transaction.amount;
                           }
                           
                           return (
                             <tr key={transaction._id}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                              <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                                 {formatDate(transaction.createdAt || transaction.created)}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                                {description}
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                                {planType} Plan
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white font-medium">
-                                {formatCurrency(amount, currency)}
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
+                                {profiles}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
+                                {formatCurrency(pricePerProfile, currency)}
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white font-medium">
+                                {formatCurrency(totalAmount, currency)}
+                              </td>
+                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm">
                                 {getTransactionStatusBadge(transaction.paymentStatus || transaction.status)}
                               </td>
                             </tr>
@@ -309,8 +327,8 @@ const Billing = () => {
           </div>
 
           {/* Summary Card */}
-          <div className="space-y-6">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="space-y-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
               
               <div className="space-y-3">
@@ -354,7 +372,7 @@ const Billing = () => {
                 </div>
               </div>
 
-              <div className="mt-6 space-y-3">
+              <div className="mt-5 space-y-3">
                 {!active && (
                   <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
                     Upgrade Plan
@@ -367,7 +385,7 @@ const Billing = () => {
             </div>
 
             {/* Support Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Need Help?</h2>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
                 Our support team is here to help with any questions about your subscription.
