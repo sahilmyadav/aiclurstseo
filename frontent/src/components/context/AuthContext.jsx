@@ -15,17 +15,22 @@ export const AuthContextProvider = ({ children }) => {
   const [isInitialized, setIsInitialized] = useState(false)
   
   // Subscription-related state
-  const [subscriptionData, setSubscriptionData] = useState(null)
-  console.log("Subs >>>>>>>",subscriptionData)
-  const [trialEligible, setTrialEligible] = useState(true)
-  const [trialMessage, setTrialMessage] = useState("")
-  const [trialData, setTrialData] = useState(null)
-  const [subscriptionLoading, setSubscriptionLoading] = useState(false)
-  const [subscriptionError, setSubscriptionError] = useState(null)
+  const [subscriptionData, setSubscriptionData] = useState(null);
+  console.log("Subs >>>>>>>",subscriptionData);
+  const [trialEligible, setTrialEligible] = useState(true);
+  const [trialMessage, setTrialMessage] = useState("");
+  const [trialData, setTrialData] = useState(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const [subscriptionError, setSubscriptionError] = useState(null);
+
+  // Transaction state
+  const [transactions, setTransactions] = useState([]);
+  const [transactionsLoading, setTransactionsLoading] = useState(false);
+  const [transactionsError, setTransactionsError] = useState(null);
 
   // Subscription plans (pricing) loaded once and shared across app
-  const [plans, setPlans] = useState([])
-  const [plansLoading, setPlansLoading] = useState(false)
+  const [plans, setPlans] = useState([]);
+  const [plansLoading, setPlansLoading] = useState(false);
   const [plansError, setPlansError] = useState(null)
 
   const API_BASE = import.meta.env.VITE_API_BASE
@@ -241,15 +246,45 @@ export const AuthContextProvider = ({ children }) => {
     return Math.max(0, diffDays)
   }
 
+  // Fetch user transactions
+  const fetchUserTransactions = useCallback(async (userId, token) => {
+    if (!userId || !token) return;
+
+    try {
+      setTransactionsLoading(true);
+      setTransactionsError(null);
+
+      const response = await axios.get(
+        `${API_BASE}/api/subscription/transactions/${userId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      console.log('Transactions response:', response.data);
+      setTransactions(response.data || []);
+    } catch (error) {
+      console.error('Error fetching transactions:', error);
+      setTransactionsError(error.response?.data?.message || error.message || 'Failed to fetch transaction history');
+      setTransactions([]);
+    } finally {
+      setTransactionsLoading(false);
+    }
+  }, [API_BASE]);
+
   // Fetch subscription data when user state is available
   useEffect(() => {
     if (user && token) {
-      const userId = user._id || user.id
+      const userId = user._id || user.id;
       if (userId) {
-        checkSubscriptionStatus(userId, token)
+        checkSubscriptionStatus(userId, token);
+        fetchUserTransactions(userId, token);
       }
     }
-  }, [user, token, checkSubscriptionStatus])
+  }, [user, token, checkSubscriptionStatus, fetchUserTransactions]);
 
   // Fetch subscription plans (pricing) once
   useEffect(() => {
@@ -431,6 +466,11 @@ export const AuthContextProvider = ({ children }) => {
       checkSubscriptionStatus,
       activateTrial,
       getRemainingTrialDays,
+      // Transactions
+      transactions,
+      transactionsLoading,
+      transactionsError,
+      fetchUserTransactions,
       // Plans (pricing)
       plans,
       plansLoading,

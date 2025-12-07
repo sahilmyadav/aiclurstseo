@@ -6,14 +6,19 @@ const Billing = () => {
   const { 
     subscriptionData, 
     subscriptionLoading, 
-    subscriptionError 
+    subscriptionError,
+    transactions,
+    transactionsLoading,
+    transactionsError
   } = useAuth();
 
-  if (subscriptionLoading) {
+  console.log("transactions", transactions)
+
+  if (subscriptionLoading || transactionsLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] bg-gray-50 dark:bg-gray-900 rounded-xl p-6">
         <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
-        <p className="mt-4 text-gray-600 dark:text-gray-300">Loading subscription details...</p>
+        <p className="mt-4 text-gray-600 dark:text-gray-300">Loading billing details...</p>
       </div>
     );
   }
@@ -61,6 +66,16 @@ const Billing = () => {
     });
   };
 
+  const formatCurrency = (amount, currency = 'USD') => {
+    if (amount === undefined || amount === null || isNaN(amount)) {
+      return '$0.00';
+    }
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: currency
+    }).format(amount);
+  };
+
   const getStatusBadge = () => {
     const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
     
@@ -81,6 +96,30 @@ const Billing = () => {
     return (
       <span className={`${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400`}>
         {status || 'Inactive'}
+      </span>
+    );
+  };
+
+  const getTransactionStatusBadge = (status) => {
+    const baseClasses = "px-2.5 py-0.5 rounded-full text-xs font-medium";
+    
+    if (status === 'succeeded' || status === 'paid') {
+      return (
+        <span className={`${baseClasses} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400`}>
+          Paid
+        </span>
+      );
+    }
+    if (status === 'failed') {
+      return (
+        <span className={`${baseClasses} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400`}>
+          Failed
+        </span>
+      );
+    }
+    return (
+      <span className={`${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400`}>
+        {status || 'Unknown'}
       </span>
     );
   };
@@ -178,64 +217,93 @@ const Billing = () => {
               </div>
             </div>
 
-            {/* Billing History */}
+            {/* Transaction History */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">Billing Information</h2>
-                
-                <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                    <thead className="bg-gray-50 dark:bg-gray-700/50">
-                      <tr>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                          Date
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                          Description
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                          Amount
-                        </th>
-                        <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                          Status
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                      <tr>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                          {formatDate(startDate)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                          {planType ? `${planType.charAt(0).toUpperCase() + planType.slice(1)} Plan` : 'N/A'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white font-medium">
-                          ${totalPrice?.toFixed(2) || '0.00'}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                          <div className="inline-flex items-center space-x-2">
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              status === 'active' 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                : status === 'expired'
-                                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                  : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                            }`}>
-                              {status === 'active' ? 'Active' : status === 'expired' ? 'Expired' : 'Inactive'}
-                            </span>
-                            <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              active 
-                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                            }`}>
-                              {active ? 'Paid' : 'Pending'}
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Transaction History</h2>
                 </div>
+                
+                {transactionsError ? (
+                  <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 mb-4">
+                    <div className="flex items-center text-red-600 dark:text-red-400">
+                      <AlertCircle className="h-5 w-5 mr-2" />
+                      <span>Error loading transactions: {transactionsError}</span>
+                    </div>
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CreditCard className="h-12 w-12 mx-auto text-gray-400" />
+                    <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No transactions yet</h3>
+                    <p className="mt-1 text-gray-500 dark:text-gray-400">
+                      Your transaction history will appear here once you make a payment.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                      <thead className="bg-gray-50 dark:bg-gray-700/50">
+                        <tr>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Date
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Description
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Amount
+                          </th>
+                          <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Status
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {transactions.map((transaction) => {
+                          // Determine amount and currency
+                          let amount = 0;
+                          let currency = 'USD';
+                          
+                          if (transaction.amountInUSD) {
+                            amount = transaction.amountInUSD;
+                            currency = 'USD';
+                          } else if (transaction.amountInCents) {
+                            amount = transaction.amountInCents / 100;
+                            currency = transaction.currency || 'USD';
+                          } else if (transaction.amount) {
+                            amount = transaction.amount;
+                            currency = transaction.currency || 'USD';
+                          }
+                          
+                          // Determine description
+                          let description = 'Subscription Payment';
+                          if (transaction.metadata?.planType) {
+                            description = `${transaction.metadata.planType.charAt(0).toUpperCase() + transaction.metadata.planType.slice(1)} Plan`;
+                          } else if (transaction.description) {
+                            description = transaction.description;
+                          }
+                          
+                          return (
+                            <tr key={transaction._id}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                                {formatDate(transaction.createdAt || transaction.created)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                                {description}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white font-medium">
+                                {formatCurrency(amount, currency)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
+                                {getTransactionStatusBadge(transaction.paymentStatus || transaction.status)}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             </div>
           </div>

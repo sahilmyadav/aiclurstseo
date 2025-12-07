@@ -8,6 +8,7 @@ import {
   getPlans,
   createPlan,
   getUserSubscription,
+  getUserTransactions,
 } from "../controllers/subscriptionController.js";
 import protect from "../middleware/auth.js";
 
@@ -30,7 +31,7 @@ router.post("/create-checkout-session", protect,createCheckoutSession);
 router.get("/verify", verifySubscription);
 router.get("/plans", getPlans);
 router.post("/plans", createPlan);
-
+router.get("/transactions/:userId", protect, getUserTransactions);
 // Get user's subscription (active or most recent)
 router.get("/user/:userId", protect, getUserSubscription);
 
