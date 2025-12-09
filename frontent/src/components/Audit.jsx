@@ -40,12 +40,12 @@ const Audit = () => {
   const {
     businesses,
     selectedBusiness,
-    selectedBusinesses, // Add this
+    selectedBusinesses,
     reviews,
     loading,
     isConnected,
     selectBusiness,
-    selectMultipleBusinesses, // Add this
+    selectMultipleBusinesses,
     reviewStats,
     performanceData,
     performanceLoading,
@@ -246,7 +246,6 @@ const Audit = () => {
     }
   }, [selectedBusiness, isConnected, reviews, insightsLoading, cooldownTimer, navigate]);
 
-
   const tabs = useMemo(() => [
     { id: 'overview', label: 'Overview', icon: BarChart3 },
     { id: 'performance', label: 'Performance', icon: TrendingUp },
@@ -254,6 +253,53 @@ const Audit = () => {
   ], []);
 
   const COLORS = ['#ef4444', '#f97316', '#eab308', '#84cc16', '#22c55e'];
+
+  const renderRatingDistribution = () => {
+    if (!reviewStats) return null;
+    
+    const data = Object.entries(reviewStats.ratingPercentages || {})
+      .map(([rating, percentage]) => ({
+        name: `${rating} Star`,
+        value: percentage,
+        count: reviewStats.ratingDistribution?.[rating] || 0
+      }))
+      .reverse(); // Show 5 stars first
+
+    return (
+      <div className="bg-gray-800/50 p-4 rounded-lg">
+        <h3 className="text-lg font-semibold mb-4">Rating Distribution</h3>
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" stroke="#4B5563" />
+              <XAxis type="number" domain={[0, 100]} tick={{ fill: '#9CA3AF' }} />
+              <YAxis 
+                dataKey="name" 
+                type="category" 
+                width={80}
+                tick={{ fill: '#E5E7EB' }}
+              />
+              <Tooltip 
+                formatter={(value, name, props) => [
+                  `${value}% (${props.payload.count} reviews)`,
+                  'Percentage of total reviews'
+                ]}
+                contentStyle={{ backgroundColor: '#1F2937', borderColor: '#4B5563' }}
+              />
+              <Bar dataKey="value" fill="#10B981" radius={[0, 4, 4, 0]}>
+                {data.map((entry, index) => (
+                  <Cell 
+                    key={`cell-${index}`} 
+                    fill={`rgba(16, 185, 129, ${0.3 + (index * 0.15)})`} 
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen w-full text-white">
@@ -387,7 +433,7 @@ const Audit = () => {
                                   <Star className="w-4 h-4 text-yellow-400" />
                                 </div>
                                 <div className="text-3xl font-bold text-yellow-400">
-                                  {reviewStats?.average ? reviewStats.average.toFixed(1) : '0.0'}
+                                  {reviewStats?.averageRating ? reviewStats.averageRating.toFixed(1) : '0.0'}
                                 </div>
                                 <div className="text-xs text-white/60 mt-1">out of 5.0</div>
                               </div>
@@ -398,7 +444,7 @@ const Audit = () => {
                                   <BarChart3 className="w-4 h-4 text-blue-400" />
                                 </div>
                                 <div className="text-3xl font-bold text-blue-400">
-                                  {reviewStats?.total || 0}
+                                  {reviewStats?.totalReviews || 0}
                                 </div>
                                 <div className="text-xs text-white/60 mt-1">all time</div>
                               </div>
@@ -477,7 +523,7 @@ const Audit = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                               <div className="rounded-2xl bg-[#121324]/90 border border-white/5 p-6">
-                                <h3 className="text-sm font-semibold mb-4">Monthly Review Trend ({new Date().getFullYear()})</h3>
+                                <h3 className="text-lg font-semibold mb-4">Monthly Review Trend ({new Date().getFullYear()})</h3>
                                 {monthlyData.length > 0 && monthlyData.some(d => d.reviews > 0) ? (
                                   <ResponsiveContainer width="100%" height={200}>
                                     <BarChart data={monthlyData}>
@@ -506,7 +552,7 @@ const Audit = () => {
                               </div>
 
                               <div className="rounded-2xl bg-[#121324]/90 border border-white/5 p-6">
-                                <h3 className="text-sm font-semibold mb-4">Rating Distribution</h3>
+                                <h3 className="text-lg font-semibold mb-4">Rating Distribution</h3>
                                 {ratingDistribution.length > 0 && ratingDistribution.some(d => d.value > 0) ? (
                                   <ResponsiveContainer width="100%" height={200}>
                                     <PieChart>
@@ -556,7 +602,7 @@ const Audit = () => {
                                   </div>
                                 </div>
                                 <div className="text-right">
-                                  <div className="text-2xl font-bold text-green-400">{reviewStats?.total || 0}</div>
+                                  <div className="text-2xl font-bold text-green-400">{reviewStats?.totalReviews || 0}</div>
                                   <div className="text-xs text-white/60">Total Reviews</div>
                                 </div>
                               </div>
@@ -598,7 +644,7 @@ const Audit = () => {
                             <div className="rounded-2xl bg-[#121324]/90 border border-white/5 p-6">
                               <h3 className="text-lg font-semibold mb-4">Rating Quality Analysis</h3>
                               <div className="space-y-3">
-                                {reviewStats.ratings.sort((a, b) => b.rating - a.rating).map((item) => (
+                                {reviewStats?.ratings?.length > 0 ? reviewStats.ratings.sort((a, b) => b.rating - a.rating).map((item) => (
                                   <div key={item.rating} className="flex items-center gap-3">
                                     <div className="flex items-center w-20">
                                       {[...Array(item.rating)].map((_, i) => (
@@ -610,29 +656,30 @@ const Audit = () => {
                                         className={`h-full rounded-full ${item.rating >= 4 ? 'bg-green-500' :
                                           item.rating === 3 ? 'bg-yellow-500' : 'bg-red-500'
                                           }`}
-                                        style={{ width: `${reviewStats.total > 0 ? (item.count / reviewStats.total) * 100 : 0}%` }}
+                                        style={{ width: `${reviewStats.totalReviews > 0 ? (item.count / reviewStats.totalReviews) * 100 : 0}%` }}
                                       />
                                     </div>
-                                    <span className="w-16 text-sm text-white/70 text-right">{item.count} ({reviewStats.total > 0 ? ((item.count / reviewStats.total) * 100).toFixed(0) : 0}%)</span>
+                                    <span className="w-16 text-sm text-white/70 text-right">{item.count} ({reviewStats.totalReviews > 0 ? ((item.count / reviewStats.totalReviews) * 100).toFixed(0) : 0}%)</span>
                                   </div>
-                                ))}
+                                )) : (
+                                  <div className="text-center py-4 text-white/60">
+                                    {loading ? 'Loading rating data...' : 'No rating data available'}
+                                  </div>
+                                )}
                               </div>
-                            </div>
-
-                            <div className="rounded-lg bg-[#121324]/90 border border-white/5 p-6">
                               <h3 className="text-sm font-semibold mb-4">Performance Summary</h3>
                               <div className="space-y-3">
                                 <div className="flex justify-between items-center">
                                   <span className="text-white/60">Total Reviews</span>
-                                  <span className="font-semibold">{reviewStats.total}</span>
+                                  <span className="font-semibold">{reviewStats?.totalReviews || 0}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                   <span className="text-white/60">Average Rating</span>
-                                  <span className="font-semibold">{reviewStats.average.toFixed(2)}</span>
+                                  <span className="font-semibold">{reviewStats?.averageRating ? reviewStats.averageRating.toFixed(2) : '0.00'}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                   <span className="text-white/60">Recent Activity (30d)</span>
-                                  <span className="font-semibold">{reviewStats.recentCount} reviews</span>
+                                  <span className="font-semibold">{reviewStats?.recentReviews?.length || 0} reviews</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                   <span className="text-white/60">Response Rate</span>

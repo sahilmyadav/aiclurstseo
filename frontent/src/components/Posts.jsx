@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import SideNav from "./SideNav";
 import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
+import { useAuth } from "./context/AuthContext";
 import ScheduledPosts from "./ScheduledPosts";
 import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
 import { 
@@ -124,6 +125,7 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
 
 const Posts = () => {
   const { isCollapsed } = useSidebar();
+  const { user: authUser } = useAuth();
   const { 
     isConnected: isGoogleConnected, 
     businesses, 
@@ -183,10 +185,17 @@ const Posts = () => {
       
       const baseUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
       
-      // Build URL with pagination parameters
+      // Get Google OAuth tokens from localStorage
+      const oauthKey = `google_oauth_tokens_${authUser?.id || 'guest'}`;
+      const oauthTokens = JSON.parse(localStorage.getItem(oauthKey) || '{}');
+      
+      // Build URL with pagination and OAuth parameters
       const params = new URLSearchParams({
         pageSize: pagination.pageSize,
-        ...(loadMore && pagination.nextPageToken && { pageToken: pagination.nextPageToken })
+        ...(loadMore && pagination.nextPageToken && { pageToken: pagination.nextPageToken }),
+        ...(oauthTokens.access_token && { access_token: oauthTokens.access_token }),
+        ...(oauthTokens.refresh_token && { refresh_token: oauthTokens.refresh_token }),
+        ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date })
       });
       
       const url = `${baseUrl}/auth/google/accounts/${accountId}/locations/${locationId}/localPosts?${params}`;
@@ -198,7 +207,8 @@ const Posts = () => {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        },
+        credentials: 'include'
       });
       
       if (!postsResponse.ok) {
@@ -449,9 +459,12 @@ const Posts = () => {
     setIsCreatingPost(true);
     
     try {
-      const token = localStorage.getItem('auth') ? JSON.parse(localStorage.getItem('auth')).token : null;
+      const token = localStorage.getItem('token');
       if (!token) {
-        throw new Error('No authentication token found. Please log in again.');
+        // If no token is found, redirect to login
+        localStorage.removeItem('token');
+        navigate('/login');
+        throw new Error('Your session has expired. Please log in again.');
       }
 
       const locationId = businessDetails.name.split('/')[1];
@@ -494,9 +507,21 @@ const Posts = () => {
         throw new Error('BACKEND_URL is not defined');
       }
       const baseUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
-      const url = `${baseUrl}/auth/google/accounts/${businessDetails.accountId}/locations/${locationId}/localPosts`;
       
-      console.log('📤 Sending request to:', url);
+      // Get Google OAuth tokens from localStorage
+      const oauthKey = `google_oauth_tokens_${authUser?.id || 'guest'}`;
+      const oauthTokens = JSON.parse(localStorage.getItem(oauthKey) || '{}');
+      
+      // Build URL with OAuth parameters
+      const params = new URLSearchParams({
+        ...(oauthTokens.access_token && { access_token: oauthTokens.access_token }),
+        ...(oauthTokens.refresh_token && { refresh_token: oauthTokens.refresh_token }),
+        ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date })
+      });
+      
+      const url = `${baseUrl}/auth/google/accounts/${businessDetails.accountId}/locations/${locationId}/localPosts?${params}`;
+      
+      console.log(' Sending request to:', url);
 
       const response = await fetch(url, {
         method: 'POST',

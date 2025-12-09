@@ -974,7 +974,7 @@ const getUserTransactions = async (req, res) => {
     const transactions = await Payment.find({ userId })
       .sort({ createdAt: -1 })
       .limit(50); // Limit to 50 most recent transactions
-    console.log("User transactions:",transactions);
+    // console.log("User transactions:",transactions);
     res.json(transactions);
   } catch (err) {
     console.error('Error fetching user transactions:', err);

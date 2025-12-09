@@ -49,7 +49,6 @@ const Billing = () => {
     active,
     startDate,
     endDate,
-    daysRemaining,
     profiles,
     pricePerProfile,
     totalPrice
