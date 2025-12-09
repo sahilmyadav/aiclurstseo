@@ -13,10 +13,10 @@ export const AuthContextProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true) // Start with true to indicate initial loading
   const [isInitialized, setIsInitialized] = useState(false)
-  
+  console.log("User >>>>>>>",user)
   // Subscription-related state
   const [subscriptionData, setSubscriptionData] = useState(null);
-  console.log("Subs >>>>>>>",subscriptionData);
+  // console.log("Subs >>>>>>>",subscriptionData);
   const [trialEligible, setTrialEligible] = useState(true);
   const [trialMessage, setTrialMessage] = useState("");
   const [trialData, setTrialData] = useState(null);
@@ -166,9 +166,11 @@ export const AuthContextProvider = ({ children }) => {
   }, [API_BASE]);
 
   // Activate trial
-  const activateTrial = async (userId, token) => {
+  const activateTrial = async () => {
+    const userId = user?._id || user?.id;
+    
     if (!userId) {
-      throw new Error("User not found");
+      throw new Error("User not found. Please log in again.");
     }
 
     if (!trialEligible) {

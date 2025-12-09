@@ -115,7 +115,7 @@ export const getGoogleBusinesses = async (req, res) => {
                 specialHours,
                 categories,
                 websiteUri,
-            
+           
                 languageCode`.replace(/\s+/g, "")
             }
           }
