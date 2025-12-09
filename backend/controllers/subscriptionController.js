@@ -193,6 +193,20 @@ const createCheckoutSession = async (req, res) => {
     const { planType, profiles = 1 } = req.body;
     const userId = req.user?._id || req.body.userId;
 
+    // Check for active subscription
+    const existingSub = await Subscription.findOne({
+      user: userId,
+      status: 'active',
+      endDate: { $gt: new Date() }
+    });
+
+    if (existingSub) {
+      return res.status(400).json({
+        success: false,
+        error: 'You already have an active subscription. Please refresh your page.'
+      });
+    }
+
     // Validate required fields
     if (!userId) {
       return res.status(401).json({ error: "Authentication required" });
