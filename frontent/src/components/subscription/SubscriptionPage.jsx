@@ -26,6 +26,8 @@ const SubscriptionPage = () => {
     plansLoading,
     plansError,
   } = useAuth();
+
+  console.log("TOKEN",token,"User",user)
   
   const [profiles, setProfiles] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -158,30 +160,6 @@ const SubscriptionPage = () => {
     };
   };
 
-  // Trial Activation
-  const handleTrial = async () => {
-    const userId = user?._id || user?.id;
-    
-    if (!userId) {
-      alert("User not found. Please try logging in again.");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const res = await activateTrial(userId, token);
-      
-      // alert(res.data.message || "14-day trial activated!");
-      
-      // Optionally redirect to dashboard
-      // navigate('/dashboard');
-    } catch (error) {
-      alert(error.message || "Failed to activate trial");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   // Stripe Payment
   const handleSubscribe = async (planType) => {
     try {
@@ -258,6 +236,28 @@ const SubscriptionPage = () => {
 
   const remainingDays = getRemainingTrialDays();
 
+  // Handle starting a new trial using the activateTrial from AuthContext
+  const handleStartTrial = async () => {
+    try {
+      setLoading(true);
+      const result = await activateTrial();
+      console.log(result)
+      if (result) {
+        console.log('Trial started successfully');
+        // Refresh subscription data
+        await checkSubscriptionStatus(user?._id || user?.id, token);
+      } else {
+        console.error('Failed to start trial:', result.error);
+        // alert(result.error || 'Failed to start trial. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error starting trial:', error);
+      alert('An error occurred while starting your trial. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black py-8 px-4">
       <div className="max-w-6xl mx-auto">
@@ -272,97 +272,108 @@ const SubscriptionPage = () => {
         </div>
 
         {/* Trial Status */}
-    {/* Trial Status */}
-  {!subscriptionData?.active || subscriptionData?.planType === 'trial' ? (
-    // Show subscription status from subscriptionData if available
-    subscriptionData?.status === 'expired' ? (
-      // Expired Status
-      <div className="bg-gray-800 rounded-2xl shadow-lg border border-red-900/50 p-6 mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-white flex items-center">
-              <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
-              Trial Expired
-            </h3>
-            <p className="text-gray-300 mt-1">
-              Your 14-day free trial has ended. Please choose a subscription plan.
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-red-400">Expired</div>
-          </div>
-        </div>
-      </div>
-    ) : subscriptionData?.status === 'active' && trialData && remainingDays > 0 ? (
-      // Active Trial with Remaining Days
-      <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h3 className="text-xl font-bold text-white flex items-center">
-              <div className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse"></div>
-              {subscriptionData.planType === 'trial' ? 'Free Trial Active' : 'Subscription Active'}
-            </h3>
-            <p className="text-gray-300 mt-1">
-              {subscriptionData.planType === 'trial' 
-                ? 'Your 14-day free trial is currently active.'
-                : 'Your subscription is active.'}
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
-              {remainingDays}
-            </div>
-            <div className="text-sm text-gray-400">days left</div>
-          </div>
-        </div>
-        <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
-          <div 
-            className="bg-gradient-to-r from-green-400 to-emerald-400 rounded-full h-3 transition-all duration-500 shadow-sm"
-            style={{ width: `${(remainingDays / 14) * 100}%` }}
-          ></div>
-        </div>
-      </div>
-    ) : (
-      // Trial Expired
-      <div className="bg-gray-800 rounded-2xl shadow-lg border border-red-900/50 p-6 mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-xl font-bold text-white flex items-center">
-              <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
-              Trial Expired
-            </h3>
-            <p className="text-gray-300 mt-1">
-              Your 14-day free trial has ended. Please choose a subscription plan to continue.
-            </p>
-          </div>
-          <div className="text-right">
-            <div className="text-2xl font-bold text-red-400">Expired</div>
-          </div>
-        </div>
-      </div>
-    )
-  ) : trialEligible ? (
-    // Trial Available
-    <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 text-white rounded-2xl shadow-xl p-6 mb-8 relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm"></div>
-      <div className="relative flex items-center justify-between">
-        <div>
-          <h3 className="text-xl font-bold flex items-center">
-            <FiStar className="w-6 h-6 mr-2 text-yellow-400" />
-            14-Day Free Trial
-          </h3>
-          <p className="text-blue-100 mt-1">No credit card required • Full access</p>
-        </div>
-        <button
-          onClick={handleTrial}
-          disabled={loading}
-          className="bg-white text-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-200 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {loading ? "Starting..." : "Start Free Trial"}
-        </button>
-      </div>
-    </div>
-  ) : null}
+        {(() => {
+          // Case 1: User has an active trial
+          if (subscriptionData?.status === 'active' && trialData && remainingDays > 0) {
+            return (
+              <div className="bg-gray-800 rounded-2xl shadow-lg border border-green-900/50 p-6 mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-xl font-bold text-white flex items-center">
+                      <div className="w-3 h-3 bg-green-400 rounded-full mr-3 animate-pulse"></div>
+                      Free Trial Active
+                    </h3>
+                    <p className="text-gray-300 mt-1">
+                      Your 14-day free trial is currently active. Enjoy all premium features!
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold bg-gradient-to-r from-green-400 to-emerald-400 bg-clip-text text-transparent">
+                      {remainingDays}
+                    </div>
+                    <div className="text-sm text-gray-400">days left</div>
+                  </div>
+                </div>
+                <div className="bg-gradient-to-r from-gray-700 to-gray-600 rounded-full h-3">
+                  <div 
+                    className="bg-gradient-to-r from-green-400 to-emerald-400 rounded-full h-3 transition-all duration-500 shadow-sm"
+                    style={{ width: `${(remainingDays / 14) * 100}%` }}
+                  ></div>
+                </div>
+              </div>
+            );
+          }
+          
+          // Case 2: User is eligible for a trial but hasn't started one
+          if (trialEligible && (!subscriptionData || !subscriptionData.planType)) {
+            return (
+              <div className="bg-gradient-to-r from-blue-600 via-purple-600 to-blue-700 text-white rounded-2xl shadow-xl p-6 mb-8 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20 backdrop-blur-sm"></div>
+                <div className="relative flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold flex items-center">
+                      <FiStar className="mr-2 text-yellow-300" />
+                      Start Your Free Trial
+                    </h3>
+                    <p className="text-blue-100 mt-1">
+                      Get 14 days of premium features for free. No credit card required.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleStartTrial()}
+                    className="bg-white text-blue-600 hover:bg-blue-50 font-medium px-5 py-2 rounded-lg transition-colors duration-200"
+                  >
+                    Start Free Trial
+                  </button>
+                </div>
+              </div>
+            );
+          }
+          
+          // Case 3: Trial has expired
+          if (subscriptionData?.planType === 'trial' && remainingDays <= 0) {
+            return (
+              <div className="bg-gray-800 rounded-2xl shadow-lg border border-red-900/50 p-6 mb-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold text-white flex items-center">
+                      <div className="w-3 h-3 bg-red-500 rounded-full mr-3"></div>
+                      Trial Expired
+                    </h3>
+                    <p className="text-gray-300 mt-1">
+                      Your 14-day free trial has ended. Choose a plan to continue enjoying premium features.
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-2xl font-bold text-red-400">Expired</div>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          
+          // Case 4: User has an active paid subscription
+          if (subscriptionData?.active && subscriptionData.planType !== 'trial') {
+            return (
+              <div className="bg-gray-800 rounded-2xl shadow-lg border border-green-900/50 p-6 mb-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-xl font-bold text-white flex items-center">
+                      <div className="w-3 h-3 bg-green-400 rounded-full mr-3"></div>
+                      {subscriptionData.planType ? `${subscriptionData.planType.charAt(0).toUpperCase() + subscriptionData.planType.slice(1)} Plan Active` : 'Subscription Active'}
+                    </h3>
+                    <p className="text-gray-300 mt-1">
+                      Your subscription is active until {subscriptionData.endDate ? formatDate(subscriptionData.endDate) : 'further notice'}.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            );
+          }
+          
+          // Default case: No active subscription or trial
+          return null;
+        })()}
 
         {/* Profile Selector */}
         <div className="bg-gray-800 rounded-2xl shadow-lg border border-gray-700 p-6 mb-8">
