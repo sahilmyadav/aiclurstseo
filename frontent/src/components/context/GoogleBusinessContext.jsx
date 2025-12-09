@@ -195,9 +195,45 @@ export const GoogleBusinessProvider = ({ children }) => {
   // ==============================
   // DISCONNECT GOOGLE
   // ==============================
-  const disconnectGoogle = async () => {
-    setUser(null);
-    setBusinesses([]);
+  const disconnectGoogle = async (silent = false) => {
+    if (!silent) {
+      toast.info('Disconnecting Google Business Profile...');
+    }
+    
+    try {
+      // Clear local state
+      setUser(null);
+      setBusinesses([]);
+      setSelectedBusiness(null);
+      setSelectedBusinesses([]);
+      setReviews([]);
+      setLocalReviews([]);
+      setIsConnected(false);
+      setTokenDetails({ accessToken: null, refreshToken: null, expiryDate: null, scopes: [] });
+      
+      // Clear Google OAuth tokens
+      setGoogleOAuth({
+        access_token: null,
+        refresh_token: null,
+        expiry_date: null
+      });
+      
+      // Clear local storage
+      localStorage.removeItem(getStorageKey(authUser?.id));
+      localStorage.removeItem(getOAuthStorageKey(authUser?.id));
+      
+      if (!silent) {
+        toast.success('Successfully disconnected Google Business Profile');
+      }
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Error disconnecting Google:', error);
+      if (!silent) {
+        toast.error('Failed to disconnect Google Business Profile');
+      }
+      return { success: false, error };
+    }
     setSelectedBusiness(null);
     setSelectedBusinesses([]);
     setReviews([]);
@@ -211,6 +247,30 @@ export const GoogleBusinessProvider = ({ children }) => {
     });
     toast.success("Disconnected");
   };
+
+  
+  // ==============================
+  // AUTO DISCONNECT ON SUBSCRIPTION END
+  // ==============================
+  useEffect(() => {
+    if (authUser?.id && subscriptionData) {
+      const now = new Date();
+      const endDate = subscriptionData.endDate ? new Date(subscriptionData.endDate) : null;
+      
+      // Check if subscription is active
+      const isSubscriptionActive = subscriptionData.status === 'active' && 
+                                endDate && 
+                                endDate > now;
+      
+      // If not active and token exists (meaning user was connected), disconnect
+      if (!isSubscriptionActive && (googleOAuth?.access_token || tokenDetails?.accessToken)) {
+        console.log('No active subscription - disconnecting Google Business Profile');
+        disconnectGoogle(true).then(() => {
+          toast.warning('Your subscription has ended. Google Business Profile has been disconnected.');
+        });
+      }
+    }
+  }, [subscriptionData, googleOAuth?.access_token, tokenDetails?.accessToken, authUser?.id]);
 
   // ==============================
   // FETCH BUSINESSES
