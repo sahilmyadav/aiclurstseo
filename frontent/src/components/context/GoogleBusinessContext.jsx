@@ -18,7 +18,7 @@ export const useGoogleBusiness = () => {
 
 export const GoogleBusinessProvider = ({ children }) => {
   const { user: authUser, token } = useAuth();
-  const BACKEND_URL = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
+  const BACKEND_URL = (import.meta.env.VITE_API_BASE ).replace(/\/$/, '');
   const { subscriptionData } = useAuth();
 
   // ==============================

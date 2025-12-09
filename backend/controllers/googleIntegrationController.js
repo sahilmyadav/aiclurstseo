@@ -87,7 +87,7 @@ export const getGoogleBusinesses = async (req, res) => {
     if (!tokens.access_token) return res.status(401).json({ error: "Not authenticated" });
 
     const token = await getBearerToken(tokens);
-   console.log("TOKEN HAI",token)
+  //  console.log("TOKEN HAI",token)
     const accountsRes = await axios.get(
       "https://mybusinessaccountmanagement.googleapis.com/v1/accounts",
       { headers: { Authorization: `Bearer ${token}` } }
@@ -104,15 +104,27 @@ export const getGoogleBusinesses = async (req, res) => {
           {
             headers: { Authorization: `Bearer ${token}` },
             params: {
-              readMask: `name,title,websiteUri,phoneNumbers,categories`.replace(/\s+/g, "")
+              readMask: ` name,
+                title,
+                storeCode,
+                metadata,
+                latlng,
+                phoneNumbers,
+                regularHours,
+                moreHours,
+                specialHours,
+                categories,
+                websiteUri,
+            
+                languageCode`.replace(/\s+/g, "")
             }
           }
         );
+        console.log("locations >>>>>>>>>>>>",locationsRes)
         const locations = locationsRes.data.locations || [];
         allLocations.push(...locations.map(loc => ({ ...loc, accountId })));
       } catch (locErr) {}
     }
-
     res.json({ businesses: allLocations });
   } catch (error) {
     res.status(500).json({
