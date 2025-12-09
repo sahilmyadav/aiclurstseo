@@ -6,7 +6,7 @@ import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import { generateAIPost } from '../utils/suggestion';
 
 const SocialSharing = () => {
-  const { selectedBusiness, tokenDetails } = useGoogleBusiness();
+  const { selectedBusiness, tokenDetails, googleOAuth } = useGoogleBusiness();
 
   // Function to get auto keywords from selected business
   const getAutoKeywords = () => {
@@ -230,8 +230,17 @@ const SocialSharing = () => {
         accountId,
         locationId,
         businessName, 
-        createdBy: '673a8778588c0847f3a6d3c4', 
-        tokenDetails: tokenDetails,
+        createdBy: '673a8778588c0847f3a6d3c4',
+        tokenDetails: {
+          // Use googleOAuth values first, fall back to tokenDetails
+          accessToken: googleOAuth?.access_token || tokenDetails?.accessToken,
+          refreshToken: googleOAuth?.refresh_token || tokenDetails?.refreshToken,
+          expiryDate: googleOAuth?.expiry_date 
+            ? new Date(googleOAuth.expiry_date) 
+            : tokenDetails?.expiryDate 
+              ? new Date(tokenDetails.expiryDate) 
+              : null
+        },
         businessData: selectedBusiness 
       };
       console.log("postData",postData)

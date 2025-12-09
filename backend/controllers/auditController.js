@@ -1,17 +1,30 @@
 import axios from 'axios';
+import { getBearerToken } from './googleIntegrationController.js';
 
 // Fetch performance metrics from Google Business Profile API
 export const fetchPerformanceMetrics = async (req, res) => {
   try {
-    const { locationId, startDate, endDate, accessToken } = req.body;
-    console.log("start date", startDate)
-    console.log("end date", endDate)
+    const { locationId, startDate, endDate, accessToken, refresh_token, expiry_date } = req.body;
+
+    console.log("Fetching performance metrics with params:", {
+      locationId,
+      startDate,
+      endDate
+    });
+
     if (!locationId || !startDate || !endDate || !accessToken) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required parameters: locationId, startDate, endDate, accessToken'
+        error: 'Missing required parameters: locationId, startDate, endDate, and accessToken are required'
       });
     }
+
+    // Get a fresh access token if needed
+    const token = await getBearerToken({
+      access_token: accessToken,
+      refresh_token,
+      expiry_date: expiry_date ? parseInt(expiry_date) : null
+    });
 
     // Construct the API URL
     const apiUrl = `https://businessprofileperformance.googleapis.com/v1/locations/${locationId}:fetchMultiDailyMetricsTimeSeries`;
@@ -33,10 +46,10 @@ export const fetchPerformanceMetrics = async (req, res) => {
     
     const url = `${apiUrl}?${params.toString()}`;
     
-    // Make the API request
+    // Make the API request with the token
     const response = await axios.get(url, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       }
     });
