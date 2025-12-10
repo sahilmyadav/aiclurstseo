@@ -120,7 +120,7 @@ export const getGoogleBusinesses = async (req, res) => {
             }
           }
         );
-        console.log("locations >>>>>>>>>>>>",locationsRes)
+        // console.log("locations >>>>>>>>>>>>",locationsRes)
         const locations = locationsRes.data.locations || [];
         allLocations.push(...locations.map(loc => ({ ...loc, accountId })));
       } catch (locErr) {}

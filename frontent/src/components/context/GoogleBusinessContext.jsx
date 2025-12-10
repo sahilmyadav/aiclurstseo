@@ -426,6 +426,51 @@ export const GoogleBusinessProvider = ({ children }) => {
   };
 
   // ==============================
+  // SCHEDULED POSTS
+  // ==============================
+  const fetchScheduledPosts = useCallback(async () => {
+    if (!selectedBusiness) return;
+    
+    const locationId = selectedBusiness.name.split("/")[1];
+    if (!locationId) return;
+
+    console.log('Frontend: Fetching scheduled posts for locationId:', locationId);
+    
+    setLoadingScheduled(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/post/user/${locationId}`, {
+        headers: authHeaders(),
+      });
+      
+      console.log('Frontend: Response status:', response.status);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Frontend: Received data:', data);
+        setScheduledPosts(data.data || []);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Frontend: Error response:', errorData);
+        throw new Error(errorData.message || 'Failed to fetch scheduled posts');
+      }
+    } catch (error) {
+      console.error('Error fetching scheduled posts:', error);
+      if (!error.message.includes('404')) {
+        toast.error(error.message || 'Failed to load scheduled posts');
+      }
+    } finally {
+      setLoadingScheduled(false);
+    }
+  }, [selectedBusiness, token]);
+
+  // Fetch scheduled posts when selected business changes
+  useEffect(() => {
+    if (selectedBusiness?.name) {
+      fetchScheduledPosts();
+    }
+  }, [selectedBusiness, fetchScheduledPosts]);
+
+  // ==============================
   // PERFORMANCE METRICS
   // ==============================
   const fetchPerformanceMetrics = async ({ startDate, endDate }) => {
@@ -528,6 +573,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     selectBusiness,
     fetchLocalReviews,
     fetchPerformanceMetrics,
+    fetchScheduledPosts,
   };
 
   // Handle OAuth callback and save tokens from URL
