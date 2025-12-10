@@ -122,7 +122,7 @@ const SideNav = () => {
     { name: 'Settings', icon: Settings, path: '/ad-dashboard/settings', active: location.pathname === '/ad-dashboard/settings' },
     { name: 'Users', icon: Users, path: '/ad-dashboard/users', active: location.pathname === '/ad-dashboard/users' },
     { name: 'Analytics', icon: BarChart2, path: '/ad-dashboard/analytics', active: location.pathname === '/ad-dashboard/analytics' },
-    // { name: 'Billing', icon: CreditCard, path: '/ad-dashboard/billing', active: location.pathname === '/ad-dashboard/billing' },
+    { name: 'Edit Plans', icon: CreditCard, path: '/ad-dashboard/plans', active: location.pathname === '/ad-dashboard/plans' },
   ];
 
   const navItems = user?.role === 'admin' ? adminNavItems : userNavItems;

@@ -28,6 +28,7 @@ import { useAuth } from './components/context/AuthContext'
 import AdminDashboard from './components/admin/AdminDashboard'
 import { Users } from 'lucide-react'
 import AllUsers from './components/admin/AllUsers'
+import EditPlans from './components/admin/EditPlans'
 import { AdminProvider } from './context/AdminContext'
 import Reviews from './components/Reviews'
 import SubscriptionPage from './components/subscription/SubscriptionPage'
@@ -36,7 +37,6 @@ import About from './pages/About'
 import Billing from './components/subscription/Billing'
 import BusinessDetails from './components/BusinessDetails'
 import UserSubscriptionDetails from './components/subscription/UserSubsriptionDetails'
-
 
 const AppContent = () => {
   const location = useLocation()
@@ -114,6 +114,8 @@ const AppContent = () => {
               <Route path="users" element={<AllUsers />} />
               <Route path="analytics" element={<AnalyticsDashboard />} />
               <Route path="billing" element={<UserSubscriptionDetails />} />
+              <Route path="plans" element={<EditPlans />} />
+              <Route path="subscription-plans" element={<EditPlans />} />
             </Route>
           )
         }

@@ -15,6 +15,7 @@ import invitationRoutes from './routes/invitationRoutes.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import planRoutes from "./routes/planRoutes.js";
 import { startSubscriptionJobs } from './jobs/subscriptionJobs.js';
 dotenv.config();
 
@@ -42,7 +43,7 @@ const corsOptions = {
     return callback(null, true);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
@@ -75,6 +76,7 @@ app.use((req, res, next) => {
 });
 
 app.use("/api/subscription", subscriptionRoutes);
+app.use("/api/admin/plans", planRoutes);
 app.use("/auth/google", googleRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
