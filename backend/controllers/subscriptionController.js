@@ -193,17 +193,32 @@ const createCheckoutSession = async (req, res) => {
     const { planType, profiles = 1 } = req.body;
     const userId = req.user?._id || req.body.userId;
 
-    // Check for active subscription
+    // Check for active or pending subscription
     const existingSub = await Subscription.findOne({
       user: userId,
-      status: 'active',
-      endDate: { $gt: new Date() }
+      $or: [
+        { status: 'active', endDate: { $gt: new Date() } },
+        { status: 'pending' }
+      ]
     });
 
+    console.log("Existing Sub",existingSub)
+
     if (existingSub) {
+      const message = existingSub.status === 'active' 
+        ? `You already have an active subscription until ${new Date(existingSub.endDate).toLocaleDateString()}.`
+        : 'You already have a pending subscription waiting to be activated.';
+      
       return res.status(400).json({
         success: false,
-        error: 'You already have an active subscription. Please refresh your page.'
+        hasActiveSubscription: true,
+        subscription: {
+          status: existingSub.status,
+          planType: existingSub.planType,
+          endDate: existingSub.endDate,
+          profiles: existingSub.profiles
+        },
+        message: message
       });
     }
 
@@ -395,28 +410,7 @@ const handleCheckoutSessionCompleted = async (session) => {
     }
   );
 
-  // Record payment if this is not a trial
-  if (planType !== 'trial' && session.payment_status === 'paid') {
-    const amountInCents = session.amount_total || 0;
-    const amount = amountInCents / 100; // Convert to dollars/cents
-    const currency = session.currency || 'usd';
-    
-    await Payment.create({
-      userId,
-      subscriptionId: subscription._id,
-      sessionId: session.id,
-      paymentStatus: session.payment_status,
-      amount,
-      currency,
-      paymentMethod: session.payment_method_types?.[0] || 'card',
-      customerEmail: session.customer_email,
-      metadata: {
-        planType,
-        profiles: profiles,
-        pricePerProfile: plan.pricePerProfile
-      }
-    });
-  }
+  // Payment recording is handled in verifySubscription function
 
   console.log(`Subscription ${subscription._id} activated for user ${userId}`);
 }
@@ -512,9 +506,29 @@ const verifySubscription = async (req, res) => {
     if (sessionId) {
       console.log('Verifying session ID:', sessionId);
       try {
-        // Expand the payment intent to get the latest status
+        // Expand the payment intent and include all necessary details
         const session = await stripe.checkout.sessions.retrieve(sessionId, {
-          expand: ['payment_intent']
+          expand: [
+            'payment_intent',
+            'total_details.breakdown',
+            'line_items.data.discounts',
+            'discounts'
+          ]
+        });
+        
+        console.log('Retrieved session with details:', {
+          id: session.id,
+          payment_status: session.payment_status,
+          amount_total: session.amount_total,
+          amount_subtotal: session.amount_subtotal,
+          total_details: session.total_details,
+          line_items: session.line_items?.data?.map(item => ({
+            amount_subtotal: item.amount_subtotal,
+            amount_total: item.amount_total,
+            description: item.description,
+            discounts: item.discounts
+          })),
+          discounts: session.discounts
         });
         
         console.log('Retrieved session:', {
@@ -603,26 +617,109 @@ const verifySubscription = async (req, res) => {
               }
             );
 
-            // Record payment
-            const amountInCents = session.amount_total;
-            const amount = amountInCents / 100; // Convert to dollars/cents
-            const currency = session.currency || 'usd';
+            // Check if payment already exists
+            const existingPayment = await Payment.findOne({ sessionId: session.id });
             
-            await Payment.create({
-              userId,
-              subscriptionId: subscription._id,
-              sessionId: session.id,
-              paymentStatus: session.payment_status,
-              amount,
-              currency,
-              paymentMethod: session.payment_method_types?.[0] || 'card',
-              customerEmail: session.customer_email,
-              metadata: {
-                planType,
-                profiles: numProfiles,
-                pricePerProfile: plan.pricePerProfile
+            if (!existingPayment) {
+              // Calculate amounts
+              const currency = session.currency || 'usd';
+              // Get plan details including discount percentage
+              const planDetails = await Plan.findOne({ planType });
+              if (!planDetails) {
+                throw new Error(`Plan details not found for type: ${planType}`);
               }
-            });
+              
+              const pricePerProfile = planDetails.pricePerProfile || 0;
+              const discountPercent = planDetails.discountPercent || 0;
+              
+              // Calculate expected prices based on plan
+              const expectedSubtotal = pricePerProfile * numProfiles;
+              const expectedDiscount = expectedSubtotal * (discountPercent / 100);
+              const expectedTotal = expectedSubtotal - expectedDiscount;
+              
+              // Get actual amounts from session (in cents)
+              const subtotalInCents = session.amount_subtotal || 0;
+              const totalInCents = session.amount_total || 0;
+              const discountInCents = subtotalInCents - totalInCents;
+              
+              // Convert to proper currency units
+              const subtotal = subtotalInCents / 100;
+              const total = totalInCents / 100;
+              const discount = discountInCents / 100;
+              
+              // Log for debugging
+              console.log('Plan Details:', {
+                pricePerProfile,
+                numProfiles,
+                discountPercent,
+                expectedSubtotal,
+                expectedDiscount,
+                expectedTotal,
+                actualSubtotal: subtotal,
+                actualDiscount: discount,
+                actualTotal: total
+              });
+              
+              // Create payment record with all details
+              const paymentData = {
+                userId,
+                subscriptionId: subscription._id,
+                sessionId: session.id,
+                paymentStatus: session.payment_status || 'paid',
+                amountInCents: totalInCents,
+                amountInUSD: currency.toLowerCase() === 'usd' ? total : 0,
+                amountInINR: currency.toLowerCase() === 'inr' ? total : Math.round(total * 83),
+                currency: currency,
+                paymentMethod: session.payment_method_types?.[0] || 'card',
+                customerEmail: session.customer_email || user?.email,
+                created: new Date().toISOString(),
+                paymentMethodTypes: session.payment_method_types || [],
+                subtotalInCents: subtotalInCents,
+                subtotalInINR: currency.toLowerCase() === 'inr' ? subtotal : Math.round(subtotal * 83),
+                totalDetails: session.total_details || {},
+                paymentIntent: session.payment_intent?.id || '',
+                customer: session.customer || '',
+                metadata: {
+                  planType,
+                  profiles: numProfiles,
+                  originalPricePerProfile: pricePerProfile,
+                  discountedPricePerProfile: (pricePerProfile * (1 - (discountPercent / 100))).toFixed(2),
+                  discountAmount: expectedDiscount.toFixed(2),
+                  discountPercent: parseFloat(discountPercent),
+                  subtotal: expectedSubtotal.toFixed(2),
+                  total: expectedTotal.toFixed(2),
+                  currency: currency,
+                  originalTotal: (pricePerProfile * numProfiles).toFixed(2),
+                  discountedTotal: (expectedTotal).toFixed(2),
+                  discountApplied: discountPercent > 0 ? 'Yes' : 'No',
+                  calculation: {
+                    basePrice: pricePerProfile,
+                    profiles: numProfiles,
+                    subtotal: expectedSubtotal,
+                    discountPercent: discountPercent,
+                    discountAmount: expectedDiscount,
+                    finalAmount: expectedTotal
+                  }
+                }
+              };
+              
+              // Add any coupon or promotion code if available
+              if (session.discounts && session.discounts.length > 0) {
+                paymentData.metadata.coupon = session.discounts[0].coupon?.id || '';
+                paymentData.metadata.promotionCode = session.discounts[0].promotion_code || '';
+              }
+              
+              // Save the payment
+              await Payment.create(paymentData);
+              
+              console.log(`Payment recorded for session ${session.id} - `, {
+                subtotal: subtotal,
+                discount: discount,
+                total: total,
+                currency: currency,
+                discountPercent: discountPercent + '%'
+              });
+            }
 
             console.log(`Subscription ACTIVATED for user ${userId}`);
           }
