@@ -214,7 +214,25 @@ const Billing = () => {
               </div>
             </div>
 
-            {/* Transaction History */}
+           
+          </div>
+
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Need Help?</h2>
+              <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                Our support team is here to help with any questions about your subscription.
+              </p>
+              <button className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium py-2 px-4 rounded-lg transition-colors">
+                Contact Support
+              </button>
+            </div>
+
+         
+          
+        </div>
+ {/* Summary Card */}
+        
+         {/* Transaction History */}
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               <div className="p-5">
                 <div className="flex items-center justify-between mb-5">
@@ -237,82 +255,160 @@ const Billing = () => {
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto w-full">
                     <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                       <thead className="bg-gray-50 dark:bg-gray-700/50">
                         <tr>
-                          <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Date
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Date & Time
                           </th>
-                          <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Plan
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Transaction ID
                           </th>
-                          <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Profiles
+                          <th scope="col" className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Plan & Billing
                           </th>
-                          <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Price/Profile
+                          <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Amount (USD)
                           </th>
-                          <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Total
+                          <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Amount (INR)
                           </th>
-                          <th scope="col" className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                            Status
+                          <th scope="col" className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                            Payment Status
                           </th>
                         </tr>
                       </thead>
                       <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                         {transactions.map((transaction) => {
-                          // Determine plan type
-                          let planType = 'N/A';
-                          if (transaction.metadata?.planType) {
-                            planType = transaction.metadata.planType.charAt(0).toUpperCase() + transaction.metadata.planType.slice(1);
-                          }
+                          // Extract metadata and calculation data
+                          const metadata = transaction.metadata || {};
+                          const calculation = metadata.calculation || {};
                           
-                          // Determine profiles
-                          let profiles = 1;
-                          if (transaction.metadata?.profiles) {
-                            profiles = transaction.metadata.profiles;
-                          }
+                          // Plan and profile info
+                          const planType = metadata.planType 
+                            ? metadata.planType.charAt(0).toUpperCase() + metadata.planType.slice(1)
+                            : 'N/A';
                           
-                          // Determine price per profile
-                          let pricePerProfile = 0;
-                          if (transaction.metadata?.pricePerProfile) {
-                            pricePerProfile = transaction.metadata.pricePerProfile;
-                          }
+                          const profiles = metadata.profiles || calculation.profiles || 1;
+                          const originalPricePerProfile = parseFloat(metadata.originalPricePerProfile || calculation.originalPricePerProfile || 0);
+                          const discountedPricePerProfile = parseFloat(metadata.discountedPricePerProfile || calculation.basePrice || 0);
+                          const discountPercent = metadata.discountPercent || calculation.discountPercent || 0;
                           
-                          // Calculate total amount
-                          let totalAmount = pricePerProfile * profiles;
-                          let currency = transaction.currency || 'USD';
+                          // Format amounts
+                          const amountInCents = transaction.amountInCents || 0;
+                          const amountInUSD = transaction.amountInUSD || (amountInCents / 100);
+                          const amountInINR = transaction.amountInINR || 0;
                           
-                          // If we have amountInUSD, use that instead
-                          if (transaction.amountInUSD) {
-                            totalAmount = transaction.amountInUSD;
-                          } else if (transaction.amountInCents) {
-                            totalAmount = transaction.amountInCents / 100;
-                          } else if (transaction.amount) {
-                            totalAmount = transaction.amount;
-                          }
+                          // Calculate totals
+                          const originalTotal = parseFloat(metadata.originalTotal || calculation.originalTotal || 0);
+                          const discountedTotal = parseFloat(metadata.discountedTotal || calculation.total || 0);
+                          const savings = originalTotal - discountedTotal;
+                          
+                          // Format dates
+                          const transactionDate = new Date(transaction.createdAt || transaction.created);
+                          const formattedDate = transactionDate.toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          });
+                          const formattedTime = transactionDate.toLocaleTimeString('en-US', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          });
                           
                           return (
-                            <tr key={transaction._id}>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
-                                {formatDate(transaction.createdAt || transaction.created)}
+                            <tr key={transaction._id} className="hover:bg-gray-50 dark:hover:bg-gray-700/30">
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                  {formattedDate}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {formattedTime}
+                                </div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                                {planType} Plan
+                              <td className="px-4 py-3 whitespace-nowrap">
+                                <div className="text-sm font-mono text-gray-900 dark:text-gray-200">
+                                  {transaction._id?.substring(0, 8)}...
+                                </div>
+                                {transaction.sessionId && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[120px]" title={transaction.sessionId}>
+                                    {transaction.sessionId.substring(0, 6)}...
+                                  </div>
+                                )}
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
-                                {profiles}
+                              <td className="px-4 py-3">
+                                <div className="flex items-center space-x-2">
+                                  <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {planType} Plan
+                                  </div>
+                                  {discountPercent > 0 && (
+                                    <span className="text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded">
+                                      {discountPercent}% OFF
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="text-sm text-gray-600 dark:text-gray-300">
+                                  {profiles} Profile{profiles !== 1 ? 's' : ''}
+                                </div>
+                                <div className="flex items-baseline space-x-2">
+                                  {originalPricePerProfile > 0 && (
+                                    <span className="text-xs text-gray-500 dark:text-gray-400 line-through">
+                                      ${originalPricePerProfile.toFixed(2)}/profile
+                                    </span>
+                                  )}
+                                  <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                    ${discountedPricePerProfile.toFixed(2)}/profile
+                                  </span>
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {metadata.discountApplied === 'Yes' && (
+                                    <span className="text-green-600 dark:text-green-400 font-medium">
+                                      Saved ${savings.toFixed(2)} ({(savings/originalTotal*100).toFixed(0)}%)
+                                    </span>
+                                  )}
+                                </div>
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white">
-                                {formatCurrency(pricePerProfile, currency)}
+                              <td className="px-4 py-3 text-right whitespace-nowrap">
+                                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                  ${amountInUSD.toFixed(2)}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {amountInCents} cents
+                                </div>
+                                {originalTotal > 0 && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    <span className="line-through">${originalTotal.toFixed(2)}</span> → 
+                                    <span className="font-medium text-green-600 dark:text-green-400"> ${discountedTotal.toFixed(2)}</span>
+                                  </div>
+                                )}
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm text-right text-gray-900 dark:text-white font-medium">
-                                {formatCurrency(totalAmount, currency)}
+                              <td className="px-4 py-3 text-right whitespace-nowrap">
+                                {amountInINR > 0 ? (
+                                  <>
+                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                                      ₹{amountInINR.toLocaleString('en-IN')}
+                                    </div>
+                                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                                      {amountInUSD > 0 ? (amountInINR/amountInUSD).toFixed(2) : '0.00'} INR/USD
+                                    </div>
+                                  </>
+                                ) : (
+                                  <span className="text-xs text-gray-400">-</span>
+                                )}
                               </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-right text-sm">
-                                {getTransactionStatusBadge(transaction.paymentStatus || transaction.status)}
+                              <td className="px-4 py-3 text-right whitespace-nowrap">
+                                <div className="mb-1">
+                                  {getTransactionStatusBadge(transaction.paymentStatus || transaction.status)}
+                                </div>
+                                <div className="text-xs text-gray-500 dark:text-gray-400">
+                                  {transaction.paymentMethodTypes?.[0] || 'Card'}
+                                </div>
+                                {savings > 0 && (
+                                  <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                    Saved ${savings.toFixed(2)}
+                                  </div>
+                                )}
                               </td>
                             </tr>
                           );
@@ -323,78 +419,6 @@ const Billing = () => {
                 )}
               </div>
             </div>
-          </div>
-
-          {/* Summary Card */}
-          <div className="space-y-4">
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Summary</h2>
-              
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-500 dark:text-gray-400">Plan</span>
-                  <div className="flex items-center space-x-2">
-                    <span className="font-medium text-gray-900 dark:text-white capitalize">
-                      {planType || 'N/A'} Plan
-                    </span>
-                    {status && (
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        status === 'active' 
-                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                          : status === 'expired'
-                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                      }`}>
-                        {status}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Profiles</span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    {profiles || 0} {profiles === 1 ? 'Profile' : 'Profiles'}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-500 dark:text-gray-400">Price per Profile</span>
-                  <span className="font-medium text-gray-900 dark:text-white">
-                    ${pricePerProfile?.toFixed(2) || '0.00'}
-                  </span>
-                </div>
-                <div className="border-t border-gray-200 dark:border-gray-700 my-3"></div>
-                <div className="flex justify-between text-lg font-semibold">
-                  <span className="text-gray-900 dark:text-white">Total</span>
-                  <span className="text-blue-600 dark:text-blue-400">
-                    ${totalPrice?.toFixed(2) || '0.00'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-5 space-y-3">
-                {!active && (
-                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                    Upgrade Plan
-                  </button>
-                )}
-                <button className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium py-2 px-4 rounded-lg transition-colors">
-                  Download Invoice
-                </button>
-              </div>
-            </div>
-
-            {/* Support Card */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
-              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Need Help?</h2>
-              <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
-                Our support team is here to help with any questions about your subscription.
-              </p>
-              <button className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 font-medium py-2 px-4 rounded-lg transition-colors">
-                Contact Support
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

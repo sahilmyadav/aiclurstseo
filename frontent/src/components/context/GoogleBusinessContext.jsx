@@ -234,18 +234,7 @@ export const GoogleBusinessProvider = ({ children }) => {
       }
       return { success: false, error };
     }
-    setSelectedBusiness(null);
-    setSelectedBusinesses([]);
-    setReviews([]);
-    setLocalReviews([]);
-    setIsConnected(false);
-    setPerformanceData(null);
-    setGoogleOAuthTokens({
-      access_token: null,
-      refresh_token: null,
-      expiry_date: null,
-    });
-    toast.success("Disconnected");
+  
   };
 
   
@@ -338,7 +327,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   };
 
   const calculateReviewStats = useCallback((reviews) => {
-    console.log('Calculating review stats for reviews:', reviews);
+    // console.log('Calculating review stats for reviews:', reviews);
     if (!reviews || !reviews.length) {
       console.log('No reviews to calculate stats');
       return null;
@@ -356,7 +345,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     const totalReviews = reviews.length;
     const totalRating = reviews.reduce((sum, review) => {
       const rating = ratingMap[review.starRating] || 0;
-      console.log(`Review ID: ${review.reviewId}, Star Rating: ${review.starRating}, Mapped Rating: ${rating}`);
+      // console.log(`Review ID: ${review.reviewId}, Star Rating: ${review.starRating}, Mapped Rating: ${rating}`);
       return sum + rating;
     }, 0);
     
@@ -434,7 +423,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     const locationId = selectedBusiness.name.split("/")[1];
     if (!locationId) return;
 
-    console.log('Frontend: Fetching scheduled posts for locationId:', locationId);
+    // console.log('Frontend: Fetching scheduled posts for locationId:', locationId);
     
     setLoadingScheduled(true);
     try {
