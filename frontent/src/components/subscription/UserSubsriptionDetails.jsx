@@ -18,7 +18,7 @@ const UserSubscriptionDetails = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  console.log("transactions>>>>>>>>>>>>>>>..",transactions)
+  console.log("transactions>>>>>>>>>>>>>>>..",subscriptionData)
   useEffect(() => {
     // Redirect if not authenticated
     if (!isAuthenticated) {
@@ -74,8 +74,20 @@ const UserSubscriptionDetails = () => {
               }
             }
           );
-          
-          setSubscriptionData(subscriptionResponse.data);
+          console.log("subscriptiondata", subscriptionResponse.data);
+          // Update to handle nested subscription data
+          const responseData = subscriptionResponse.data;
+          if (responseData.success && responseData.subscription) {
+            setSubscriptionData(responseData.subscription);
+          } else if (responseData.success && !responseData.subscription) {
+            // Handle case where subscription is null/undefined but API returned success
+            console.warn('No subscription data found in response');
+            setSubscriptionData(null);
+          } else {
+            // Handle case where API didn't return success
+            console.warn('Subscription API did not return success');
+            setSubscriptionData(null);
+          }
         } catch (subscriptionError) {
           console.warn('Could not fetch subscription data:', subscriptionError);
           // More detailed error logging
@@ -216,178 +228,620 @@ const UserSubscriptionDetails = () => {
     }
   };
 
+  const getStatusBadge = (status) => {
+    const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
+    
+    if (status === 'active' || status === 'completed' || status === 'paid') {
+      return (
+        <span className={`${baseClasses} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400`}>
+          Active
+        </span>
+      );
+    }
+    if (status === 'expired' || status === 'cancelled' || status === 'failed') {
+      return (
+        <span className={`${baseClasses} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400`}>
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </span>
+      );
+    }
+    return (
+      <span className={`${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400`}>
+        {status || 'Unknown'}
+      </span>
+    );
+  };
+
+  const getPlanDetails = (subscription) => {
+    // If no subscription data, return free plan details
+    if (!subscription) {
+      return {
+        name: 'Free Plan',
+        features: [
+          '1 Business Profile',
+          'Basic Analytics',
+          'Email Support'
+        ],
+        price: '0.00',
+        color: 'gray',
+        profileLimit: 1,
+        pricePerProfile: '0.00',
+        billingCycle: 'month',
+        isFree: true,
+        status: 'inactive'
+      };
+    }
+    
+    console.log('Processing subscription data:', subscription);
+
+    const pricePerProfile = subscription.pricePerProfile !== undefined 
+      ? (subscription.pricePerProfile / 100).toFixed(2) 
+      : '0.00';
+      
+    const totalPrice = subscription.totalPrice !== undefined
+      ? (subscription.totalPrice / 100).toFixed(2)
+      : '0.00';
+      
+    const profileCount = subscription.profiles || 0;
+    const isYearly = subscription.planType === 'yearly';
+    const isActive = subscription.status === 'active';
+    
+    console.log('Plan details:', { pricePerProfile, totalPrice, profileCount, isYearly, isActive });
+    
+    return {
+      name: isYearly ? 'Pro Yearly Plan' : 'Pro Monthly Plan',
+      features: [
+        `${profileCount} Business Profile${profileCount !== 1 ? 's' : ''}`,
+        isYearly ? 'Yearly Billing (Save 20%)' : 'Monthly Billing',
+        `$${pricePerProfile} per profile`,
+        'Priority Support',
+        'Advanced Analytics',
+        'API Access'
+      ],
+      price: totalPrice,
+      color: isActive ? 'indigo' : 'gray',
+      profileLimit: profileCount,
+      pricePerProfile: pricePerProfile,
+      billingCycle: isYearly ? 'year' : 'month',
+      isFree: false,
+      status: subscription.status || 'inactive',
+      startDate: subscription.startDate,
+      endDate: subscription.endDate
+    };
+  };
+
+  const planDetails = getPlanDetails(subscriptionData);
+  
+  // Calculate days left in subscription
+  const getDaysLeft = () => {
+    try {
+      if (!subscriptionData?.endDate) return 0;
+      const endDate = new Date(subscriptionData.endDate);
+      const today = new Date();
+      const diffTime = endDate - today;
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    } catch (error) {
+      console.error('Error calculating days left:', error);
+      return 0;
+    }
+  };
+  
+  const daysLeft = subscriptionData ? getDaysLeft() : 0;
+  
+  // Format subscription dates
+  const formatSubscriptionDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error, 'Input:', dateString);
+      return 'N/A';
+    }
+  };
+
   return (
-    <div className="max-w-6xl mx-auto p-4">
+    <div className="max-w-7xl mx-auto p-4 sm:p-6">
       {/* Header */}
       <div className="mb-8">
-        <div className="flex justify-between items-center">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-white mb-2">
-              {isAdminView ? `Billing Details for ${userData.name}` : 'My Billing'}
+            <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+              {isAdminView ? `Billing Dashboard - ${userData.name}` : 'My Billing Dashboard'}
             </h1>
+            <p className="text-gray-400">
+              {isAdminView ? 'View and manage user subscription details' : 'Manage your subscription and payment information'}
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3 w-full sm:w-auto">
             {isAdminView && (
               <button 
                 onClick={() => navigate('/ad-dashboard/users')}
-                className="mt-2 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 text-sm"
+                className="w-full sm:w-auto px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors duration-200 text-sm flex items-center justify-center gap-2"
               >
-                ← Back to All Users
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clipRule="evenodd" />
+                </svg>
+                Back to Users
+              </button>
+            )}
+            {!subscriptionData && (
+              <button className="w-full sm:w-auto px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 text-sm">
+                Upgrade Plan
               </button>
             )}
           </div>
-          {!isAdminView && (
-            <p className="text-gray-300">
-              Manage your subscription and payment information
-            </p>
-          )}
         </div>
       </div>
 
-      {/* User Info Card */}
-      <div className="billing-card p-6 mb-8">
-        <h2 className="text-xl font-semibold text-white mb-4 billing-card-header">User Information</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="border-l-4 border-purple-500 pl-4">
-            <p className="text-sm text-gray-400">User ID</p>
-            <p className="font-medium text-white">{userData.id || 'N/A'}</p>
+      {/* User Info and Subscription Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* User Info Card */}
+        <div className="lg:col-span-1 bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-700">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-white">Account Information</h2>
+            <button className="text-blue-400 hover:text-blue-300 text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.793.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+              </svg>
+            </button>
           </div>
-          <div className="border-l-4 border-purple-500 pl-4">
-            <p className="text-sm text-gray-400">Name</p>
-            <p className="font-medium text-white">{userData.name || 'N/A'}</p>
-          </div>
-          <div className="border-l-4 border-purple-500 pl-4">
-            <p className="text-sm text-gray-400">Email</p>
-            <p className="font-medium text-white">{userData.email || 'N/A'}</p>
-          </div>
-          <div className="border-l-4 border-purple-500 pl-4">
-            <p className="text-sm text-gray-400">Role</p>
-            <p className="font-medium text-white capitalize">{userData.role || 'N/A'}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Subscription Info */}
-      {subscriptionData ? (
-        <div className="billing-card p-6 mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4 billing-card-header">Subscription Details</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="border-l-4 border-blue-500 pl-4">
-              <p className="text-sm text-gray-400">Plan Type</p>
-              <p className="font-medium text-lg capitalize text-white">
-                {subscriptionData.planType || 'Free'} 
-                {subscriptionData.isTrial ? ' (Trial)' : ''}
-              </p>
-            </div>
-            
-            <div className="border-l-4 border-green-500 pl-4">
-              <p className="text-sm text-gray-400">Status</p>
-              <p className="font-medium text-lg text-white">
-                {getSubscriptionStatus(subscriptionData)}
-              </p>
-            </div>
-            
-            <div className="border-l-4 border-purple-500 pl-4">
-              <p className="text-sm text-gray-400">Profiles Allowed</p>
-              <p className="font-medium text-lg text-white">
-                {(subscriptionData.profiles || 1)} Profile{(subscriptionData.profiles || 1) !== 1 ? 's' : ''}
-              </p>
-            </div>
-            
-            {subscriptionData.startDate && (
-              <div className="border-l-4 border-yellow-500 pl-4">
-                <p className="text-sm text-gray-400">Start Date</p>
-                <p className="font-medium text-white">{formatDate(subscriptionData.startDate)}</p>
+          
+          <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-indigo-500 flex items-center justify-center text-white">
+                {userData?.name?.charAt(0) || 'U'}
               </div>
-            )}
+              <div>
+                <p className="font-medium text-white">{userData?.name || 'User'}</p>
+                <p className="text-sm text-gray-400">{userData?.email || 'No email'}</p>
+              </div>
+            </div>
             
-            {subscriptionData.endDate && (
-              <div className="border-l-4 border-orange-500 pl-4">
-                <p className="text-sm text-gray-400">
-                  {new Date(subscriptionData.endDate) < new Date() ? 'Expired On' : 'Expires On'}
+            <div className="space-y-2 pt-4 border-t border-gray-700">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">User ID:</span>
+                <span className="text-gray-200 font-mono">{userData?.id?.substring(0, 8)}...</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Account Type:</span>
+                <span className="text-gray-200 capitalize">{userData?.role || 'user'}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-400">Member Since:</span>
+                <span className="text-gray-200">
+                  {userData?.createdAt ? formatDate(userData.createdAt) : 'N/A'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Subscription Status Card */}
+        <div className="lg:col-span-2 bg-gradient-to-r from-indigo-900 to-indigo-800 rounded-xl p-6 shadow-sm border border-indigo-700">
+          <div className="flex flex-col h-full">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h2 className="text-lg font-semibold text-white">Subscription Status</h2>
+                <p className="text-indigo-200 text-sm">
+                  {subscriptionData ? 'Manage your subscription' : 'No active subscription'}
                 </p>
-                <p className="font-medium text-white">{formatDate(subscriptionData.endDate)}</p>
               </div>
-            )}
+              {subscriptionData && getStatusBadge(getSubscriptionStatus(subscriptionData))}
+            </div>
             
-            {subscriptionData.cancelledAt && (
-              <div className="border-l-4 border-red-500 pl-4">
-                <p className="text-sm text-gray-400">Cancelled On</p>
-                <p className="font-medium text-white">{formatDate(subscriptionData.cancelledAt)}</p>
+            {subscriptionData ? (
+              <div className="mt-4 space-y-4">
+                <div className="text-center">
+                  <p className="text-sm text-indigo-300 mb-1">Current Plan</p>
+                  <p className="text-xl font-bold text-white">
+                    {subscriptionData.planType === 'monthly' ? 'Monthly' : 'Yearly'} Plan
+                  </p>
+                  <p className="text-indigo-200 text-sm mt-2">
+                    {planDetails.profileLimit} profile{planDetails.profileLimit !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                
+                <div className="pt-4 border-t border-indigo-700">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-indigo-300">Subscription Progress</span>
+                    <span className="text-indigo-200">{daysLeft} days remaining</span>
+                  </div>
+                  <div className="w-full bg-indigo-900/50 rounded-full h-2.5">
+                    <div 
+                      className="bg-green-400 h-2.5 rounded-full" 
+                      style={{ width: `${Math.min(100, Math.max(0, daysLeft))}%` }}
+                    ></div>
+                  </div>
+                  <div className="flex justify-between text-xs text-indigo-400 mt-1">
+                    <span>
+                      Started: {subscriptionData?.startDate 
+                        ? formatSubscriptionDate(subscriptionData.startDate) 
+                        : 'N/A'}
+                    </span>
+                    <span>
+                      {subscriptionData?.endDate 
+                        ? `Renews: ${formatSubscriptionDate(subscriptionData.endDate)}`
+                        : 'No active subscription'}
+                    </span>
+                  </div>
+                </div>
+                
+              </div>
+            ) : (
+              <div className="mt-6 text-center py-8 bg-indigo-900/30 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                <h3 className="mt-3 text-lg font-medium text-white">No Active Subscription</h3>
+                <p className="mt-1 text-indigo-200 text-sm">Upgrade your account to unlock all features</p>
+                <div className="mt-6">
+                  <button className="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors">
+                    View Plans & Pricing
+                  </button>
+                </div>
               </div>
             )}
           </div>
         </div>
-      ) : (
-        <div className="billing-card p-6 mb-8">
-          <h2 className="text-xl font-semibold text-white mb-4 billing-card-header">Subscription Details</h2>
-          <p className="text-gray-400">No active subscription found</p>
+      </div>
+
+      {/* Plan Features and Usage */}
+      {/* {subscriptionData && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+          <div className="lg:col-span-2 bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-700">
+            <h2 className="text-lg font-semibold text-white mb-4">Plan Features</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {planDetails.features.map((feature, index) => (
+                <div key={index} className="flex items-start space-x-3">
+                  <svg className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <div>
+                    <p className="text-white">{feature}</p>
+                    <p className="text-sm text-gray-400">Included in your plan</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <div className="mt-6 pt-6 border-t border-gray-700">
+              <h3 className="text-md font-medium text-white mb-3">Usage Summary</h3>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-400">Profiles Used</span>
+                    <span className="text-white">
+                      {subscriptionData.profilesUsed || 0} of {subscriptionData.profiles || 1}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-blue-500 h-2 rounded-full" 
+                      style={{ 
+                        width: `${Math.min(100, ((subscriptionData.profilesUsed || 0) / (subscriptionData.profiles || 1)) * 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-400">API Requests (this month)</span>
+                    <span className="text-white">
+                      {subscriptionData.apiCalls || 0} of {subscriptionData.apiLimit || 'Unlimited'}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-700 rounded-full h-2">
+                    <div 
+                      className="bg-purple-500 h-2 rounded-full" 
+                      style={{ 
+                        width: subscriptionData.apiLimit === 'Unlimited' ? '100%' : 
+                          `${Math.min(100, ((subscriptionData.apiCalls || 0) / (subscriptionData.apiLimit || 1)) * 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-700">
+            <h2 className="text-lg font-semibold text-white mb-4">Billing Information</h2>
+            
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-gray-400">Current Plan</p>
+                <p className="text-lg font-medium text-white">
+                  {planDetails.name} Plan
+                  {subscriptionData.isTrial && (
+                    <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
+                      Trial
+                    </span>
+                  )}
+                </p>
+                <p className="text-2xl font-bold text-white mt-1">
+                  {formatCurrency(subscriptionData.amount || planDetails.price)}
+                  <span className="text-base font-normal text-gray-400"> / {subscriptionData.billingCycle || 'month'}</span>
+                </p>
+              </div>
+              
+              <div className="pt-4 border-t border-gray-700">
+                <p className="text-sm text-gray-400 mb-2">Next Billing Date</p>
+                <div className="flex items-center justify-between">
+                  <p className="text-lg font-medium text-white">
+                    {subscriptionData.nextBillingDate 
+                      ? formatDate(subscriptionData.nextBillingDate)
+                      : 'N/A'}
+                  </p>
+                  <button className="text-sm text-blue-400 hover:text-blue-300">
+                    Update Payment
+                  </button>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t border-gray-700">
+                <p className="text-sm text-gray-400 mb-2">Payment Method</p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className="h-8 w-12 bg-gray-700 rounded-md flex items-center justify-center mr-3">
+                      <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-2c1.11 0 2 .89 2 2 0 1.11-.89 2-2 2-1.11 0-2-.89-2-2 0-1.11.89-2 2-2zm0-4c1.11 0 2 .89 2 2s-.89 2-2 2-2-.89-2-2 .9-2 2-2z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-white font-medium">Visa ending in 4242</p>
+                      <p className="text-xs text-gray-400">Expires 12/25</p>
+                    </div>
+                  </div>
+                  <button className="text-sm text-blue-400 hover:text-blue-300">
+                    Change
+                  </button>
+                </div>
+              </div>
+              
+              <div className="pt-4 border-t border-gray-700">
+                <h3 className="text-sm font-medium text-white mb-2">Billing Address</h3>
+                <p className="text-sm text-gray-300">
+                  {userData.billingAddress?.line1 || '123 Main St'}<br />
+                  {userData.billingAddress?.line2 && <>{userData.billingAddress.line2}<br /></>}
+                  {userData.billingAddress?.city || 'San Francisco'}, {userData.billingAddress?.state || 'CA'} {userData.billingAddress?.postalCode || '94105'}<br />
+                  {userData.billingAddress?.country || 'United States'}
+                </p>
+                <button className="mt-2 text-sm text-blue-400 hover:text-blue-300">
+                  Update Address
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
+      )} */}
 
       {/* Transaction History */}
-      <div className="billing-card p-6">
-        <h2 className="text-xl font-semibold text-white mb-4 billing-card-header">Transaction History</h2>
+      <div className="bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-700">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+          <div>
+            <h2 className="text-lg font-semibold text-white">Transaction History</h2>
+            <p className="text-sm text-gray-400">View all your payment transactions</p>
+          </div>
+          <div className="mt-3 sm:mt-0 flex items-center space-x-2">
+            <div className="relative">
+              <select className="bg-gray-700 text-white text-sm rounded-lg px-3 py-2 pr-8 appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option>All Transactions</option>
+                <option>Payments</option>
+                <option>Refunds</option>
+                <option>Failed</option>
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                </svg>
+              </div>
+            </div>
+            <button className="px-3 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg text-sm text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </button>
+            <button className="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-sm text-white flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              </svg>
+              Export
+            </button>
+          </div>
+        </div>
         
         {transactions && transactions.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-indigo-900 rounded-lg overflow-hidden text-sm">
-              <thead className="bg-indigo-800">
+            <table className="min-w-full divide-y divide-gray-700">
+              <thead className="bg-gray-700">
                 <tr>
-                  <th className="py-2 px-3 text-left text-xs font-semibold text-indigo-100">Date</th>
-                  <th className="py-2 px-3 text-left text-xs font-semibold text-indigo-100">Description</th>
-                  <th className="py-2 px-3 text-left text-xs font-semibold text-indigo-100">Plan Type</th>
-                  <th className="py-2 px-3 text-left text-xs font-semibold text-indigo-100">Amount</th>
-                  <th className="py-2 px-3 text-left text-xs font-semibold text-indigo-100">Method</th>
-                  <th className="py-2 px-3 text-left text-xs font-semibold text-indigo-100">Status</th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Date & Time
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Description
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Invoice
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-indigo-700">
+              <tbody className="bg-gray-800 divide-y divide-gray-700">
                 {transactions.map((transaction, index) => {
-                  // Add a check for transaction data
                   if (!transaction) return null;
                   
+                  const status = (transaction.status || transaction.paymentStatus || '').toLowerCase();
+                  const isPaid = status === 'completed' || status === 'paid' || status === 'succeeded';
+                  const isPending = status === 'pending' || status === 'processing';
+                  const isFailed = status === 'failed' || status === 'declined' || status === 'cancelled';
+                  
+                  const amount = transaction.amount || transaction.amountInUSD || 
+                               (transaction.amountInCents ? transaction.amountInCents / 100 : 0) || 
+                               transaction.total || transaction.price || 0;
+                  
+                  const paymentMethod = transaction.paymentMethodTypes?.[0] || 
+                                      transaction.payment_method_type || 'card';
+                  
                   return (
-                    <tr key={transaction._id || transaction.id || index} className="hover:bg-indigo-800 transition-colors duration-150">
-                      <td className="py-2 px-3 text-indigo-200">
-                        {transaction.createdAt ? formatDate(transaction.createdAt) : 'N/A'}
+                    <tr key={transaction._id || transaction.id || index} className="hover:bg-gray-750">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-white">
+                          {transaction.createdAt ? formatDate(transaction.createdAt) : 'N/A'}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {transaction.createdAt ? new Date(transaction.createdAt).toLocaleTimeString() : ''}
+                        </div>
                       </td>
-                      <td className="py-2 px-3 font-medium text-white">
-                        {transaction.description || transaction.name || transaction.type || 'Subscription Payment'}
+                      <td className="px-6 py-4">
+                        <div className="text-sm font-medium text-white">
+                          {transaction.description || transaction.name || 'Subscription Payment'}
+                        </div>
+                        <div className="text-xs text-gray-400 flex items-center mt-1">
+                          {paymentMethod === 'card' ? (
+                            <>
+                              <svg className="h-4 w-4 mr-1 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
+                              </svg>
+                              Card ending in {transaction.last4 || '••••'}
+                            </>
+                          ) : (
+                            <span className="capitalize">{paymentMethod}</span>
+                          )}
+                        </div>
                       </td>
-                      <td className="py-2 px-3 text-indigo-200 capitalize">
-                        {transaction.metadata?.planType || 'N/A'}
-                      </td>
-                      <td className="py-2 px-3 text-indigo-200">
-                        {formatCurrency(transaction.amount || transaction.amountInUSD || (transaction.amountInCents / 100) || transaction.total || transaction.price)}
-                      </td>
-                      <td className="py-2 px-3 text-indigo-200">
-                        {transaction.paymentMethodTypes && transaction.paymentMethodTypes.length > 0
-                          ? transaction.paymentMethodTypes[0]
-                          : 'Card'}
-                      </td>
-                      <td className="py-2 px-3">
-                        <span className={`px-2 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
-                          (transaction.status || transaction.paymentStatus) === 'completed' || (transaction.status || transaction.paymentStatus) === 'paid'
-                            ? 'bg-emerald-500 text-white'
-                            : (transaction.status || transaction.paymentStatus) === 'pending'
-                            ? 'bg-amber-500 text-white'
-                            : (transaction.status || transaction.paymentStatus) === 'failed' || (transaction.status || transaction.paymentStatus) === 'cancelled'
-                            ? 'bg-rose-500 text-white'
-                            : 'bg-indigo-500 text-white'
-                        }`}>
-                          {(transaction.status || transaction.paymentStatus) ? 
-                            (transaction.status || transaction.paymentStatus).substring(0, 10) : 
-                            'Unknown'}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className="text-sm text-gray-300 font-mono">
+                          {transaction.invoiceId || `INV-${(transaction._id || '').substring(0, 8).toUpperCase()}`}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right">
+                        <div className="text-sm font-medium text-white">
+                          {formatCurrency(amount)}
+                        </div>
+                        {transaction.refundedAmount > 0 && (
+                          <div className="text-xs text-rose-400">
+                            Refunded: {formatCurrency(transaction.refundedAmount)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <span className={`px-2.5 py-1 inline-flex text-xs leading-4 font-semibold rounded-full ${
+                          isPaid 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                            : isPending 
+                              ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' 
+                              : isFailed 
+                                ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400' 
+                                : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
+                        }`}>
+                          {status || 'Unknown'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button 
+                          onClick={() => {
+                            // Handle view receipt
+                            console.log('View receipt for:', transaction._id);
+                          }}
+                          className="text-blue-500 hover:text-blue-400 mr-3"
+                        >
+                          Receipt
+                        </button>
+                        <button 
+                          onClick={() => {
+                            // Handle download invoice
+                            console.log('Download invoice for:', transaction._id);
+                          }}
+                          className="text-gray-400 hover:text-white"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
                       </td>
                     </tr>
                   );
                 })}
               </tbody>
             </table>
+            
+            {/* Pagination */}
+            <div className="bg-gray-800 px-6 py-3 flex items-center justify-between border-t border-gray-700">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <button className="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                  Previous
+                </button>
+                <button className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                  Next
+                </button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-400">
+                    Showing <span className="font-medium">1</span> to <span className="font-medium">10</span> of{' '}
+                    <span className="font-medium">{transactions.length}</span> results
+                  </p>
+                </div>
+                <div>
+                  <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                    <button className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-700 bg-gray-800 text-sm font-medium text-gray-400 hover:bg-gray-700">
+                      <span className="sr-only">Previous</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                    <button className="bg-blue-600 text-white px-4 py-2 border border-blue-600 text-sm font-medium">
+                      1
+                    </button>
+                    <button className="bg-gray-800 text-gray-400 hover:bg-gray-700 px-4 py-2 border border-gray-700 text-sm font-medium">
+                      2
+                    </button>
+                    <button className="bg-gray-800 text-gray-400 hover:bg-gray-700 px-4 py-2 border border-gray-700 text-sm font-medium">
+                      3
+                    </button>
+                    <button className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-700 bg-gray-800 text-sm font-medium text-gray-400 hover:bg-gray-700">
+                      <span className="sr-only">Next</span>
+                      <svg className="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
           </div>
         ) : (
-          <div className="text-center py-4">
-            <p className="text-indigo-300">No transaction history found</p>
+          <div className="text-center py-12">
+            <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+            </svg>
+            <h3 className="mt-2 text-sm font-medium text-white">No transactions</h3>
+            <p className="mt-1 text-sm text-gray-400">
+              You don't have any transactions yet.
+            </p>
+            <div className="mt-6">
+              <button className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                <svg className="-ml-1 mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+                </svg>
+                New Transaction
+              </button>
+            </div>
           </div>
         )}
       </div>
