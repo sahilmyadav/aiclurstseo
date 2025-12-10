@@ -18,7 +18,7 @@ const UserSubscriptionDetails = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
+  console.log("transactions>>>>>>>>>>>>>>>..",transactions)
   useEffect(() => {
     // Redirect if not authenticated
     if (!isAuthenticated) {
@@ -100,7 +100,7 @@ const UserSubscriptionDetails = () => {
             }
           );
           
-          console.log('Raw transactions data:', transactionsResponse.data);
+          console.log('Raw transactions data>>>>>>>>>>>>>>>>>>>:', transactionsResponse.data);
           
           // Validate and process transactions data
           let processedTransactions = [];
