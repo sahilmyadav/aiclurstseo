@@ -100,23 +100,36 @@ const EditPlans = () => {
 
   const togglePlanStatus = async () => {
     try {
-      await axios.patch(
+      const newStatus = !currentPlan.isActive;
+      const response = await axios.patch(
         `${API_URL}/api/admin/plans/${currentPlan._id}/status`,
-        { isActive: !currentPlan.isActive },
-        { headers: { Authorization: `Bearer ${token}` } },
+        { isActive: newStatus },
+        { 
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          } 
+        }
       );
 
-      setPlans((p) =>
-        p.map((pl) =>
-          pl._id === currentPlan._id
-            ? { ...pl, isActive: !pl.isActive }
-            : pl,
-        ),
-      );
-
-      setCurrentPlan((p) => ({ ...p, isActive: !p.isActive }));
+      if (response.data) {
+        // Update the plans list
+        setPlans(plans.map(plan => 
+          plan._id === currentPlan._id 
+            ? { ...plan, isActive: newStatus } 
+            : plan
+        ));
+        
+        // Update the current plan in the modal
+        setCurrentPlan({ ...currentPlan, isActive: newStatus });
+        
+        // Update the form data to reflect the new status
+        setFormData(prev => ({ ...prev, isActive: newStatus }));
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Error toggling plan status:', err);
+      // You might want to show an error toast/notification here
+      alert('Failed to update plan status. Please try again.');
     }
   };
 
