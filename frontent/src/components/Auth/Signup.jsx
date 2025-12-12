@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
-import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import { toast } from 'sonner';
+import { useAuth } from "../context/AuthContext";
 
 const Signup = () => {
   const navigate = useNavigate();
   const { signup, signupWithGoogle, isLoading } = useAuth();
+  const { theme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState({ type: null, message: "" });
   const [formData, setFormData] = useState({
@@ -66,51 +68,53 @@ const Signup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f0f1a] text-white px-4 pt-24 pb-12">
+    <div className={`min-h-screen px-4 pt-24 pb-12 ${
+      theme === 'dark' 
+        ? 'bg-gray-900 text-white' 
+        : 'bg-gray-50 text-gray-900'
+    }`}>
       <div className="container mx-auto">
         <div className="flex flex-col lg:flex-row items-center justify-center gap-12">
           {/* Left Side - Content */}
           <div className="w-full lg:w-1/2 max-w-2xl text-center lg:text-left lg:pr-12">
             <div className="lg:sticky lg:top-24">
-              <h2 className="text-4xl md:text-5xl font-bold text-white uppercase mb-4">Create Account</h2>
+              <h2 className={`text-4xl md:text-5xl font-bold uppercase mb-4 ${
+                theme === 'dark' ? 'text-white' : 'text-gray-800'
+              }`}>
+                Create Account
+              </h2>
               <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600 mb-6">
                 Join Clurst AI
               </h1>
-              <p className="text-lg text-gray-300 mb-8">
+              <p className={`text-lg mb-8 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>
                 Unlock the full potential of your online presence with our powerful tools and analytics. 
                 Create your account today and take control of your digital success.
               </p>
               <div className="hidden lg:block space-y-4 mt-12">
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+                {[
+                  "Powerful Analytics Dashboard",
+                  "AI-Powered Insights",
+                  "24/7 Customer Support"
+                ].map((feature, index) => (
+                  <div key={index} className="flex items-center space-x-3">
+                    <div className="w-8 h-8 rounded-full bg-purple-500 flex-shrink-0 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                    <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}>{feature}</span>
                   </div>
-                  <span className="text-gray-300">Powerful Analytics Dashboard</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className="text-gray-300">AI-Powered Insights</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-8 h-8 rounded-full bg-purple-500 flex items-center justify-center">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                  </div>
-                  <span className="text-gray-300">24/7 Customer Support</span>
-                </div>
+                ))}
               </div>
             </div>
           </div>
 
           {/* Right Side - Form */}
-          <div className="w-full max-w-md bg-[#181818] rounded-xl shadow-2xl p-8 space-y-4 mt-10 lg:mt-0">
+          <div className={`w-full max-w-md rounded-xl shadow-2xl p-8 space-y-4 mt-10 lg:mt-0 ${
+            theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-lg'
+          }`}>
             {alert.type && (
               <div className={`w-full px-4 py-3 rounded-lg text-sm ${alert.type === 'success' ? 'bg-green-500/15 text-green-300 border border-green-600/40' : 'bg-red-500/15 text-red-300 border border-red-600/40'}`}>
                 {alert.message}
@@ -124,7 +128,11 @@ const Signup = () => {
                   value={formData.username}
                   onChange={handleChange}
                   placeholder="Username"
-                  className="w-full px-4 py-3 rounded-lg bg-[#222] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 text-white placeholder-gray-400' 
+                      : 'bg-gray-100 text-gray-900 placeholder-gray-500'
+                  }`}
                   required
                 />
               </div>
@@ -136,7 +144,11 @@ const Signup = () => {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Email"
-                  className="w-full px-4 py-3 rounded-lg bg-[#222] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 text-white placeholder-gray-400' 
+                      : 'bg-gray-100 text-gray-900 placeholder-gray-500'
+                  }`}
                   required
                 />
               </div>
@@ -148,7 +160,11 @@ const Signup = () => {
                   value={formData.phone}
                   onChange={handleChange}
                   placeholder="Phone"
-                  className="w-full px-4 py-3 rounded-lg bg-[#222] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 text-white placeholder-gray-400' 
+                      : 'bg-gray-100 text-gray-900 placeholder-gray-500'
+                  }`}
                 />
               </div>
 
@@ -159,13 +175,19 @@ const Signup = () => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Password"
-                  className="w-full px-4 py-3 rounded-lg bg-[#222] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 pr-12"
+                  className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 pr-12 ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 text-white placeholder-gray-400' 
+                      : 'bg-gray-100 text-gray-900 placeholder-gray-500'
+                  }`}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+                  className={`absolute right-3 top-1/2 transform -translate-y-1/2 ${
+                    theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'
+                  }`}
                 >
                   {showPassword ? "Hide" : "Show"}
                 </button>
@@ -178,7 +200,11 @@ const Signup = () => {
                   value={formData.confirmPassword}
                   onChange={handleChange}
                   placeholder="Confirm Password"
-                  className="w-full px-4 py-3 rounded-lg bg-[#222] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  className={`w-full px-4 py-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 text-white placeholder-gray-400' 
+                      : 'bg-gray-100 text-gray-900 placeholder-gray-500'
+                  }`}
                   required
                 />
               </div>
@@ -194,28 +220,42 @@ const Signup = () => {
               </button>
 
               <div className="relative flex items-center justify-center">
-                <div className="border-t border-gray-700 w-full"></div>
-                <span className="px-3 bg-[#181818] text-gray-400 text-sm">OR</span>
-                <div className="border-t border-gray-700 w-full"></div>
+                <div className={`border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'} w-full`}></div>
+                <span className={`px-3 text-sm ${
+                  theme === 'dark' 
+                    ? 'bg-gray-800 text-gray-400' 
+                    : 'bg-white text-gray-500'
+                }`}>
+                  OR
+                </span>
+                <div className={`border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-300'} w-full`}></div>
               </div>
 
               <button
                 type="button"
                 onClick={handleGoogleSignup}
                 disabled={isLoading}
-                className={`w-full flex items-center justify-center gap-2 py-3 px-4 bg-white text-gray-800 rounded-lg font-medium hover:bg-gray-100 transition-colors ${
-                  isLoading ? 'opacity-70 cursor-not-allowed' : ''
+                className={`w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+                  theme === 'dark' 
+                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                    : 'bg-white text-gray-800 hover:bg-gray-100'
                 }`}
               >
                 <FcGoogle className="text-xl" />
-                {isLoading ? 'Signing up with Google...' : 'Sign up with Google'}
+                Sign up with Google
               </button>
 
-              <p className="text-center text-gray-400 text-sm mt-4">
+              <p className={`text-center text-sm ${
+                theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+              }`}>
                 Already have an account?{" "}
-                <Link
-                  to="/login"
-                  className="text-purple-400 hover:text-purple-300 font-medium"
+                <Link 
+                  to="/login" 
+                  className={`${
+                    theme === 'dark' 
+                      ? 'text-purple-400 hover:text-purple-300' 
+                      : 'text-purple-600 hover:text-purple-500'
+                  } font-medium`}
                 >
                   Login
                 </Link>
