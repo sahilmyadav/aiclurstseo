@@ -13,20 +13,35 @@ const SubscriptionSuccess = () => {
 
   useEffect(() => {
     const verifyPayment = async () => {
-      const sessionId = searchParams.get('session_id');
+      // Get the session ID from the URL
+      const sessionId = searchParams.get('sessionId');
       const verify = searchParams.get('verify');
+      
+      console.log('URL Params:', { sessionId, verify }); // Debug log
       
       if (sessionId && verify === 'true') {
         try {
-          const response = await axios.get(
-            `${import.meta.env.VITE_API_BASE}/api/subscription/verify?sessionId=${sessionId}`
-          );
+          // Get user ID from localStorage if available
+          const user = JSON.parse(localStorage.getItem('user'));
+          const userId = user?._id;
           
+          // Build the query string with available parameters
+          const params = new URLSearchParams({
+            sessionId,
+            ...(userId && { userId }) // Only add userId if it exists
+          });
+          
+          const response = await axios.get(
+            `${import.meta.env.VITE_API_BASE}/api/subscription/verify?${params.toString()}`,
+            { withCredentials: true }
+          );
+          console.log("Sucess message",response)
           if (response.data.active) {
-            setSubscription(response.data);
+            // Set the subscription data from the nested subscription object
+            setSubscription(response.data.subscription);
             // Save order ID in a separate state
-            if (response.data.id || response.data._id) {
-              setOrderId(response.data.id || response.data._id);
+            if (response.data.subscription?.id) {
+              setOrderId(response.data.subscription.id);
             }
           } else {
             setError('Payment verification failed. Please try again.');
@@ -182,35 +197,40 @@ const SubscriptionSuccess = () => {
             <div className="p-6 bg-gray-900/30">
               <h3 className="font-medium mb-3">Subscription Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                {subscription.planType && (
-                  <div>
-                    <p className="text-gray-400">Plan Type</p>
-                    <p className="font-medium capitalize">{subscription.planType}</p>
-                  </div>
-                )}
-                {subscription.planType && (
-                  <div>
-                    <p className="text-gray-400">Billing Cycle</p>
-                    <p className="font-medium">
-                      {subscription.planType === 'monthly' ? 'Monthly' : 
-                       subscription.planType === 'yearly' ? 'Yearly' : 'One-time'}
-                    </p>
-                  </div>
-                )}
-                {startDate && (
-                  <div>
-                    <p className="text-gray-400">Start Date</p>
-                    <p className="font-medium">{startDate}</p>
-                  </div>
-                )}
-                {endDate && (
-                  <div>
-                    <p className="text-gray-400">
-                      {subscription.status === 'active' ? 'Next Billing Date' : 'End Date'}
-                    </p>
-                    <p className="font-medium">{endDate}</p>
-                  </div>
-                )}
+                <div>
+                  <p className="text-gray-400">Plan Type</p>
+                  <p className="font-medium capitalize">{subscription.planType || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Status</p>
+                  <p className="font-medium capitalize text-green-400">
+                    {subscription.status || 'Active'}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Profiles</p>
+                  <p className="font-medium">{subscription.profiles || 1}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Price per Profile</p>
+                  <p className="font-medium">${subscription.pricePerProfile || 0}/mo</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Start Date</p>
+                  <p className="font-medium">{startDate || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">
+                    {subscription.status === 'active' ? 'Next Billing Date' : 'End Date'}
+                  </p>
+                  <p className="font-medium">{endDate || 'N/A'}</p>
+                </div>
+                <div className="md:col-span-2 pt-2 border-t border-gray-700">
+                  <p className="text-gray-400">Total Amount</p>
+                  <p className="text-xl font-bold text-indigo-400">
+                    ${subscription.totalPrice || 0}/mo
+                  </p>
+                </div>
               </div>
             </div>
           </div>

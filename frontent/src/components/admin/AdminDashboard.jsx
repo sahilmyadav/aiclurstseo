@@ -1,5 +1,6 @@
 import { BarChart3, Users, Clock, FileText, Settings, AlertCircle, MessageSquare, Activity, ArrowUpRight, Loader2 } from 'lucide-react';
 import { useState, useContext, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { AdminContext } from '../../context/AdminContext';
 
 const AdminDashboard = () => {
@@ -83,10 +84,10 @@ const AdminDashboard = () => {
     }));
 
   const quickActions = [
-    { title: 'Manage Users', icon: <Users className="w-5 h-5" />, action: '/admin/users' },
-    { title: 'View Analytics', icon: <BarChart3 className="w-5 h-5" />, action: '/admin/analytics' },
-    { title: 'Review Moderation', icon: <MessageSquare className="w-5 h-5" />, action: '/admin/moderation' },
-    { title: 'System Settings', icon: <Settings className="w-5 h-5" />, action: '/admin/settings' },
+    { title: 'Manage Users', icon: <Users className="w-5 h-5" />, action: '/ad-dashboard/users' },
+    { title: 'View Analytics', icon: <BarChart3 className="w-5 h-5" />, action: '/ad-dashboard/analytics' },
+    { title: 'Edit Plans', icon: <MessageSquare className="w-5 h-5" />, action: '/ad-dashboard/plans' },
+    { title: 'System Settings', icon: <Settings className="w-5 h-5" />, action: '/ad-dashboard/settings' },
   ];
 
   // Render loading state
@@ -112,16 +113,16 @@ const AdminDashboard = () => {
 
   // Render main content
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-900">
       <div className="pt-20 px-4 sm:px-6 lg:px-8 pb-12">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-              <p className="mt-1 text-sm text-gray-500">Welcome back! Here's what's happening with your platform.</p>
+              <h1 className="text-2xl md:text-3xl font-bold text-white">Dashboard Overview</h1>
+              <p className="mt-1 text-sm text-gray-400">Welcome back! Here's what's happening with your platform.</p>
             </div>
             <div className="flex items-center space-x-2">
-              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400">
                 <span className="w-2 h-2 mr-1.5 rounded-full bg-green-500"></span>
                 Live
               </span>
@@ -134,28 +135,28 @@ const AdminDashboard = () => {
               title="Total Users"
               value={stats.totalUsers.toLocaleString()}
               change={`${allUsers.length > 0 ? Math.round((stats.activeUsers / allUsers.length) * 100) : 0}% Active`}
-              icon={<Users className="w-6 h-6 text-blue-500" />}
+              icon={<Users className="w-6 h-6 text-blue-400" />}
               color="blue"
             />
             <StatCard
               title="Total Admins"
               value={stats.totalAdmins.toLocaleString()}
               change={`${allUsers.length > 0 ? Math.round((stats.totalAdmins / allUsers.length) * 100) : 0}% of total`}
-              icon={<Users className="w-6 h-6 text-indigo-500" />}
+              icon={<Users className="w-6 h-6 text-indigo-400" />}
               color="indigo"
             />
             <StatCard
               title="Active Users"
               value={stats.activeUsers.toLocaleString()}
               change={`${allUsers.length > 0 ? Math.round((stats.activeUsers / allUsers.length) * 100) : 0}% of total`}
-              icon={<Activity className="w-6 h-6 text-green-500" />}
+              icon={<Activity className="w-6 h-6 text-green-400" />}
               color="green"
             />
             <StatCard
               title="Blocked Users"
               value={stats.blockedUsers.toLocaleString()}
               change={`${allUsers.length > 0 ? Math.round((stats.blockedUsers / allUsers.length) * 100) : 0}% of total`}
-              icon={<Users className="w-6 h-6 text-red-500" />}
+              icon={<Users className="w-6 h-6 text-red-400" />}
               color="red"
             />
           </div>
@@ -163,25 +164,25 @@ const AdminDashboard = () => {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
             {/* Quick Actions - Left Side */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200">
-                  <h3 className="text-lg font-medium text-gray-900">Quick Actions</h3>
+              <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-700">
+                  <h3 className="text-lg font-medium text-white">Quick Actions</h3>
                 </div>
-                <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-gray-700">
                   {quickActions.map((action, index) => (
-                    <a
+                    <Link
                       key={index}
-                      href={action.action}
-                      className="flex items-center justify-between px-6 py-4 hover:bg-gray-50 transition-colors duration-150"
+                      to={action.action}
+                      className="flex items-center justify-between px-6 py-4 hover:bg-gray-700/50 transition-colors duration-150"
                     >
                       <div className="flex items-center">
-                        <span className="p-2 rounded-lg bg-gray-100 text-gray-600 mr-3">
+                        <span className="p-2 rounded-lg bg-gray-700 text-gray-300 mr-3">
                           {action.icon}
                         </span>
-                        <span className="font-medium text-gray-700">{action.title}</span>
+                        <span className="font-medium text-gray-200">{action.title}</span>
                       </div>
                       <ArrowUpRight className="w-4 h-4 text-gray-400" />
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -189,29 +190,29 @@ const AdminDashboard = () => {
 
             {/* Recent Activity - Right Side */}
             <div className="lg:col-span-3">
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-                  <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
-                  <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">View All</button>
+              <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
+                  <h3 className="text-lg font-medium text-white">Recent Activity</h3>
+                  <button className="text-sm text-blue-400 hover:text-blue-300 font-medium">View All</button>
                 </div>
-                <div className="divide-y divide-gray-200 max-h-[280px] overflow-y-auto">
+                <div className="divide-y divide-gray-700 max-h-[280px] overflow-y-auto">
                   {recentActivities.map((activity) => (
-                    <div key={activity.id} className="px-6 py-4 hover:bg-gray-50 transition-colors duration-150">
+                    <div key={activity.id} className="px-6 py-4 hover:bg-gray-700/50 transition-colors duration-150">
                       <div className="flex items-start">
                         <div className="flex-shrink-0 mt-0.5">
-                          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-500">
+                          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-700 text-gray-300">
                             {activity.icon}
                           </span>
                         </div>
                         <div className="ml-3 flex-1">
                           <div className="flex items-center">
-                            <span className="font-medium text-gray-900">{activity.user}</span>
-                            <span className="mx-1 text-gray-500">{activity.action}</span>
+                            <span className="font-medium text-white">{activity.user}</span>
+                            <span className="mx-1 text-gray-400">{activity.action}</span>
                           </div>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="text-xs text-gray-400 mt-0.5">
                             {activity.time}
                             {activity.userEmail && (
-                              <span className="ml-2 text-gray-400">• {activity.userEmail}</span>
+                              <span className="ml-2 text-gray-500">• {activity.userEmail}</span>
                             )}
                           </p>
                         </div>
@@ -224,16 +225,16 @@ const AdminDashboard = () => {
           </div>
 
           {/* Recent Reviews Section */}
-          <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Recent Reviews</h3>
+          <div className="mt-8 bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-700">
+              <h3 className="text-lg font-medium text-white">Recent Reviews</h3>
             </div>
             <div className="p-6 text-center">
-              <div className="text-gray-400 mb-2">
+              <div className="text-gray-500 mb-2">
                 <MessageSquare className="w-10 h-10 mx-auto" />
               </div>
-              <h4 className="text-gray-500 text-sm">No recent reviews available</h4>
-              <p className="text-gray-400 text-xs mt-1">New reviews will appear here</p>
+              <h4 className="text-gray-400 text-sm">No recent reviews available</h4>
+              <p className="text-gray-500 text-xs mt-1">New reviews will appear here</p>
             </div>
           </div>
         </div>
@@ -244,24 +245,34 @@ const AdminDashboard = () => {
 
 const StatCard = ({ title, value, change, icon, color }) => {
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-700',
-    green: 'bg-green-50 text-green-700',
-    purple: 'bg-purple-50 text-purple-700',
-    orange: 'bg-orange-50 text-orange-700',
-    indigo: 'bg-indigo-50 text-indigo-700',
+    blue: 'bg-blue-900/30 text-blue-400',
+    green: 'bg-green-900/30 text-green-400',
+    purple: 'bg-purple-900/30 text-purple-400',
+    orange: 'bg-orange-900/30 text-orange-400',
+    indigo: 'bg-indigo-900/30 text-indigo-400',
+    red: 'bg-red-900/30 text-red-400',
+  };
+
+  const iconColors = {
+    blue: 'text-blue-400',
+    green: 'text-green-400',
+    purple: 'text-purple-400',
+    orange: 'text-orange-400',
+    indigo: 'text-indigo-400',
+    red: 'text-red-400',
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+    <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6 hover:bg-gray-700/50 transition-colors duration-200">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className="mt-1 text-2xl font-semibold text-gray-900">{value}</p>
-          <div className={`mt-2 inline-flex items-center text-xs font-medium px-2 py-0.5 rounded-full ${colorClasses[color]}`}>
+          <p className="text-sm font-medium text-gray-400">{title}</p>
+          <p className="mt-1 text-2xl font-semibold text-white">{value}</p>
+          <div className={`mt-2 inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full ${colorClasses[color]}`}>
             {change}
           </div>
         </div>
-        <div className="p-3 rounded-lg bg-opacity-20 bg-gray-100">
+        <div className={`p-3 rounded-lg bg-opacity-20 ${iconColors[color]}`}>
           {icon}
         </div>
       </div>
