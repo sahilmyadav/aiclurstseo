@@ -1,16 +1,24 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
+import { ThemeContext } from '../context/ThemeContext';
 import QRCode from 'qrcode';
 import BusinessProfileDropdown from './common/BusinessProfileDropdown';
 
 const HowToGetReviewLinkModal = ({ isOpen, onClose }) => {
+  const { theme } = useContext(ThemeContext);
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1e1b2e] rounded-xl max-w-md w-full p-6 shadow-2xl border border-white/10">
+      <div className={`rounded-xl max-w-md w-full p-6 shadow-2xl ${
+        theme === 'dark' 
+          ? 'bg-[#1e1b2e] border-white/10' 
+          : 'bg-white border-purple-100 shadow-lg'
+      } border`}>
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-white">How to Get Your Google Review Link</h3>
+          <h3 className={`text-xl font-bold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>How to Get Your Google Review Link</h3>
           <button 
             onClick={onClose}
             className="text-gray-400 hover:text-white"
@@ -21,10 +29,14 @@ const HowToGetReviewLinkModal = ({ isOpen, onClose }) => {
           </button>
         </div>
         
-        <div className="space-y-4 text-gray-300">
+        <div className={`space-y-4 ${
+          theme === 'dark' ? 'text-gray-300' : 'text-purple-900/90'
+        }`}>
           <div className="flex items-start gap-3">
             <div className="bg-purple-500/20 text-purple-400 rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center text-sm font-bold">1</div>
-            <p>Open <a href="https://business.google.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Google Business Profile Manager</a></p>
+            <p>Open <a href="https://business.google.com" target="_blank" rel="noopener noreferrer" className={`${
+              theme === 'dark' ? 'text-blue-400' : 'text-purple-700'
+            } hover:underline`}>Google Business Profile Manager</a></p>
           </div>
           
           <div className="flex items-start gap-3">
@@ -34,17 +46,27 @@ const HowToGetReviewLinkModal = ({ isOpen, onClose }) => {
           
           <div className="flex items-start gap-3">
             <div className="bg-purple-500/20 text-purple-400 rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center text-sm font-bold">3</div>
-            <p>Click on <span className="bg-white/10 px-2 py-0.5 rounded">Home</span> or <span className="bg-white/10 px-2 py-0.5 rounded">Get more reviews</span></p>
+            <p>Click on <span className={`px-2 py-0.5 rounded ${
+              theme === 'dark' ? 'bg-white/10' : 'bg-purple-100/80 text-purple-800'
+            }`}>Home</span> or <span className={`px-2 py-0.5 rounded ${
+              theme === 'dark' ? 'bg-white/10' : 'bg-purple-100/80 text-purple-800'
+            }`}>Get more reviews</span></p>
           </div>
           
           <div className="flex items-start gap-3">
             <div className="bg-purple-500/20 text-purple-400 rounded-full w-6 h-6 flex-shrink-0 flex items-center justify-center text-sm font-bold">4</div>
-            <p>Copy the review link (it should look like: <code className="bg-black/30 px-1.5 py-0.5 rounded">https://g.page/r/YOUR_PLACE_ID/review</code>)</p>
+            <p>Copy the review link (it should look like: <code className={`px-1.5 py-0.5 rounded ${
+              theme === 'dark' ? 'bg-black/30' : 'bg-purple-100 text-purple-800'
+            }`}>https://g.page/r/YOUR_PLACE_ID/review</code>)</p>
           </div>
           
           <div className="pt-2">
-            <p className="text-sm text-gray-400">
-              <span className="font-semibold">Note:</span> The link should be in the format: <code className="bg-black/30 px-1.5 py-0.5 rounded text-purple-300">https://g.page/r/YOUR_PLACE_ID/review</code>
+            <p className={`text-sm ${
+              theme === 'dark' ? 'text-gray-400' : 'text-purple-800'
+            }`}>
+              <span className="font-semibold">Note:</span> The link should be in the format: <code className={`px-1.5 py-0.5 rounded ${
+                theme === 'dark' ? 'bg-black/30 text-purple-300' : 'bg-purple-100 text-purple-800'
+              }`}>https://g.page/r/YOUR_PLACE_ID/review</code>
             </p>
           </div>
         </div>
@@ -52,7 +74,11 @@ const HowToGetReviewLinkModal = ({ isOpen, onClose }) => {
         <div className="mt-6 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
+            className={`px-4 py-2 rounded-lg transition-colors ${
+                theme === 'dark' 
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                  : 'bg-purple-600 hover:bg-purple-700 text-white'
+            }`}
           >
             Got it!
           </button>
@@ -63,6 +89,7 @@ const HowToGetReviewLinkModal = ({ isOpen, onClose }) => {
 };
 
 const QRCodeComponent = () => {
+  const { theme } = useContext(ThemeContext);
   const { 
     businesses, 
     selectedBusinesses,
@@ -176,14 +203,20 @@ const QRCodeComponent = () => {
   if (!isConnected) {
     return (
       <div className="w-full max-w-lg mx-auto">
-        <div className="bg-[#171624]/50 border border-white/5 rounded-lg p-8 backdrop-blur-sm text-center">
+        <div className={`rounded-lg p-8 backdrop-blur-sm text-center ${
+        theme === 'dark' 
+          ? 'bg-[#171624]/50 border-white/5' 
+          : 'bg-white border border-purple-100 shadow-md'
+      }`}>
           <div className="mb-4">
             <svg className="w-16 h-16 text-purple-400 mx-auto" fill="currentColor" viewBox="0 0 20 20">
               <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4z" />
             </svg>
           </div>
           <h3 className="text-xl font-bold mb-2">Connect Google Business</h3>
-          <p className="text-gray-400 mb-4">
+          <p className={`mb-4 ${
+            theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+          }`}>
             Please connect your Google Business account to generate QR codes
           </p>
         </div>
@@ -194,8 +227,14 @@ const QRCodeComponent = () => {
   if (loading || businesses.length === 0) {
     return (
       <div className="w-full max-w-lg mx-auto">
-        <div className="bg-[#171624]/50 border border-white/5 rounded-lg p-8 backdrop-blur-sm text-center">
-          <p className="text-gray-400">Loading businesses...</p>
+        <div className={`rounded-lg p-8 backdrop-blur-sm text-center ${
+        theme === 'dark' 
+          ? 'bg-[#171624]/50 border-white/5' 
+          : 'bg-white border border-purple-100 shadow-md'
+      }`}>
+          <p className={`${
+            theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
+          }`}>Loading businesses...</p>
         </div>
       </div>
     );
@@ -204,14 +243,14 @@ const QRCodeComponent = () => {
   return (
     <div className="w-full max-w-6xl mx-auto px-4 py-6 h-[calc(100vh-2rem)] flex flex-col">
       {/* Main Container */}
-      <div className="bg-[#171624]/50 border border-white/5 rounded-lg p-6 sm:p-8 backdrop-blur-sm flex-1 flex flex-col">
+      <div className={`${theme === 'dark' ? 'bg-[#171624]/50 border-white/5' : 'bg-white/95 border-purple-100 shadow-lg'} border rounded-lg p-6 sm:p-8 backdrop-blur-sm flex-1 flex flex-col`}>
         {/* Header */}
         <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-3 mb-3">
-            <svg className="w-8 h-8 text-purple-400" fill="currentColor" viewBox="0 0 20 20">
+          {/* <div className="flex items-center justify-center gap-3 mb-3">
+            <svg className={`w-8 h-8 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} fill="currentColor" viewBox="0 0 20 20">
               <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4z" />
             </svg>
-            <h2 className="text-2xl font-bold text-white">QR Code Generator</h2>
+            <h2 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-purple-900'}`}>QR Code Generator</h2>
             <button
               className="ml-2 p-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors duration-200"
               title="Refresh local businesses"
@@ -220,10 +259,10 @@ const QRCodeComponent = () => {
                 <path d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 110 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 01-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" />
               </svg>
             </button>
-          </div>
-          <p className="text-gray-300 text-sm">
+          </div> */}
+          <h2 className={`${theme === 'dark' ? 'text-gray-300' : 'text-purple-700'} text-lg italic`}>
             Generate and share your review link
-          </p>
+          </h2>
         </div>
 
         {/* Business Selection - Using BusinessProfileDropdown component */}
@@ -260,7 +299,7 @@ const QRCodeComponent = () => {
                     {/* <label className="block text-sm font-medium text-gray-300 mb-1">
                       Google Review URL
                     </label> */}
-                    <div className="flex items-center bg-white/5 border border-white/20 rounded-lg overflow-hidden">
+                    <div className={`flex items-center ${theme === 'dark' ? 'bg-white/5 border-white/20' : 'bg-purple-50 border-purple-200'} border rounded-lg overflow-hidden`}>
                       <input
                         type="text"
                         value={manualReviewUri}
@@ -269,20 +308,20 @@ const QRCodeComponent = () => {
                           setManualReviewUri(e.target.value);
                         }}
                         placeholder="https://g.page/r/YOUR_PLACE_ID/review"
-                        className="flex-1 px-4 py-3 bg-transparent text-white focus:outline-none focus:ring-1 focus:ring-purple-500 w-full"
+                        className={`flex-1 px-4 py-3 bg-transparent ${theme === 'dark' ? 'text-white' : 'text-purple-900'} focus:outline-none focus:ring-1 focus:ring-purple-500 w-full`}
                       />
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className={`text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-purple-700/80'} mt-1`}>
                       Enter your Google Review URL (e.g., https://g.page/r/YOUR_PLACE_ID/review)
                     </p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1">
+                    <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-purple-900'} mb-1`}>
                       Review Page URL
                     </label>
                     <div className="relative">
-                      <div className="w-full px-4 py-3 pr-10 border border-white/20 rounded-lg bg-white/10 text-white text-sm break-all">
+                      <div className={`w-full px-4 py-3 pr-10 border ${theme === 'dark' ? 'border-white/20 bg-white/10 text-white' : 'border-purple-200 bg-purple-50 text-purple-900'} rounded-lg text-sm break-all`}>
                         {reviewLink || 'Enter a review URI above to generate the full URL'}
                       </div>
                       {reviewLink && (
@@ -298,7 +337,7 @@ const QRCodeComponent = () => {
                         </button>
                       )}
                     </div>
-                    <p className="text-xs text-gray-400 mt-2">
+                    <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-purple-700/90'} mt-2`}>
                       {reviewLink ? (
                         <span className="flex items-center gap-1">
                           <svg className="w-3 h-3 text-green-400" fill="currentColor" viewBox="0 0 20 20">
@@ -327,7 +366,7 @@ const QRCodeComponent = () => {
                     className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm"
                   >
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M3 17a1 1 0 01-1-1v-5a1 1 0 112 0v5a1 1 0 01-1 1zm9-15a1 1 0 011 1v10.586l2.293-2.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 111.414-1.414L11 13.586V3a1 1 0 011-1z" clipRule="evenodd" />
+                      <path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V4z" />
                     </svg>
                     <span>Download</span>
                   </button>
@@ -362,10 +401,10 @@ const QRCodeComponent = () => {
 
           {/* Right Side - QR Code */}
           <div className="w-full md:w-1/2">
-            <div className="bg-white p-4 rounded-lg shadow-lg h-full flex flex-col items-center justify-center">
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white border border-purple-100'} p-4 rounded-lg shadow-lg h-full flex flex-col items-center justify-center`}>
               <div className="text-center mb-4">
-                <h3 className="font-medium text-gray-800">Scan to Review</h3>
-                <p className="text-sm text-gray-500">Share this QR code</p>
+                <h3 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-purple-900'}`}>Scan to Review</h3>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-purple-700'}`}>Share this QR code</p>
               </div>
               <div className="bg-white p-2 rounded border border-gray-200">
                 {qrCodeUrl ? (
@@ -381,15 +420,15 @@ const QRCodeComponent = () => {
                 )}
               </div>
               <div className="mt-4 text-center">
-                <p className="text-xs text-gray-500">Scan this code with your phone's camera</p>
+                <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-purple-700'}`}>Scan this code with your phone's camera</p>
               </div>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="mt-6 pt-4 border-t border-white/10 text-center">
-          <p className="text-xs text-gray-400">
+        <div className={`mt-6 pt-4 border-t ${theme === 'dark' ? 'border-white/10' : 'border-purple-100'} text-center`}>
+          <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-purple-700'}`}>
             Share this QR code to get more reviews
           </p>
         </div>
