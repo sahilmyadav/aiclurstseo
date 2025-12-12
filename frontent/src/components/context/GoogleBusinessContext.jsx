@@ -6,6 +6,7 @@ const GoogleBusinessContext = createContext();
 
 // Helper function to get storage key for current user
 const getStorageKey = (userId) => `google_business_data_${userId || 'guest'}`;
+const getOAuthStorageKey = (userId) => `google_oauth_tokens_${userId || 'guest'}`;
 
 export const useGoogleBusiness = () => {
   const context = useContext(GoogleBusinessContext);
@@ -17,9 +18,12 @@ export const useGoogleBusiness = () => {
 
 export const GoogleBusinessProvider = ({ children }) => {
   const { user: authUser, token } = useAuth();
-  const BACKEND_URL = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
+  const BACKEND_URL = (import.meta.env.VITE_API_BASE ).replace(/\/$/, '');
   const { subscriptionData } = useAuth();
-  // Initialize state with user-specific data from localStorage
+
+  // ==============================
+  // OLD STATE (UNCHANGED)
+  // ==============================
   const [state, setState] = useState(() => {
     const saved = localStorage.getItem(getStorageKey(authUser?.id));
     return saved ? JSON.parse(saved) : {
@@ -41,11 +45,50 @@ export const GoogleBusinessProvider = ({ children }) => {
       performanceLoading: false,
       performanceError: null,
       scheduledPosts: [],
-      loadingScheduled: false
+      loadingScheduled: false,
+      reviewStats: null
     };
   });
 
-  // State updater function
+  // ==============================
+  // NEW STATE: Google OAuth Tokens
+  // ==============================
+  const [googleOAuth, setGoogleOAuth] = useState(() => {
+    const saved = localStorage.getItem(getOAuthStorageKey(authUser?.id));
+    return saved ? JSON.parse(saved) : {
+      access_token: null,
+      refresh_token: null,
+      expiry_date: null,
+    };
+  });
+
+  const setGoogleOAuthTokens = useCallback((tokens) => {
+    setGoogleOAuth(tokens);
+    localStorage.setItem(
+      getOAuthStorageKey(authUser?.id),
+      JSON.stringify(tokens)
+    );
+  }, [authUser?.id]);
+
+  // ==============================
+  // SYNC GOOGLE OAUTH WITH TOKEN DETAILS
+  // ==============================
+  useEffect(() => {
+    if (googleOAuth?.access_token) {
+      updateState({
+        tokenDetails: {
+          accessToken: googleOAuth.access_token,
+          refreshToken: googleOAuth.refresh_token || state.tokenDetails?.refreshToken,
+          expiryDate: googleOAuth.expiry_date ? new Date(googleOAuth.expiry_date) : null,
+          scopes: state.tokenDetails?.scopes || []
+        }
+      });
+    }
+  }, [googleOAuth, authUser?.id]);
+
+  // ==============================
+  // STATE SETTERS
+  // ==============================
   const updateState = useCallback((updates) => {
     setState(prev => {
       const newState = { ...prev, ...updates };
@@ -54,24 +97,6 @@ export const GoogleBusinessProvider = ({ children }) => {
     });
   }, [authUser?.id]);
 
-  // Create individual state setters
-  const setUser = useCallback((user) => updateState({ user }), [updateState]);
-  const setBusinesses = useCallback((businesses) => updateState({ businesses }), [updateState]);
-  const setSelectedBusiness = useCallback((selectedBusiness) => updateState({ selectedBusiness }), [updateState]);
-  const setSelectedBusinesses = useCallback((selectedBusinesses) => updateState({ selectedBusinesses }), [updateState]);
-  const setReviews = useCallback((reviews) => updateState({ reviews }), [updateState]);
-  const setLocalReviews = useCallback((localReviews) => updateState({ localReviews }), [updateState]);
-  const setLoading = useCallback((loading) => updateState({ loading }), [updateState]);
-  const setIsConnected = useCallback((isConnected) => updateState({ isConnected }), [updateState]);
-  const setReviewUri = useCallback((reviewUri) => updateState({ reviewUri }), [updateState]);
-  const setTokenDetails = useCallback((tokenDetails) => updateState({ tokenDetails }), [updateState]);
-  const setPerformanceData = useCallback((performanceData) => updateState({ performanceData }), [updateState]);
-  const setPerformanceLoading = useCallback((performanceLoading) => updateState({ performanceLoading }), [updateState]);
-  const setPerformanceError = useCallback((performanceError) => updateState({ performanceError }), [updateState]);
-  const setScheduledPosts = useCallback((scheduledPosts) => updateState({ scheduledPosts }), [updateState]);
-  const setLoadingScheduled = useCallback((loadingScheduled) => updateState({ loadingScheduled }), [updateState]);
-
-  // Destructure state for easier access
   const {
     user,
     businesses,
@@ -87,10 +112,30 @@ export const GoogleBusinessProvider = ({ children }) => {
     performanceLoading,
     performanceError,
     scheduledPosts,
-    loadingScheduled
+    loadingScheduled,
+    reviewStats
   } = state;
 
-  // Reset state when user changes
+  const setUser = useCallback((u) => updateState({ user: u }), [updateState]);
+  const setBusinesses = useCallback((v) => updateState({ businesses: v }), [updateState]);
+  const setSelectedBusiness = useCallback((v) => updateState({ selectedBusiness: v }), [updateState]);
+  const setSelectedBusinesses = useCallback((v) => updateState({ selectedBusinesses: v }), [updateState]);
+  const setReviews = useCallback((v) => updateState({ reviews: v }), [updateState]);
+  const setLocalReviews = useCallback((v) => updateState({ localReviews: v }), [updateState]);
+  const setLoading = useCallback((v) => updateState({ loading: v }), [updateState]);
+  const setIsConnected = useCallback((v) => updateState({ isConnected: v }), [updateState]);
+  const setReviewUri = useCallback((v) => updateState({ reviewUri: v }), [updateState]);
+  const setTokenDetails = useCallback((v) => updateState({ tokenDetails: v }), [updateState]);
+  const setPerformanceData = useCallback((v) => updateState({ performanceData: v }), [updateState]);
+  const setPerformanceLoading = useCallback((v) => updateState({ performanceLoading: v }), [updateState]);
+  const setPerformanceError = useCallback((v) => updateState({ performanceError: v }), [updateState]);
+  const setScheduledPosts = useCallback((v) => updateState({ scheduledPosts: v }), [updateState]);
+  const setLoadingScheduled = useCallback((v) => updateState({ loadingScheduled: v }), [updateState]);
+  const setReviewStats = useCallback((v) => updateState({ reviewStats: v }), [updateState]);
+
+  // ==============================
+  // RESET ON USER CHANGE
+  // ==============================
   useEffect(() => {
     setState({
       user: null,
@@ -111,84 +156,274 @@ export const GoogleBusinessProvider = ({ children }) => {
       performanceLoading: false,
       performanceError: null,
       scheduledPosts: [],
-      loadingScheduled: false
+      loadingScheduled: false,
+      reviewStats: null
     });
+    
+    const savedOAuth = localStorage.getItem(getOAuthStorageKey(authUser?.id));
+    if (savedOAuth) {
+      setGoogleOAuth(JSON.parse(savedOAuth));
+    }
+    
   }, [authUser?.id]);
-
+  
+  // ==============================
+  // AUTH HEADER
+  // ==============================
   const authHeaders = () => ({
     Authorization: token ? `Bearer ${token}` : undefined,
     'Content-Type': 'application/json',
   });
+  
+  console.log("TOken Details",tokenDetails)
+  console.log("Google OAuth",googleOAuth)
+  console.log("Review Stats",reviewStats)
 
-  // Fetch performance metrics for selected business
-  const fetchPerformanceMetrics = async (dateRange = null) => {
-    if (!selectedBusiness?.name || !tokenDetails?.accessToken) {
-      return;
+  // ==============================
+  // GET Google params FOR API
+  // ==============================
+  const googleParams = () =>
+    `access_token=${googleOAuth.access_token || ''}&refresh_token=${googleOAuth.refresh_token || ''}&expiry_date=${googleOAuth.expiry_date || ''}`;
+
+  // ==============================
+  // CONNECT GOOGLE
+  // ==============================
+  const connectGoogle = () => {
+    window.location.href = `${BACKEND_URL}/auth/google/login`;
+  };
+ 
+  // ==============================
+  // DISCONNECT GOOGLE
+  // ==============================
+  const disconnectGoogle = async (silent = false) => {
+    if (!silent) {
+      toast.info('Disconnecting Google Business Profile...');
     }
-
-    setPerformanceLoading(true);
-    setPerformanceError(null);
     
     try {
-      // Default to last 30 days if no date range provided
-      const endDate = dateRange?.endDate || new Date();
-      const startDate = dateRange?.startDate || new Date(new Date().setDate(new Date().getDate() - 30));
+      // Clear local state
+      setUser(null);
+      setBusinesses([]);
+      setSelectedBusiness(null);
+      setSelectedBusinesses([]);
+      setReviews([]);
+      setLocalReviews([]);
+      setIsConnected(false);
+      setTokenDetails({ accessToken: null, refreshToken: null, expiryDate: null, scopes: [] });
       
-      // Extract location ID from the business name
-      const locationId = selectedBusiness.name.split('/')[1];
-      
-      if (!locationId) {
-        throw new Error('Invalid business location ID');
-      }
-      
-      // Format dates for the API
-      const formattedStartDate = {
-        year: startDate.getFullYear(),
-        month: startDate.getMonth() + 1, // Months are 0-indexed
-        day: startDate.getDate()
-      };
-      
-      const formattedEndDate = {
-        year: endDate.getFullYear(),
-        month: endDate.getMonth() + 1, // Months are 0-indexed
-        day: endDate.getDate()
-      };
-      
-      const response = await fetch(`${BACKEND_URL}/api/audit/performance`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({
-          locationId,
-          startDate: formattedStartDate,
-          endDate: formattedEndDate,
-          accessToken: tokenDetails.accessToken
-        })
+      // Clear Google OAuth tokens
+      setGoogleOAuth({
+        access_token: null,
+        refresh_token: null,
+        expiry_date: null
       });
       
-      const data = await response.json();
-      console.log("Performance data",data)
+      // Clear local storage
+      localStorage.removeItem(getStorageKey(authUser?.id));
+      localStorage.removeItem(getOAuthStorageKey(authUser?.id));
       
-      if (response.ok && data.success) {
-        setPerformanceData(data.totals);
-      } else {
-        // throw new Error(data.error || 'Failed to fetch performance data');
+      if (!silent) {
+        toast.success('Successfully disconnected Google Business Profile');
       }
+      
+      return { success: true };
     } catch (error) {
-      console.error('Error fetching performance data:', error);
-      // setPerformanceError(error.message);
-      // toast.error('Failed to load performance data: ' + error.message);
+      console.error('Error disconnecting Google:', error);
+      if (!silent) {
+        toast.error('Failed to disconnect Google Business Profile');
+      }
+      return { success: false, error };
+    }
+  
+  };
+
+  
+  // ==============================
+  // AUTO DISCONNECT ON SUBSCRIPTION END
+  // ==============================
+  useEffect(() => {
+    if (authUser?.id && subscriptionData) {
+      const now = new Date();
+      const endDate = subscriptionData.endDate ? new Date(subscriptionData.endDate) : null;
+      
+      // Check if subscription is active
+      const isSubscriptionActive = subscriptionData.status === 'active' && 
+                                endDate && 
+                                endDate > now;
+      
+      // If not active and token exists (meaning user was connected), disconnect
+      if (!isSubscriptionActive && (googleOAuth?.access_token || tokenDetails?.accessToken)) {
+        console.log('No active subscription - disconnecting Google Business Profile');
+        disconnectGoogle(true).then(() => {
+          toast.warning('Your subscription has ended. Google Business Profile has been disconnected.');
+        });
+      }
+    }
+  }, [subscriptionData, googleOAuth?.access_token, tokenDetails?.accessToken, authUser?.id]);
+
+  // ==============================
+  // FETCH BUSINESSES
+  // ==============================
+  const fetchBusinesses = async () => {
+    if (!googleOAuth.access_token) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`${BACKEND_URL}/auth/google/businesses?${googleParams()}`, {
+        headers: authHeaders(),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        setUser(data.user || {});
+        setBusinesses(data.businesses || []);
+        setIsConnected(true);
+
+        if (data.businesses?.length > 0 && !selectedBusiness) {
+          const first = data.businesses[0];
+          setSelectedBusiness(first);
+          setSelectedBusinesses([first]);
+          if (first.metadata?.newReviewUri) setReviewUri(first.metadata.newReviewUri);
+
+          await fetchReviews(first.accountId, first.name.split("/")[1]);
+          await fetchLocalReviews(first.name.split("/")[1]);
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching businesses:', err);
+      toast.error("Failed to fetch businesses");
     } finally {
-      setPerformanceLoading(false);
+      setLoading(false);
     }
   };
 
-  // Fetch scheduled posts for the selected business location
-  const fetchScheduledPosts = async () => {
+  // ==============================
+  // FETCH REVIEWS
+  // ==============================
+  const fetchReviews = async (accountId, locationId) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${BACKEND_URL}/auth/google/reviews/${accountId}/${locationId}?${googleParams()}`, {
+        headers: authHeaders(),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        const reviews = data.reviews || [];
+        setReviews(reviews);
+        // Calculate and set review stats
+        const stats = calculateReviewStats(reviews);
+        setReviewStats(stats);
+      } else {
+        throw new Error(data.error || 'Failed to fetch reviews');
+      }
+    } catch (err) {
+      console.error('Error fetching reviews:', err);
+      setReviews([]);
+      setReviewStats(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateReviewStats = useCallback((reviews) => {
+    // console.log('Calculating review stats for reviews:', reviews);
+    if (!reviews || !reviews.length) {
+      console.log('No reviews to calculate stats');
+      return null;
+    }
+    
+    // Map string ratings to numbers
+    const ratingMap = {
+      'ONE': 1,
+      'TWO': 2,
+      'THREE': 3,
+      'FOUR': 4,
+      'FIVE': 5
+    };
+    
+    const totalReviews = reviews.length;
+    const totalRating = reviews.reduce((sum, review) => {
+      const rating = ratingMap[review.starRating] || 0;
+      // console.log(`Review ID: ${review.reviewId}, Star Rating: ${review.starRating}, Mapped Rating: ${rating}`);
+      return sum + rating;
+    }, 0);
+    
+    const averageRating = totalReviews > 0 ? totalRating / totalReviews : 0;
+    
+    // Group by rating
+    const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    reviews.forEach(review => {
+      const rating = ratingMap[review.starRating];
+      if (rating && rating >= 1 && rating <= 5) {
+        ratingCounts[rating]++;
+      }
+    });
+    
+    // Convert to array format expected by the UI
+    const ratings = [5, 4, 3, 2, 1].map(rating => ({
+      rating,
+      count: ratingCounts[rating] || 0,
+      percentage: totalReviews > 0 ? Math.round((ratingCounts[rating] / totalReviews) * 100) : 0
+    }));
+    
+    // Get recent reviews (last 5)
+    const recentReviews = [...reviews]
+      .sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
+      .slice(0, 5);
+    
+    const result = {
+      totalReviews,
+      averageRating: parseFloat(averageRating.toFixed(1)),
+      ratings,  // Array format for the UI
+      recentReviews
+    };
+    
+    console.log('Calculated review stats:', result);
+    return result;
+  }, []);
+
+  const fetchLocalReviews = async (locationId) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${BACKEND_URL}/api/reviews/allReviews/${locationId}`, {
+        headers: authHeaders(),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setLocalReviews(data || []);
+      } else {
+        setLocalReviews([]);
+      }
+    } catch (err) {
+      setLocalReviews([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ==============================
+  // SELECT BUSINESS
+  // ==============================
+  const selectBusiness = async (b) => {
+    setSelectedBusiness(b);
+    if (b.metadata?.newReviewUri) setReviewUri(b.metadata.newReviewUri);
+
+    await fetchReviews(b.accountId, b.name.split("/")[1]);
+    await fetchLocalReviews(b.name.split("/")[1]);
+  };
+
+  // ==============================
+  // SCHEDULED POSTS
+  // ==============================
+  const fetchScheduledPosts = useCallback(async () => {
     if (!selectedBusiness) return;
     
     const locationId = selectedBusiness.name.split("/")[1];
-    
-    console.log('Frontend: Fetching scheduled posts for locationId:', locationId);
+    if (!locationId) return;
+
+    // console.log('Frontend: Fetching scheduled posts for locationId:', locationId);
     
     setLoadingScheduled(true);
     try {
@@ -209,358 +444,156 @@ export const GoogleBusinessProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error fetching scheduled posts:', error);
-      toast.error(error.message || 'Failed to load scheduled posts');
+      if (!error.message.includes('404')) {
+        toast.error(error.message || 'Failed to load scheduled posts');
+      }
     } finally {
       setLoadingScheduled(false);
     }
-  };
-
-  // Check Google authentication status
-  const checkAuthStatus = async () => {
-    if (!authUser) return;
-    try {
-      const res = await fetch(`${BACKEND_URL}/auth/google/status`, {
-        headers: authHeaders(),
-        credentials: 'include',
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.authenticated) {
-          setUser(data.user);
-          setIsConnected(true);
-          
-          console.log("data.tokenDetails",data)
-          // Update token details if available
-          if (data.tokenDetails) {
-            setTokenDetails({
-              accessToken: data.tokenDetails.access_token,
-              refreshToken: data.tokenDetails.refresh_token,
-              expiryDate: data.tokenDetails.expiry_date ? new Date(data.tokenDetails.expiry_date) : null,
-              scopes: data.tokenDetails.scope ? data.tokenDetails.scope.split(' ') : []
-            });
-          }
-          
-          await fetchBusinesses();
-        }
-      }
-    } catch (err) {
-      console.error('Error checking auth status:', err);
-    }
-  };
-
-  // Fetch businesses from Google
-  const fetchBusinesses = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${BACKEND_URL}/auth/google/businesses`, {
-        headers: authHeaders(),
-        credentials: 'include',
-      });
-      const data = await res.json();
-      console.log("data",data)
-      if (res.ok) {
-        setUser(data.user || {});
-        setBusinesses(data.businesses || []);
-        
-        // Auto-select first business if none selected
-        if (data.businesses && data.businesses.length > 0 && !selectedBusiness) {
-          const firstBusiness = data.businesses[0];
-          setSelectedBusiness(firstBusiness);
-          setSelectedBusinesses([firstBusiness]); // Also add to multiple selections
-          
-          // Set review URI from first business metadata if available
-          if (firstBusiness.metadata?.newReviewUri) {
-            setReviewUri(firstBusiness.metadata.newReviewUri);
-          }
-          
-          // Auto-fetch reviews for first business
-          await fetchReviews(firstBusiness.accountId, firstBusiness.name.split("/")[1]);
-          // Also fetch local reviews
-          await fetchLocalReviews(firstBusiness.name.split("/")[1]);
-          // fetchScheduledPosts will be called by useEffect when selectedBusiness changes
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching businesses:', err);
-      toast.error("Failed to fetch businesses");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch reviews for selected business
-  const fetchReviews = async (accountId, locationId) => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${BACKEND_URL}/auth/google/reviews/${accountId}/${locationId}`, {
-        headers: authHeaders(),
-        credentials: 'include',
-      });
-      const data = await res.json();
-      
-      if (res.ok) {
-        setReviews(data.reviews || []);
-      } else {
-        throw new Error(data.message || 'Failed to fetch reviews');
-      }
-    } catch (err) {
-      console.error('Error fetching reviews:', err);
-      // toast.error("Failed to fetch reviews");
-      setReviews([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Fetch local reviews from database by locationId
-  const fetchLocalReviews = async (locationId) => {
-    try {
-      setLoading(true);
-      const res = await fetch(`${BACKEND_URL}/api/reviews/allReviews/${locationId}`, {
-        headers: authHeaders(),
-        credentials: 'include',
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        setLocalReviews(data || []);
-      } else {
-        throw new Error('Failed to fetch local reviews');
-      }
-    } catch (err) {
-      console.error('Error fetching local reviews:', err);
-      // Don't show toast error for local reviews as it might not be implemented yet
-      // toast.error("Failed to fetch local reviews");
-      setLocalReviews([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Connect to Google
-  const connectGoogle = async () => {
-   
-   
-    window.location.href = `${BACKEND_URL}/auth/google/login`;
-  };
-
-  // Disconnect from Google
-  const disconnectGoogle = async () => {
-    try {
-      await fetch(`${BACKEND_URL}/auth/google/disconnect`, {
-        method: 'POST',
-        headers: authHeaders(),
-        credentials: 'include',
-      });
-      
-      // Reset all state
-      setUser(null);
-      setBusinesses([]);
-      setSelectedBusiness(null);
-      setSelectedBusinesses([]); // Reset multiple selections
-      setReviews([]);
-      setLocalReviews([]); // Reset local reviews
-      setIsConnected(false);
-      setPerformanceData(null); // Reset performance data
-      
-      toast.success("Disconnected successfully");
-    } catch (err) {
-      console.error('Error disconnecting:', err);
-      toast.error("Failed to disconnect");
-    }
-  };
-
-  // Select a single business and fetch its reviews
-  const selectBusiness = async (business) => {
-    setSelectedBusiness(business);
-    const accountId = business.accountId;
-    const locationId = business.name.split("/")[1];
-    
-    // Set review URI from business metadata if available
-    if (business.metadata?.newReviewUri) {
-      setReviewUri(business.metadata.newReviewUri);
-    }
-    
-    await fetchReviews(accountId, locationId);
-    // Also fetch local reviews when business is selected
-    await fetchLocalReviews(locationId);
-    // Fetch performance metrics for the selected business
-    await fetchPerformanceMetrics();
-  };
-
-  // Select multiple businesses
-  const selectMultipleBusinesses = async (businesses) => {
-    setSelectedBusinesses(businesses);
-    
-    // If there's at least one business selected, use the first one as the primary
-    if (businesses.length > 0) {
-      const primaryBusiness = businesses[0];
-      setSelectedBusiness(primaryBusiness);
-      
-      // Set review URI from business metadata if available
-      if (primaryBusiness.metadata?.newReviewUri) {
-        setReviewUri(primaryBusiness.metadata.newReviewUri);
-      }
-      
-      // Fetch reviews for the primary business
-      const accountId = primaryBusiness.accountId;
-      const locationId = primaryBusiness.name.split("/")[1];
-      await fetchReviews(accountId, locationId);
-      // Also fetch local reviews when business is selected
-      await fetchLocalReviews(locationId);
-      // Fetch performance metrics for the selected business
-      await fetchPerformanceMetrics();
-    } else {
-      // If no businesses selected, clear the primary selection
-      setSelectedBusiness(null);
-      setReviews([]);
-      setLocalReviews([]);
-      setPerformanceData(null); // Clear performance data
-    }
-  };
-
-  // Toggle selection of a business (for multiple selections)
-  const toggleBusinessSelection = async (business) => {
-    const isSelected = selectedBusinesses.some(b => b.name === business.name);
-    
-    let newSelections;
-    if (isSelected) {
-      // Remove from selection
-      newSelections = selectedBusinesses.filter(b => b.name !== business.name);
-    } else {
-      // Add to selection
-      newSelections = [...selectedBusinesses, business];
-    }
-    
-    await selectMultipleBusinesses(newSelections);
-  };
-
-  // Calculate review statistics
-  const getReviewStats = () => {
-    if (!reviews || reviews.length === 0) {
-      return {
-        average: 0,
-        total: 0,
-        ratings: [],
-        recentCount: 0
-      };
-    }
-
-    const ratingMap = { 'ONE': 1, 'TWO': 2, 'THREE': 3, 'FOUR': 4, 'FIVE': 5 };
-    const ratings = [1, 2, 3, 4, 5].map(rating => ({
-      rating,
-      count: reviews.filter(r => ratingMap[r.starRating] === rating).length
-    }));
-
-    const totalRating = reviews.reduce((sum, review) => sum + (ratingMap[review.starRating] || 0), 0);
-    const average = reviews.length > 0 ? totalRating / reviews.length : 0;
-
-    // Count recent reviews (last 30 days)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const recentCount = reviews.filter(review => 
-      new Date(review.createTime) > thirtyDaysAgo
-    ).length;
-
-    return {
-      average,
-      total: reviews.length,
-      ratings,
-      recentCount
-    };
-  };
-
-  // Calculate performance totals
-  const getPerformanceStats = () => {
-    return performanceData || { websiteClicks: 0, callClicks: 0 };
-  };
-
-  // Refresh all data when needed
-  const refreshData = async () => {
-    if (isConnected && selectedBusiness) {
-      // Ensure the selected business is set
-      console.log('Refreshing data for selected business:', selectedBusiness.title || selectedBusiness.name);
-      
-      const locationId = selectedBusiness.name.split("/")[1];
-      await fetchReviews(selectedBusiness.accountId, locationId);
-      await fetchLocalReviews(locationId);
-      await fetchScheduledPosts();
-      await fetchPerformanceMetrics();
-    }
-  };
-
-  useEffect(() => {
-  // Wait until subscription data is loaded
-  if (subscriptionData === undefined) return;
-  
-  // Only proceed if we have a user and the account is currently connected
-  if (!authUser || !isConnected) return;
-  
-  // Only disconnect if we're certain the subscription is not active
-  if (subscriptionData === null || subscriptionData.active === false) {
-    const timeoutId = setTimeout(() => {
-      console.log('Disconnecting due to no active subscription');
-      disconnectGoogle().catch(console.error);
-    }, 1000); // Small delay to ensure other auth processes complete
-    
-    return () => clearTimeout(timeoutId);
-  }
-}, [subscriptionData, authUser, disconnectGoogle, isConnected]); // Added isConnected to dependencies
-
-  useEffect(() => {
-    checkAuthStatus();
-  }, [authUser]);
+  }, [selectedBusiness, token]);
 
   // Fetch scheduled posts when selected business changes
   useEffect(() => {
-    if (selectedBusiness) {
+    if (selectedBusiness?.name) {
       fetchScheduledPosts();
-      // Fetch performance metrics when business is selected
-      fetchPerformanceMetrics();
     }
-  }, [selectedBusiness]);
+  }, [selectedBusiness, fetchScheduledPosts]);
 
+  // ==============================
+  // PERFORMANCE METRICS
+  // ==============================
+  const fetchPerformanceMetrics = async ({ startDate, endDate }) => {
+    if (!selectedBusiness) {
+      console.error('No business selected');
+      return null;
+    }
+
+    try {
+      setPerformanceLoading(true);
+      setPerformanceError(null);
+      
+      const locationId = selectedBusiness.name.split("/")[1];
+      
+      // Format dates as required by the backend
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      // Get the access token from the OAuth context
+      const accessToken = googleOAuth?.access_token;
+      if (!accessToken) {
+        throw new Error('No access token available. Please reconnect your Google account.');
+      }
+      
+      const requestBody = {
+        locationId,
+        accessToken,
+        startDate: {
+          year: start.getFullYear(),
+          month: start.getMonth() + 1, // JavaScript months are 0-indexed
+          day: start.getDate()
+        },
+        endDate: {
+          year: end.getFullYear(),
+          month: end.getMonth() + 1, // JavaScript months are 0-indexed
+          day: end.getDate()
+        }
+      };
+
+      const response = await fetch(`${BACKEND_URL}/api/audit/performance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+          ...authHeaders()
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        if (response.status === 401) {
+          // Handle expired or invalid token
+          setPerformanceError('Your session has expired. Please reconnect your Google account.');
+          // Optionally trigger re-authentication
+          // disconnectGoogle();
+        }
+        throw new Error(errorData.error || 'Failed to fetch performance metrics');
+      }
+      const data = await response.json();
+      console.log("Performace",data)
+      setPerformanceData(data.totals);
+      return data;
+    } catch (error) {
+      console.error('Error fetching performance metrics:', error);
+      setPerformanceError(error.message);
+      return null;
+    } finally {
+      setPerformanceLoading(false);
+    }
+  };
+
+  // ==============================
+  // VALUE EXPORT
+  // ==============================
   const value = {
-    // State
     user,
     businesses,
     selectedBusiness,
-    selectedBusinesses, // For multiple selections
+    selectedBusinesses,
     reviews,
     localReviews,
     loading,
     isConnected,
     reviewUri,
     tokenDetails,
-    scheduledPosts,
-    loadingScheduled,
-    // Performance metrics
     performanceData,
     performanceLoading,
     performanceError,
-    // Actions
-    setBusinesses,
-    setSelectedBusiness,
-    setSelectedBusinesses, // For multiple selections
-    setReviews,
-    setLocalReviews,
-    setLoading,
-    checkAuthStatus,
+    scheduledPosts,
+    loadingScheduled,
+    reviewStats,
+    googleOAuth,
+    setGoogleOAuthTokens,
+
     connectGoogle,
     disconnectGoogle,
     fetchBusinesses,
     fetchReviews,
-    fetchLocalReviews,
     selectBusiness,
-    selectMultipleBusinesses, // For multiple selections
-    toggleBusinessSelection, // Toggle selection
-    refreshData,
-    fetchScheduledPosts,
+    fetchLocalReviews,
     fetchPerformanceMetrics,
-    // Computed values
-    reviewStats: getReviewStats(),
-    performanceStats: getPerformanceStats()
+    fetchScheduledPosts,
   };
+
+  // Handle OAuth callback and save tokens from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+    const expiry_date = params.get('expiry_date');
+    
+    if (access_token && authUser?.id) {
+      const tokens = {
+        access_token,
+        refresh_token,
+        expiry_date: expiry_date ? parseInt(expiry_date) : null
+      };
+      
+      // Save tokens to state and localStorage
+      setGoogleOAuthTokens(tokens);
+      
+      // Clean up URL
+      const cleanUrl = window.location.pathname;
+      window.history.replaceState({}, document.title, cleanUrl);
+    }
+  }, [authUser?.id]);
+
+  // Fetch businesses when we have a valid token
+  useEffect(() => {
+    if (googleOAuth.access_token && authUser) {
+      fetchBusinesses();
+    }
+  }, [googleOAuth.access_token, authUser]);
 
   return (
     <GoogleBusinessContext.Provider value={value}>

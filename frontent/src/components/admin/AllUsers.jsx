@@ -103,6 +103,16 @@ const AllUsers = () => {
     deleteUser,
     blockUnblockUser 
   } = useContext(AdminContext);
+  
+  // Check if user is the main admin
+  const isMainAdmin = (user) => {
+    return user.role === 'admin' && user.email === 'admin@example.com'; // Replace with your main admin email
+  };
+  
+  // Count admin users
+  const adminUsersCount = useMemo(() => {
+    return allUsers.filter(user => user.role === 'admin').length;
+  }, [allUsers]);
 
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -113,32 +123,33 @@ const AllUsers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  // Fetch users when page, search term, or active tab changes
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        let url = `/api/admin/users?page=${currentPage}&limit=${itemsPerPage}`;
-        
-        // Add role filter if a specific tab is selected
-        if (activeTab === 'admins') {
-          url += '&role=admin';
-        } else if (activeTab === 'users') {
-          url += '&role=user';
-        }
-        
-        // Add search term if provided
-        if (searchTerm) {
-          url += `&search=${encodeURIComponent(searchTerm)}`;
-        }
-        
-        await fetchUsers(url);
-      } catch (err) {
-        console.error('Error fetching users:', err);
+  // Filter users based on active tab and search term
+  const filteredUsers = useMemo(() => {
+    return allUsers.filter(user => {
+      // Filter by search term
+      const matchesSearch = searchTerm === '' || 
+        user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      // Filter by role if a specific tab is selected
+      if (activeTab === 'admins') {
+        return user.role === 'admin' && matchesSearch;
+      } else if (activeTab === 'users') {
+        return user.role === 'user' && matchesSearch;
       }
-    };
-    
-    fetchData();
-  }, [currentPage, itemsPerPage, searchTerm, activeTab, fetchUsers]);
+      
+      return matchesSearch;
+    });
+  }, [allUsers, searchTerm, activeTab]);
+
+  // Paginate the filtered users
+  const currentUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredUsers, currentPage, itemsPerPage]);
+
+  // Calculate total pages for pagination
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
 
   // Handle page change
   const handlePageChange = (page) => {
@@ -152,8 +163,18 @@ const AllUsers = () => {
     setCurrentPage(1);
   }, [searchTerm, activeTab]);
 
-  // Current users are already paginated by the backend
-  const currentUsers = users;
+  // Fetch all users on component mount and when search/active tab changes
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        await fetchUsers('/api/admin/users?limit=1000'); // Fetch all users with a high limit
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
+    
+    fetchData();
+  }, [fetchUsers]);
 
   // ✅ Debounced search
   const debouncedSearch = useCallback(
@@ -438,57 +459,69 @@ const AllUsers = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium space-x-3">
-                      <button
-                        onClick={() => handleRoleChange(user._id, user.role)}
-                        disabled={isUpdating === user._id}
-                        className={`inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white ${
-                          user.role === "admin"
-                            ? "bg-yellow-600 hover:bg-yellow-700"
-                            : "bg-indigo-600 hover:bg-indigo-700"
-                        }`}
-                      >
-                        {isUpdating === user._id ? (
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        ) : (
-                          <UserCog className="w-3 h-3 mr-1" />
-                        )}
-                        {user.role === "admin" ? "Make User" : "Make Admin"}
-                      </button>
-                      <button
-                        onClick={() => handleViewBilling(user._id)}
-                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white bg-purple-600 hover:bg-purple-700"
-                      >
-                        <CreditCard className="w-3 h-3 mr-1" />
-                        View Billing
-                      </button>
-                      <button
-                        onClick={() => handleDelete(user._id)}
-                        disabled={isDeleting === user._id}
-                        className="inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white bg-red-600 hover:bg-red-700"
-                      >
-                        {isDeleting === user._id ? (
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-3 h-3 mr-1" />
-                        )}
-                        Delete
-                      </button>
-                      <button
-                        onClick={() => handleBlockUnblock(user._id, user.isBlocked)}
-                        disabled={isBlocking === user._id}
-                        className={`inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white ${
-                          user.isBlocked ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
-                        }`}
-                      >
-                        {isBlocking === user._id ? (
-                          <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                        ) : user.isBlocked ? (
-                          <Unlock className="w-3 h-3 mr-1" />
-                        ) : (
-                          <Lock className="w-3 h-3 mr-1" />
-                        )}
-                        {user.isBlocked ? 'Unblock' : 'Block'}
-                      </button>
+                      {!isMainAdmin(user) && (adminUsersCount > 1 || user.role !== 'admin') ? (
+                        <>
+                          <button
+                            onClick={() => handleRoleChange(user._id, user.role)}
+                            disabled={isUpdating === user._id}
+                            className={`inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white ${
+                              user.role === "admin"
+                                ? "bg-yellow-600 hover:bg-yellow-700"
+                                : "bg-indigo-600 hover:bg-indigo-700"
+                            }`}
+                          >
+                            {isUpdating === user._id ? (
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            ) : (
+                              <UserCog className="w-3 h-3 mr-1" />
+                            )}
+                            {user.role === "admin" ? "Make User" : "Make Admin"}
+                          </button>
+                          
+                          {/* Only show View Billing for non-admin users */}
+                          {user.role !== 'admin' && (
+                            <button
+                              onClick={() => handleViewBilling(user._id)}
+                              className="inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                            >
+                              <CreditCard className="w-3 h-3 mr-1" />
+                              View Billing
+                            </button>
+                          )}
+                          
+                          <button
+                            onClick={() => handleDelete(user._id)}
+                            disabled={isDeleting === user._id}
+                            className="inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white bg-red-600 hover:bg-red-700"
+                          >
+                            {isDeleting === user._id ? (
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-3 h-3 mr-1" />
+                            )}
+                            Delete
+                          </button>
+                          
+                          <button
+                            onClick={() => handleBlockUnblock(user._id, user.isBlocked)}
+                            disabled={isBlocking === user._id}
+                            className={`inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white ${
+                              user.isBlocked ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
+                            }`}
+                          >
+                            {isBlocking === user._id ? (
+                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                            ) : user.isBlocked ? (
+                              <Unlock className="w-3 h-3 mr-1" />
+                            ) : (
+                              <Lock className="w-3 h-3 mr-1" />
+                            )}
+                            {user.isBlocked ? 'Unblock' : 'Block'}
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-sm text-gray-500">Admin actions not available</span>
+                      )}
                     </td>
                   </tr>
                 ))
@@ -498,10 +531,10 @@ const AllUsers = () => {
         </div>
 
         {/* Pagination */}
-        {pagination.pages > 1 && (
+        {totalPages > 1 && (
           <Pagination
-            currentPage={pagination.page}
-            totalPages={pagination.pages}
+            currentPage={currentPage}
+            totalPages={totalPages}
             onPageChange={handlePageChange}
           />
         )}

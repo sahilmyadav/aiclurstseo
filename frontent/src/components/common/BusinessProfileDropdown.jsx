@@ -53,8 +53,14 @@ const BusinessProfileDropdown = ({
 
   // Check if a business can be selected
   const canSelectBusiness = (business) => {
-    // If no subscription or subscription expired, cannot select
-    if (!subscriptionData || !isSubscriptionActive) return false;
+    // If no subscription data, cannot select
+    if (!subscriptionData) return false;
+    
+    // Check if subscription is active
+    const isActive = subscriptionData.active && 
+                    subscriptionData.subscription?.status === 'active';
+    
+    if (!isActive) return false;
     
     // If already selected, can deselect
     if (multiple) {
@@ -70,7 +76,8 @@ const BusinessProfileDropdown = ({
 
   // Auto-select first business if none selected and within limits
   useEffect(() => {
-    if (businesses?.length > 0 && !selectedBusiness && !businessesLoading && maxProfiles > 0) {
+    if (businesses?.length > 0 && !selectedBusiness && !businessesLoading && 
+        subscriptionData?.active && subscriptionData.subscription?.status === 'active') {
       const firstBusiness = businesses[0];
       if (canSelectBusiness(firstBusiness)) {
         selectBusiness(firstBusiness);
@@ -139,7 +146,7 @@ const BusinessProfileDropdown = ({
   }
 
   // Show subscription status message if no active subscription
-  if (!subscriptionData || !isSubscriptionActive) {
+  if (!subscriptionData || subscriptionData.status === 'expired') {
     return (
       <div className={`bg-yellow-50 border-l-4 border-yellow-400 p-4 ${className}`}>
         <div className="flex">

@@ -28,6 +28,7 @@ import { useAuth } from './components/context/AuthContext'
 import AdminDashboard from './components/admin/AdminDashboard'
 import { Users } from 'lucide-react'
 import AllUsers from './components/admin/AllUsers'
+import EditPlans from './components/admin/EditPlans'
 import { AdminProvider } from './context/AdminContext'
 import Reviews from './components/Reviews'
 import SubscriptionPage from './components/subscription/SubscriptionPage'
@@ -35,7 +36,7 @@ import SubscriptionSuccess from './components/subscription/SubscriptionSuccess'
 import About from './pages/About'
 import Billing from './components/subscription/Billing'
 import BusinessDetails from './components/BusinessDetails'
-
+import UserSubscriptionDetails from './components/subscription/UserSubsriptionDetails'
 
 const AppContent = () => {
   const location = useLocation()
@@ -65,6 +66,7 @@ const AppContent = () => {
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
         <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />
         <Route path="/review/:locationId" element={<MakeReview />} />
+        <Route path="/subscription/success" element={<SubscriptionSuccess />} />
         <Route path="/analytics-dashboard" element={isAuthenticated ? <AnalyticsDashboard /> : <Navigate to="/login" />} />
         <Route path="/seo-dashboard" element={isAuthenticated ? <SeoDashboard /> : <Navigate to="/login" />} />
         <Route path="/reviews" element={isAuthenticated ? <Allreviews /> : <Navigate to="/login" />} />
@@ -86,7 +88,6 @@ const AppContent = () => {
             <Route path="social-sharing" element={<Posts />} />
             <Route path="schedule-post" element={<SocialSharing />} />
             <Route path="subscription" element={<SubscriptionPage />} />
-            <Route path="subscription/success" element={<SubscriptionSuccess />} />
             <Route path="billing" element={<Billing />} />
             <Route path="business-details" element={<BusinessDetails />} />
             
@@ -112,7 +113,9 @@ const AppContent = () => {
               <Route path="settings" element={<Settings />} />
               <Route path="users" element={<AllUsers />} />
               <Route path="analytics" element={<AnalyticsDashboard />} />
-              <Route path="billing" element={<Billing />} />
+              <Route path="billing" element={<UserSubscriptionDetails />} />
+              <Route path="plans" element={<EditPlans />} />
+              <Route path="subscription-plans" element={<EditPlans />} />
             </Route>
           )
         }

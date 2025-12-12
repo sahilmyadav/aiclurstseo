@@ -11,29 +11,15 @@ const UserSchema = new mongoose.Schema(
     
     // Subscription information
     subscription: {
-      activeSubscriptionId: { 
+      currentSubscriptionId: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'Subscription' 
       },
-      nextPendingSubscriptionId: { 
-        type: mongoose.Schema.Types.ObjectId, 
-        ref: 'Subscription' 
+      stripeCustomerId: { 
+        type: String,
+        index: true,
+        sparse: true
       },
-      pendingSubscriptions: [{
-        subscriptionId: { 
-          type: mongoose.Schema.Types.ObjectId, 
-          ref: 'Subscription' 
-        },
-        status: { 
-          type: String, 
-          enum: ['pending'],
-          default: 'pending'
-        },
-        addedAt: { 
-          type: Date, 
-          default: Date.now 
-        }
-      }],
       hasUsedTrial: { 
         type: Boolean, 
         default: false 
@@ -47,9 +33,8 @@ const UserSchema = new mongoose.Schema(
           ref: 'Subscription' 
         },
         status: { 
-          type: String, 
-          enum: ['active', 'expired', 'cancelled'],
-          default: 'active'
+          type: String,
+          enum: ['expired', 'cancelled', 'failed']
         },
         changedAt: { 
           type: Date, 
@@ -57,22 +42,12 @@ const UserSchema = new mongoose.Schema(
         }
       }]
     },
-    
-    // Firebase fields
-    firebaseUid: { type: String },
-    avatar: { type: String },
-    provider: { type: String, enum: ['local', 'google', 'firebase'], default: 'local' },
-    isEmailVerified: { type: Boolean, default: false },
-    isBlocked: { type: Boolean, default: false },
-    // Login tracking
-    lastLogin: { type: Date, default: Date.now },
     loginCount: { type: Number, default: 0 }
   },
   { timestamps: true }
 );
 
 UserSchema.index({ email: 1 }, { unique: true });
-UserSchema.index({ phone: 1 }, { unique: true, sparse: true });
 UserSchema.index({ firebaseUid: 1 }, { unique: true, sparse: true });
 
 export default mongoose.model('User', UserSchema);

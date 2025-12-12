@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
+import { useAuth } from './context/AuthContext';
 import React from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -179,6 +180,7 @@ const Reviews = () => {
     const [currentReplyIndex, setCurrentReplyIndex] = useState(0);
     const [activeFilter, setActiveFilter] = useState('all');
     const { reviews, selectedBusiness, businesses, loading, selectBusiness, tokenDetails } = useGoogleBusiness();
+    const { user: authUser } = useAuth();
     
     // Initialize expanded rows when reviews are loaded
     useEffect(() => {
@@ -308,6 +310,10 @@ const Reviews = () => {
             const locationId = selectedBusiness.name.split("/")[1];
             const reviewId = currentReview.reviewData.name.split("/").pop();
             
+            // Get Google OAuth tokens from localStorage
+            const oauthKey = `google_oauth_tokens_${authUser?.id || 'guest'}`;
+            const oauthTokens = JSON.parse(localStorage.getItem(oauthKey) || '{}');
+            
             // Create axios instance with base URL and default headers
             const api = axios.create({
                 baseURL: 'http://localhost:8000', // Replace with your actual backend URL
@@ -319,13 +325,19 @@ const Reviews = () => {
                 timeout: 10000 // 10 seconds timeout
             });
 
+            // Build URL with OAuth parameters
+            const params = new URLSearchParams({
+                ...(oauthTokens.access_token && { access_token: oauthTokens.access_token }),
+                ...(oauthTokens.refresh_token && { refresh_token: oauthTokens.refresh_token }),
+                ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date })
+            });
+
             // Use the same endpoint for both create and update
-            const response = await api.post('/api/reviews/reply', {
+            const response = await api.post(`/api/reviews/reply?${params}`, {
                 comment: replyText,
                 accountId,
                 locationId,
-                reviewId,
-                accessToken: tokenDetails?.accessToken
+                reviewId
             });
             
             console.log('Response:', response.data);
@@ -457,6 +469,10 @@ const Reviews = () => {
         const locationId = selectedBusiness.name.split("/")[1];
         const reviewId = review.reviewData.name.split("/").pop();
         
+        // Get Google OAuth tokens from localStorage
+        const oauthKey = `google_oauth_tokens_${authUser?.id || 'guest'}`;
+        const oauthTokens = JSON.parse(localStorage.getItem(oauthKey) || '{}');
+        
         const api = axios.create({
             baseURL: 'http://localhost:8000',
             headers: {
@@ -467,12 +483,18 @@ const Reviews = () => {
             timeout: 10000
         });
         
-        await api.post('/api/reviews/reply', {
+        // Build URL with OAuth parameters
+        const params = new URLSearchParams({
+            ...(oauthTokens.access_token && { access_token: oauthTokens.access_token }),
+            ...(oauthTokens.refresh_token && { refresh_token: oauthTokens.refresh_token }),
+            ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date })
+        });
+        
+        await api.post(`/api/reviews/reply?${params}`, {
             comment: aiReply,
             accountId,
             locationId,
-            reviewId,
-            accessToken: tokenDetails?.accessToken
+            reviewId
         });
         
         toast.success(`Replied to review from ${review.name}`);

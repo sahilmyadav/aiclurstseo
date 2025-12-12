@@ -67,8 +67,8 @@ const Dashboard = () => {
 
   // Calculate Performance Score (0-100) based on average rating
   const calculatePerformanceScore = () => {
-    if (!reviewStats || reviewStats.total === 0) return 0;
-    const avgRating = reviewStats.average || 0;
+    if (!reviewStats || !reviewStats.totalReviews) return 0;
+    const avgRating = reviewStats.averageRating || 0;
     const score = (avgRating / 5) * 100;
     return Math.round(score);
   };
@@ -107,9 +107,9 @@ const Dashboard = () => {
             <main className="flex-1 space-y-4 sm:space-y-6 pl-1 sm:pl-2 pr-1 sm:pr-4 overflow-y-auto max-h-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full">
                 {[
-                  { title: "AVERAGE RATING", value: reviewStats?.average ? `${reviewStats.average.toFixed(1)}` : '0.0' },
-                  { title: "TOTAL REVIEWS", value: reviewStats?.total ?? '0' },
-                  { title: "RECENT REVIEWS (30d)", value: reviewStats?.recentCount ?? '0' },
+                  { title: "AVERAGE RATING", value: reviewStats?.averageRating ? `${reviewStats.averageRating.toFixed(1)}` : '0.0' },
+                  { title: "TOTAL REVIEWS", value: reviewStats?.totalReviews?.toString() ?? '0' },
+                  { title: "RECENT REVIEWS (30d)", value: reviewStats?.recentReviews?.length?.toString() ?? '0' },
                   { title: "GOOGLE BUSINESS", value: isConnected ? 'Connected' : 'Not Connected' },
                 ].map((stat, i) => (
                   <div key={i} className="rounded-lg bg-[#1a1b2e]/90 border border-white/10 p-2 sm:p-3 h-16 `sm:h-20 flex flex-col justify-between min-w-0">
@@ -163,9 +163,9 @@ const Dashboard = () => {
                     <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-purple-700 to-indigo-600 flex items-center justify-center">
                       <div className="text-center">
                         <div className="text-xl sm:text-3xl font-extrabold">
-                          {loading ? '...' : (reviewStats?.average ? reviewStats.average.toFixed(1) : 'N/A')}
+                          {loading ? '...' : (reviewStats?.averageRating ? reviewStats.averageRating.toFixed(1) : 'N/A')}
                         </div>
-                        <div className="text-[10px] sm:text-[11px] text-white/70">{loading ? '...' : `${reviewStats?.total ?? 0} Reviews`}</div>
+                        <div className="text-[10px] sm:text-[11px] text-white/70">{loading ? '...' : `${reviewStats?.totalReviews ?? 0} Reviews`}</div>
                       </div>
                     </div>
                     <div className="flex-1 w-full">
@@ -174,7 +174,7 @@ const Dashboard = () => {
                           <div key={item.rating} className="flex items-center gap-2 sm:gap-3 py-1">
                             <span className="w-4 text-xs text-white/60">{item.rating}</span>
                             <div className="flex-1 h-2 sm:h-3 rounded bg-white/10 overflow-hidden">
-                              <div className="h-2 sm:h-3 bg-purple-500" style={{ width: `${reviewStats.total > 0 ? (item.count / reviewStats.total) * 100 : 0}%` }} />
+                              <div className="h-2 sm:h-3 bg-purple-500" style={{ width: `${reviewStats.totalReviews > 0 ? (item.count / reviewStats.totalReviews) * 100 : 0}%` }} />
                             </div>
                             <span className="w-12 sm:w-14 text-xs text-white/60 text-right">{item.count}</span>
                           </div>
