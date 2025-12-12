@@ -75,7 +75,7 @@ const EmailComponent = () => {
       // Generate the same link format as in QRCodeComponent
       const locationId = selectedBusiness.name?.split('/').pop() || '';
       const businessName = selectedBusiness.metadata?.newReviewUri || selectedBusiness.title || '';
-      const reviewLink = `${FRONTEND_URL}/review/${locationId}?name=${encodeURIComponent(businessName)}`;
+      const reviewLink = `${FRONTEND_URL}/review/${locationId}?reviewUri=${encodeURIComponent(businessName)}`;
 
       const res = await fetch(`${BACKEND_URL}/api/invitations/email`, {
         method: "POST",
