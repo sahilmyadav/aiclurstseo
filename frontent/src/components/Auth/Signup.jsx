@@ -83,7 +83,7 @@ const Signup = () => {
               }`}>
                 Create Account
               </h2>
-              <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600 mb-6">
+              <h1 className="text-5xl md:text-6xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600 mb-6 [text-shadow:_0_2px_10px_rgba(147,51,234,0.3)]">
                 Join Clurst AI
               </h1>
               <p className={`text-lg mb-8 ${
@@ -112,8 +112,10 @@ const Signup = () => {
           </div>
 
           {/* Right Side - Form */}
-          <div className={`w-full max-w-md rounded-xl shadow-2xl p-8 space-y-4 mt-10 lg:mt-0 ${
-            theme === 'dark' ? 'bg-gray-800' : 'bg-white shadow-lg'
+          <div className={`w-full max-w-md rounded-xl p-8 space-y-4 mt-10 lg:mt-0 backdrop-blur-xl transition-all duration-300 ${
+            theme === 'dark' 
+              ? 'bg-gray-900/40 shadow-[0_8px_32px_0px_rgba(76,29,149,0.3)] border border-gray-600/30' 
+              : 'bg-white/50 shadow-[0_8px_32px_0px_rgba(147,51,234,0.1)] border border-white/30'
           }`}>
             {alert.type && (
               <div className={`w-full px-4 py-3 rounded-lg text-sm ${alert.type === 'success' ? 'bg-green-500/15 text-green-300 border border-green-600/40' : 'bg-red-500/15 text-red-300 border border-red-600/40'}`}>

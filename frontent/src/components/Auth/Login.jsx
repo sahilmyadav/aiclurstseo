@@ -80,10 +80,10 @@ const Login = () => {
         </h1>
       </div>
 
-      <div className={`w-full max-w-md rounded-xl p-8 space-y-6 transition-all duration-300 ${
+      <div className={`w-full max-w-md rounded-xl p-8 space-y-6 transition-all duration-300 backdrop-blur-xl ${
         theme === 'dark' 
-          ? 'bg-gray-800 shadow-[0_8px_30px_-5px_rgba(76,29,149,0.3)]' 
-          : 'bg-white shadow-[0_8px_30px_-5px_rgba(147,51,234,0.2)]'
+          ? 'bg-gray-900/40 shadow-[0_8px_32px_0px_rgba(76,29,149,0.3)] border border-gray-600/30' 
+          : 'bg-white/50 shadow-[0_8px_32px_0px_rgba(147,51,234,0.1)] border border-white/30'
       }`}>
         {alert.type && (
           <div className={`w-full px-4 py-3 rounded-lg text-sm ${alert.type === 'success' ? 'bg-green-500/15 text-green-300 border border-green-600/40' : 'bg-red-500/15 text-red-300 border border-red-600/40'}`}>

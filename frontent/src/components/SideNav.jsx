@@ -23,6 +23,8 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSidebar } from './context/SidebarContext';
 import { useAuth } from './context/AuthContext';
 import { toast } from 'sonner';
+import ThemeToggle from './ThemeToggle';
+import { useTheme } from '../context/ThemeContext';
 
 const SideNav = () => {
   const location = useLocation();
@@ -36,6 +38,7 @@ const SideNav = () => {
     setMobileOpen,
   } = useSidebar();
   const { user, logout } = useAuth();
+  const { theme } = useTheme();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
 
@@ -135,31 +138,44 @@ const SideNav = () => {
     <>
       <button
         onClick={handleToggleMobileSidebar}
-        className="fixed top-4 left-4 lg:hidden z-50 p-2 rounded-md bg-[#0f1020] text-white border border-white/10 shadow-lg"
+        className={`fixed top-4 left-4 lg:hidden z-50 p-2 rounded-md ${
+          theme === 'dark' 
+            ? 'bg-[#0f1020] text-white border-white/10' 
+            : 'bg-white text-gray-800 border-gray-200'
+        } border shadow-lg`}
         aria-label="Toggle sidebar"
       >
         {mobileOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
       </button>
 
       <div
-        className={`fixed top-0 left-0 h-screen bg-[#0f1020] border-r border-white/10 flex flex-col transition-all duration-300 ease-in-out z-40 ${
+        className={`fixed top-0 left-0 h-screen ${
+          theme === 'dark' 
+            ? 'bg-[#0f1020] border-white/10 text-gray-200' 
+            : 'bg-white border-gray-200 text-gray-800'
+        } border-r flex flex-col transition-all duration-300 ease-in-out z-40 ${
           mobileOpen && isMobileView() ? 'w-64' : isCollapsed ? 'w-18' : 'w-64'
         } ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}
       >
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-shrink-0 flex items-center justify-between h-16 px-4 border-b border-white/10">
-            {!isCollapsed ? (
+          <div className={`flex-shrink-0 flex items-center justify-between h-16 px-4 border-b ${
+            theme === 'dark' ? 'border-white/10' : 'border-gray-200'
+          }`}>
+            <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white font-bold">
                   C
                 </div>
-                <span className="ml-3 text-lg font-semibold whitespace-nowrap bg-clip-text text-transparent font-bold font-weight-800 bg-gradient-to-r from-[#5d3be6] via-[#7b5fff] to-[#9a7dff]">Clurst Review</span>
+                {!isCollapsed && (
+                  <span className="ml-3 text-lg font-semibold whitespace-nowrap bg-clip-text text-transparent font-bold font-weight-800 bg-gradient-to-r from-[#5d3be6] via-[#7b5fff] to-[#9a7dff]">
+                    Clurst Review
+                  </span>
+                )}
               </div>
-            ) : (
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white font-bold mx-auto">
-                C
+              <div className={`${!isCollapsed ? 'ml-2' : ''}`}>
+                <ThemeToggle />
               </div>
-            )}
+            </div>
             {!((mobileOpen && isMobileView())) && !isCollapsed ? (
               <button onClick={toggleSidebar} className="ml-auto p-1 rounded-md text-gray-400 hover:bg-gray-700">
                 <ChevronLeft size={20} />
@@ -180,8 +196,10 @@ const SideNav = () => {
                     onClick={(e) => handleNavClick(e, item)}
                     className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
                       item.active
-                        ? 'bg-gradient-to-r from-[#5d3be6] via-[#7b5fff] to-[#9a7dff]'
-                        : 'text-gray-300 hover:bg-[#1a1b2e]'
+                        ? 'bg-gradient-to-r from-[#5d3be6] via-[#7b5fff] to-[#9a7dff] text-white'
+                        : theme === 'dark' 
+                          ? 'text-gray-300 hover:bg-[#1a1b2e]' 
+                          : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
                     <item.icon className="w-5 h-5" />
@@ -195,10 +213,19 @@ const SideNav = () => {
             </ul>
           </nav>
 
-          <div className="mt-auto border-t border-white/10 p-4 bg-[#0f1020]" ref={profileRef}>
+          {/* Profile Section */}
+          <div className={`border-t p-4 ${
+            theme === 'dark' 
+              ? 'border-white/10 bg-[#0f1020]' 
+              : 'border-gray-200 bg-gray-50'
+          }`} ref={profileRef}>
             <div 
               onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className="flex items-center space-x-3 p-2 rounded-lg hover:bg-[#1a1b2e] cursor-pointer"
+              className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer ${
+                theme === 'dark' 
+                  ? 'hover:bg-[#1a1b2e]' 
+                  : 'hover:bg-gray-100'
+              }`}
             >
               <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                 {getUserInitials()}
@@ -206,6 +233,11 @@ const SideNav = () => {
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium truncate">{user?.name}</p>
+                  <div className={`text-sm ${
+              theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+            }`}>
+              v1.0.0
+            </div>
                   <p className="text-xs text-gray-400 truncate">{user?.email}</p>
                 </div>
               )}
