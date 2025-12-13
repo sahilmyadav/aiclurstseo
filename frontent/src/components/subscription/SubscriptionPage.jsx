@@ -385,8 +385,8 @@ const SubscriptionPage = () => {
                 <FiUsers className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Number of Profiles</h3>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Select how many social media profiles you want to manage</p>
+                <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Number of GMB Profiles</h3>
+                <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Select how many Google Business profiles you want to manage</p>
               </div>
             </div>
             <div className="flex items-center space-x-3">
