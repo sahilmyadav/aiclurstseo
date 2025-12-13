@@ -7,6 +7,7 @@ import {
 import { useState, useEffect, useCallback } from 'react';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import { useAuth } from './context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import React from 'react';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -43,7 +44,7 @@ const AutoReplyControls = ({
                                         <div className={`block w-14 h-8 rounded-full transition-colors duration-300 ${
                                             isAutoReplyMode ? 'bg-blue-500' : 'bg-gray-300 dark:bg-gray-600'
                                         }`}></div>
-                                        <div className={`absolute left-1 top-1 bg-white w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ${
+                                        <div className={`absolute left-1 top-1 bg-white dark:bg-gray-700 w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ${
                                             isAutoReplyMode ? 'translate-x-6' : 'translate-x-0'
                                         }`}></div>
                                     </div>
@@ -164,6 +165,7 @@ Auto-replying to reviews...
 );
 
 const Reviews = () => {
+    const { theme } = useTheme();
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedRows, setExpandedRows] = useState({});
     const [replyDialogOpen, setReplyDialogOpen] = useState(false);
@@ -654,7 +656,7 @@ const renderReviewRow = (review) => {
                         <div className="flex items-center justify-end space-x-2">
                             {hasReply ? (
                                 <button
-                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleEditReply(review);
@@ -665,7 +667,7 @@ const renderReviewRow = (review) => {
                                 </button>
                             ) : (
                                 <button
-                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-150"
+                                    className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                                     onClick={(e) => {
                                         e.stopPropagation();
                                         handleReply(review);
@@ -683,7 +685,7 @@ const renderReviewRow = (review) => {
     };
 
     return (
-        <div className="relative">
+        <div className="relative bg-gray-50 dark:bg-gray-900 min-h-screen">
             {renderBusinessDropdown()}
             
             {/* Auto-reply Controls */}
@@ -707,7 +709,7 @@ const renderReviewRow = (review) => {
                         onClick={() => setActiveFilter('all')}
                         className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                             activeFilter === 'all' 
-                                ? 'bg-blue-600 text-white' 
+                                ? 'bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
                         }`}
                     >
@@ -717,7 +719,7 @@ const renderReviewRow = (review) => {
                         onClick={() => setActiveFilter('needsReply')}
                         className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                             activeFilter === 'needsReply' 
-                                ? 'bg-amber-500 text-white' 
+                                ? 'bg-amber-500 text-white hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
                         }`}
                     >
@@ -727,7 +729,7 @@ const renderReviewRow = (review) => {
                         onClick={() => setActiveFilter('replied')}
                         className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
                             activeFilter === 'replied' 
-                                ? 'bg-green-600 text-white' 
+                                ? 'bg-green-600 text-white hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600' 
                                 : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-200 dark:hover:bg-gray-600'
                         }`}
                     >
@@ -940,10 +942,10 @@ const renderReviewRow = (review) => {
             
             {/* Reply Dialog */}
             {replyDialogOpen && (
-                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden">
+                <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden border border-gray-200 dark:border-gray-700">
                         {/* Left side - Reply Form */}
-                        <div className="flex-1 p-6 border-r border-gray-200 dark:border-gray-700">
+                        <div className="flex-1 p-6 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                     {isEditMode ? 'Edit Reply' : 'Reply to Review'}
@@ -967,7 +969,7 @@ const renderReviewRow = (review) => {
                                             type="button"
                                             onClick={() => generateAIReview()}
                                             disabled={isGeneratingAI || !currentReview}
-                                            className="inline-flex items-center text-sm px-3 py-1.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                            className="inline-flex items-center text-sm px-3 py-1.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-800/50 dark:text-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-blue-100 dark:border-blue-900/50"
                                         >
                                             {isGeneratingAI ? (
                                                 <>
@@ -987,7 +989,7 @@ const renderReviewRow = (review) => {
                                         value={replyText}
                                         onChange={(e) => setReplyText(e.target.value)}
                                         rows={8}
-                                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white resize-none"
+                                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 resize-none"
                                         placeholder="Type your response or generate one with AI..."
                                     />
                                 </div>
@@ -1004,7 +1006,7 @@ const renderReviewRow = (review) => {
                                         type="button"
                                         onClick={submitReply}
                                         disabled={replyLoading || !replyText.trim()}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         {replyLoading ? (
                                             <span className="flex items-center">
@@ -1020,7 +1022,7 @@ const renderReviewRow = (review) => {
                         </div>
                         
                         {/* Right side - AI Suggestions */}
-                        <div className="w-full md:w-80 bg-gray-50 dark:bg-gray-800/50 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 p-6 overflow-y-auto max-h-[80vh]">
+                        <div className="w-full md:w-80 bg-gray-50 dark:bg-gray-800/80 border-t md:border-t-0 md:border-l border-gray-200 dark:border-gray-700 p-6 overflow-y-auto max-h-[80vh]">
                             <div className="flex items-center justify-between mb-4">
                                 <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                     AI Assistant
@@ -1083,7 +1085,7 @@ const renderReviewRow = (review) => {
                                 </div>
                             ) : (
                                 <div className="text-center py-8">
-                                    <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/30 mb-3">
+                                    <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 dark:bg-blue-900/40 mb-3 border border-blue-200 dark:border-blue-800">
                                         <Sparkles className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                                     </div>
                                     <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">AI-Powered Suggestions</h4>

@@ -2,19 +2,43 @@ import { useContext, useState, useEffect } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Cell } from "recharts";
 import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
+import { useTheme } from '../context/ThemeContext';
 
 function Card({ children, className }) {
-  return <div className={`rounded-xl shadow-md ${className}`}>{children}</div>;
+  const { theme } = useTheme();
+  return (
+    <div className={`rounded-xl shadow-md ${
+      theme === 'dark' 
+        ? 'bg-[#1e1e3a] text-white' 
+        : 'bg-white text-gray-900'
+    } ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 function CardContent({ children, className }) {
-  return <div className={`p-4 ${className}`}>{children}</div>;
+  const { theme } = useTheme();
+  return (
+    <div className={`p-4 ${
+      theme === 'dark' 
+        ? 'bg-[#1e1e3a] text-white' 
+        : 'bg-white text-gray-900'
+    } ${className}`}>
+      {children}
+    </div>
+  );
 }
 
 function Button({ children, className, ...props }) {
+  const { theme } = useTheme();
   return (
     <button
-      className={`px-4 py-2 rounded-lg font-medium transition ${className}`}
+      className={`px-4 py-2 rounded-lg font-medium transition ${
+        theme === 'dark' 
+          ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+          : 'bg-purple-600 hover:bg-purple-700 text-white'
+      } ${className}`}
       {...props}
     >
       {children}
@@ -24,6 +48,7 @@ function Button({ children, className, ...props }) {
 
 export default function ReviewPage() {
   const [rating, setRating] = useState(0);
+  const { theme } = useTheme();
   const { localReviews, selectedBusiness, isConnected, reviewUri } = useGoogleBusiness();
 
   // Use local reviews if available, otherwise use hardcoded reviews
@@ -100,26 +125,32 @@ export default function ReviewPage() {
   };
 
   return (
-    <div className="min-h-screen w-full text-white">
+    <div className={`min-h-screen w-full ${theme === 'dark' ? 'text-white bg-[#0f1020]' : 'text-gray-900 bg-gray-50'}`}>
       <div className="w-full px-2 sm:px-4 md:px-6 mx-auto transition-all duration-300">
         <div className="w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-4 sm:space-y-6">
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold">Review Link</h2>
-                <p className="text-xs sm:text-sm text-gray-300 mt-2">
+                <h2 className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Review Link</h2>
+                <p className={`text-xs sm:text-sm mt-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                   Help us grow by sharing your valuable feedback. Click the link to leave
                   your review, and subscribe to receive updates, tips, and special offers.
                 </p>
-                <div className="flex flex-col sm:flex-row items-center mt-4 bg-[#111] rounded-lg p-2 gap-2">
+                <div className={`flex flex-col sm:flex-row items-center mt-4 rounded-lg p-2 gap-2 ${
+                  theme === 'dark' ? 'bg-[#111]' : 'bg-gray-100'
+                }`}>
                   <input
                     type="text"
                     value={displayUrl}
                     readOnly
-                    className="bg-transparent flex-1 text-xs sm:text-sm px-2 outline-none w-full"
+                    className={`flex-1 text-xs sm:text-sm px-2 outline-none w-full ${
+                      theme === 'dark' 
+                        ? 'bg-[#111] text-white' 
+                        : 'bg-gray-100 text-gray-900'
+                    }`}
                   />
                   <Button 
-                    className="bg-purple-600 hover:bg-purple-700 text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2"
+                    className="text-xs sm:text-sm px-3 py-1 sm:px-4 sm:py-2"
                     onClick={copyToClipboard}
                   >
                     Copy
@@ -128,20 +159,24 @@ export default function ReviewPage() {
               </div>
 
               <div>
-                <h2 className="text-xl sm:text-2xl font-bold mb-4">Recent Feedback</h2>
+                <h2 className={`text-xl sm:text-2xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Recent Feedback</h2>
                 <div className="space-y-3 sm:space-y-4 h-[calc(100vh-300px)] overflow-y-auto pr-1" style={{scrollbarWidth:"none"}}>
                   {reviews.map((review) => (
-                    <Card key={review.id} className="bg-[#1e1e3a] border-none text-white">
+                    <Card key={review.id} className="border-none">
                       <CardContent className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4">
                         <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gray-500 flex-shrink-0"></div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-sm sm:text-base truncate">{review.name}</h3>
+                            <h3 className={`font-semibold text-sm sm:text-base truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{review.name}</h3>
                             <div className="text-yellow-400 text-sm sm:text-base">
                               {'⭐'.repeat(review.stars)}
                             </div>
                           </div>
-                          <p className="text-xs sm:text-sm text-gray-300 mt-2 break-words">{review.text}</p>
+                          <p className={`text-xs sm:text-sm mt-2 break-words ${
+                            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+                          }`}>
+                            {review.text}
+                          </p>
                         </div>
                       </CardContent>
                     </Card>
@@ -151,9 +186,9 @@ export default function ReviewPage() {
             </div>
 
             <div className="space-y-4 sm:space-y-6">
-              <Card className="bg-[#1e1e3a] border-none text-white h-full">
+              <Card className="border-none h-full">
                 <CardContent className="h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)]">
-                  <h2 className="text-lg sm:text-xl font-bold mb-4">Ratings Summary</h2>
+                  <h2 className={`text-lg sm:text-xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Ratings Summary</h2>
                   <ResponsiveContainer width="100%" height="90%">
                     <BarChart data={ratings} layout="vertical" margin={{ top: 5, right: 30, left: 30, bottom: 5 }}>
                       <XAxis type="number" hide />
@@ -161,19 +196,25 @@ export default function ReviewPage() {
                         dataKey="stars" 
                         type="category" 
                         width={80} 
-                        tick={{ fill: '#e2e8f0', fontSize: 12 }}
+                        tick={{ 
+                          fill: theme === 'dark' ? '#e2e8f0' : '#334155', 
+                          fontSize: 12 
+                        }}
                         axisLine={false}
                         tickLine={false}
                       />
                       <Tooltip 
                         contentStyle={{ 
-                          backgroundColor: '#1e293b', 
-                          borderColor: '#334155', 
+                          backgroundColor: theme === 'dark' ? '#1e293b' : '#f8fafc', 
+                          borderColor: theme === 'dark' ? '#334155' : '#cbd5e1', 
                           borderRadius: '0.5rem',
-                          color: '#f8fafc'
+                          color: theme === 'dark' ? '#f8fafc' : '#1e293b'
                         }}
-                        itemStyle={{ color: '#f8fafc' }}
-                        labelStyle={{ color: '#e2e8f0', fontWeight: 'bold' }}
+                        itemStyle={{ color: theme === 'dark' ? '#f8fafc' : '#1e293b' }}
+                        labelStyle={{ 
+                          color: theme === 'dark' ? '#e2e8f0' : '#334155', 
+                          fontWeight: 'bold' 
+                        }}
                       />
                       <Bar dataKey="count" radius={[0, 8, 8, 0]}>
                         {ratings.map((entry, index) => (
@@ -184,7 +225,6 @@ export default function ReviewPage() {
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
-
             </div>
           </div>
         </div>

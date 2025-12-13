@@ -4,6 +4,7 @@ import SideNav from "./SideNav";
 import { useSidebar } from "./context/SidebarContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 import { useAuth } from "./context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import ScheduledPosts from "./ScheduledPosts";
 import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
 import { 
@@ -34,6 +35,7 @@ if (!BACKEND_URL) {
 }
 
 const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
+  const { theme } = useTheme();
 
   // console.log("BACKEND_URL  ",BACKEND_URL);
   const formatDate = (date) => {
@@ -55,15 +57,21 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
                             'Business';
 
   return (
-    <div className="bg-gradient-to-br from-[#1a1b2e] to-[#121324] border border-white/5 rounded-xl p-4 mb-4 shadow-lg hover:shadow-xl transition-all duration-300 hover:border-blue-500/30">
+    <div className={`rounded-xl p-4 mb-4 shadow-lg hover:shadow-xl transition-all duration-300 ${theme === 'dark' 
+      ? 'bg-gradient-to-br from-[#1a1b2e] to-[#121324] border border-white/5 hover:border-blue-500/30' 
+      : 'bg-white border border-gray-200 hover:border-blue-500/30'}`}>
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-br from-blue-500/20 to-indigo-500/20 p-2.5 rounded-xl shadow-inner">
-            <FaGoogle className="text-blue-300 text-lg" />
+          <div className={`p-2.5 rounded-xl shadow-inner ${theme === 'dark' 
+            ? 'bg-gradient-to-br from-blue-500/20 to-indigo-500/20' 
+            : 'bg-blue-100'}`}>
+            <FaGoogle className={`text-lg ${theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`} />
           </div>
           <div>
             <div className="flex items-center">
-              <span className="text-blue-300 text-xs font-medium bg-blue-500/20 px-2.5 py-1 rounded-full border border-blue-400/20">
+              <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${theme === 'dark' 
+                ? 'text-blue-300 bg-blue-500/20 border-blue-400/20' 
+                : 'text-blue-700 bg-blue-100 border-blue-200'}`}>
                 {displayBusinessName}
               </span>
             </div>
@@ -71,20 +79,28 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
         </div>
       </div>
       <div className="pl-1">
-        <p className="text-sm text-white/90 leading-relaxed mb-3 line-clamp-3">{post.content}</p>
+        <p className={`text-sm leading-relaxed mb-3 line-clamp-3 ${theme === 'dark' ? 'text-white/90' : 'text-gray-700'}`}>
+          {post.content}
+        </p>
         {post.media && (
-          <div className="mt-2 w-full h-36 bg-gradient-to-r from-blue-500/10 to-indigo-500/10 rounded-lg flex items-center justify-center overflow-hidden border border-white/5">
+          <div className={`mt-2 w-full h-36 rounded-lg flex items-center justify-center overflow-hidden ${theme === 'dark' 
+            ? 'bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-white/5' 
+            : 'bg-blue-50 border border-gray-200'}`}>
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <span className="text-xs text-white/70 bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm">
+            <span className={`text-xs px-3 py-1.5 rounded-full backdrop-blur-sm ${theme === 'dark' 
+              ? 'text-white/70 bg-black/40' 
+              : 'text-gray-600 bg-gray-200'}`}>
               View Media
             </span>
           </div>
         )}
-        <div className="mt-3 pt-2 border-t border-white/5 text-xs text-white/50 space-y-1.5">
+        <div className={`mt-3 pt-2 text-xs space-y-1.5 ${theme === 'dark' 
+          ? 'border-t border-white/5 text-white/50' 
+          : 'border-t border-gray-200 text-gray-500'}`}>
           {post.status === 'scheduled' ? (
             <>
               <div className="flex items-center gap-1.5">
-                <FaCalendarAlt className="text-blue-400/80 flex-shrink-0" />
+                <FaCalendarAlt className={`flex-shrink-0 ${theme === 'dark' ? 'text-blue-400/80' : 'text-blue-500'}`} />
                 <span>
                   {post.isRecurring ? 'Next run: ' : 'Scheduled for: '}
                   {formatDate(post.nextRun || post.scheduledFor)}
@@ -92,29 +108,33 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
               </div>
               {post.isRecurring && (
                 <div className="flex items-start gap-1.5">
-                  <FaSync className="text-blue-400/80 mt-0.5 flex-shrink-0" />
+                  <FaSync className={`mt-0.5 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400/80' : 'text-blue-500'}`} />
                   <div>
                     <div>Recurring: {post.repeatType}</div>
                     {post.lastRun && (
-                      <div className="text-white/60">Last run: {formatDate(post.lastRun)}</div>
+                      <div className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>
+                        Last run: {formatDate(post.lastRun)}
+                      </div>
                     )}
                   </div>
                 </div>
               )}
-              <div className="flex items-center gap-1.5 text-blue-300/80">
+              <div className={`flex items-center gap-1.5 ${theme === 'dark' ? 'text-blue-300/80' : 'text-blue-600'}`}>
                 <FaInfoCircle className="flex-shrink-0" />
                 <span>{post.statusFromApi === 'pending' ? 'Pending' : 'Scheduled'}</span>
               </div>
             </>
           ) : post.status === 'published' ? (
             <div className="flex items-center gap-1.5">
-              <FaCheckCircle className="text-green-400/80 flex-shrink-0" />
+              <FaCheckCircle className={`flex-shrink-0 ${theme === 'dark' ? 'text-green-400/80' : 'text-green-500'}`} />
               <span>Posted on {formatDate(post.postedAt)}</span>
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 text-amber-400/80">
-              <FaEdit className="flex-shrink-0" />
-              <span>Draft - Not published</span>
+            <div className="flex items-center gap-1.5">
+              <FaEdit className={`flex-shrink-0 ${theme === 'dark' ? 'text-amber-400/80' : 'text-amber-500'}`} />
+              <span className={theme === 'dark' ? 'text-amber-400/80' : 'text-amber-500'}>
+                Draft - Not published
+              </span>
             </div>
           )}
         </div>
@@ -126,6 +146,7 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
 const Posts = () => {
   const { isCollapsed } = useSidebar();
   const { user: authUser } = useAuth();
+  const { theme } = useTheme();
   const { 
     isConnected: isGoogleConnected, 
     businesses, 
@@ -666,16 +687,16 @@ const Posts = () => {
   };
 
   return (
-    <div className="min-h-screen w-full text-white bg-transparent flex">
+    <div className={`min-h-screen w-full flex ${theme === 'dark' ? 'text-white bg-transparent' : 'text-gray-900 bg-gray-50'}`}>
       <SideNav />
       <div className="flex-1 transition-all duration-300 ease-in-out w-full overflow-x-hidden pl-0 md:pl-4">
         <div className="w-full max-w-full px-2 sm:px-4 md:px-6">
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
-                <h1 className="text-2xl sm:text-3xl font-bold">Google My Business Posts</h1>
+                <h1 className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Google My Business Posts</h1>
                 {selectedBusiness && (
-                  <p className="text-sm text-white/60">
+                  <p className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
                     Business: {selectedBusiness.title || selectedBusiness.locationName || selectedBusiness.name?.split('/').pop()}
                   </p>
                 )}
@@ -743,10 +764,10 @@ const Posts = () => {
                   </button>
                 </div>
                 {!isGoogleConnected && (
-                  <p className="text-xs text-red-400 mt-1 text-center sm:text-right">
+                  <p className={`text-xs mt-1 text-center sm:text-right ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
                     <a 
                       href="/dashboard/integrations" 
-                      className="hover:text-red-300 underline transition-colors"
+                      className={`underline transition-colors ${theme === 'dark' ? 'hover:text-red-300' : 'hover:text-red-700'}`}
                     >
                       Connect to Google
                     </a> to create posts.
@@ -757,7 +778,9 @@ const Posts = () => {
           </div>
 
           {/* Tabs */}
-          <div className="border-b border-white/10 mb-6 bg-[#1a1b2e]/50 backdrop-blur-sm rounded-t-lg">
+          <div className={`border-b mb-6 backdrop-blur-sm rounded-t-lg ${theme === 'dark' 
+            ? 'border-white/10 bg-[#1a1b2e]/50' 
+            : 'border-gray-200 bg-white'}`}>
             <div className="flex overflow-x-auto scrollbar-hide px-2 py-2">
               {['published', 'scheduled', 'drafts'].map((tab) => (
                 <button
@@ -766,14 +789,18 @@ const Posts = () => {
                   className={`px-4 py-2 text-sm font-medium whitespace-nowrap flex-shrink-0 rounded-lg mx-1 transition-all duration-200 ${
                     activeTab === tab
                       ? 'text-white bg-blue-600 shadow-lg'
-                      : 'text-white/70 hover:text-white hover:bg-white/10'
+                      : theme === 'dark' 
+                        ? 'text-white/70 hover:text-white hover:bg-white/10' 
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
                   <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
                     activeTab === tab 
                       ? 'bg-white/20 text-white' 
-                      : 'bg-white/10 text-white/60'
+                      : theme === 'dark' 
+                        ? 'bg-white/10 text-white/60' 
+                        : 'bg-gray-100 text-gray-600'
                   }`}>
                     {tab === 'scheduled' ? formattedScheduledPosts.length : posts.filter(p => p.status === tab).length}
                   </span>
@@ -785,10 +812,14 @@ const Posts = () => {
           <div>
             {!isGoogleConnected ? (
               <div className="text-center py-12">
-                <div className="bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border border-blue-500/30 rounded-xl p-8">
+                <div className={`bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border rounded-xl p-8 ${
+                  theme === 'dark' ? 'border-blue-500/30' : 'border-blue-300'
+                }`}>
                   <FaGoogle className="mx-auto text-5xl mb-4 text-blue-400" />
-                  <h3 className="text-xl font-semibold mb-2 text-white">Connect Your Google Business</h3>
-                  <p className="text-white/60 mb-6 max-w-md mx-auto">
+                  <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Connect Your Google Business</h3>
+                  <p className={`mb-6 max-w-md mx-auto ${
+                    theme === 'dark' ? 'text-white/60' : 'text-gray-600'
+                  }`}>
                     Connect your Google My Business account to create, schedule, and manage posts directly from here.
                   </p>
                   <a 
@@ -798,20 +829,22 @@ const Posts = () => {
                     <FaGoogle /> Connect Google Business
                   </a>
                 </div>
-              </div>
-            ) : isLoadingPosts ? (
+              </div>            ) : isLoadingPosts ? (
               <div className="text-center py-12">
-                <div className="bg-[#121324]/90 border border-white/5 rounded-xl p-8">
+                <div className={`border rounded-xl p-8 ${
+                  theme === 'dark' ? 'bg-[#121324]/90 border-white/5' : 'bg-white border-gray-200'
+                }`}>
                   <div className="flex flex-col items-center gap-4">
                     <FaSpinner className="text-4xl text-blue-400 animate-spin" />
                     <div>
-                      <h3 className="text-lg font-medium text-white mb-2">Loading Posts...</h3>
-                      <p className="text-white/60 text-sm">Fetching your Google My Business posts</p>
+                      <h3 className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Loading Posts...</h3>
+                      <p className={theme === 'dark' ? 'text-white/60 text-sm' : 'text-gray-600 text-sm'}>
+                        Fetching your Google My Business posts
+                      </p>
                     </div>
                   </div>
                 </div>
-              </div>
-            ) : activeTab === 'scheduled' ? (
+              </div>            ) : activeTab === 'scheduled' ? (
               <ScheduledPosts 
                 scheduledPosts={scheduledPosts} 
                 loadingScheduled={loadingScheduled}
@@ -855,19 +888,22 @@ const Posts = () => {
               </>
             ) : (
               <div className="col-span-full text-center py-12">
-                <div className="inline-flex items-center justify-center w-16 h-16 bg-indigo-500/10 rounded-full mb-4">
-                  <FaEdit className="text-indigo-400 text-2xl" />
+                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+                  theme === 'dark' ? 'bg-indigo-500/10' : 'bg-indigo-100'
+                }`}>
+                  <FaEdit className={`text-2xl ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`} />
                 </div>
-                <h3 className="text-lg font-medium text-white mb-1">
+                <h3 className={`text-lg font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                   {activeTab === 'published' ? 'No published posts' : 'No drafts'}
                 </h3>
-                <p className="text-white/60 max-w-md mx-auto">
+                <p className={`max-w-md mx-auto ${
+                  theme === 'dark' ? 'text-white/60' : 'text-gray-600'
+                }`}>
                   {activeTab === 'published' 
                     ? 'Create your first post to get started.' 
                     : 'Create a draft to get started.'}
                 </p>
-              </div>
-            )}
+              </div>            )}
           </div>
         </div>
 
@@ -876,22 +912,22 @@ const Posts = () => {
             <div className="bg-[#121324] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold">
+                  <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                     {currentPost.id ? 'Edit Post' : 'Create New Post'}
                   </h2>
                   <button 
                     onClick={() => setShowEditor(false)}
-                    className="text-white/60 hover:text-white"
+                    className={`${
+                      theme === 'dark' ? 'text-white/60 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+                    }`}
                   >
                     ✕
                   </button>
                 </div>
-
                 <form onSubmit={handleSavePost}>
                   <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
-                      <label className="block text-sm font-medium">Post Content</label>
-                      <button
+                      <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Post Content</label>                      <button
                         type="button"
                         onClick={generateAIPostContent}
                         disabled={isGeneratingAI || !selectedBusiness || currentPost.keywordsArray.length === 0}
