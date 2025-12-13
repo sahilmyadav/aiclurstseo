@@ -1,6 +1,7 @@
 import React from 'react';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext';
 import { 
   MapPin, 
   Phone, 
@@ -19,12 +20,13 @@ import {
 } from 'lucide-react';
 
 const BusinessDetails = () => {
+  const { theme } = useTheme();
   const { selectedBusiness, loading } = useGoogleBusiness();
   const navigate = useNavigate();
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0f1020]">
+      <div className={`flex items-center justify-center min-h-screen ${theme === 'dark' ? 'bg-[#0f1020]' : 'bg-gray-50'}`}>
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500"></div>
       </div>
     );
@@ -32,11 +34,11 @@ const BusinessDetails = () => {
 
   if (!selectedBusiness) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#0f1020]">
+      <div className={`min-h-screen flex items-center justify-center ${theme === 'dark' ? 'bg-[#0f1020]' : 'bg-gray-50'}`}>
         <div className="text-center">
-          <Building2 className="w-16 h-16 text-white/60 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-2">No Business Selected</h2>
-          <p className="text-white/60 mb-4">Please select a business to view details</p>
+          <Building2 className={`w-16 h-16 mx-auto mb-4 ${theme === 'dark' ? 'text-white/60' : 'text-gray-400'}`} />
+          <h2 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No Business Selected</h2>
+          <p className={`mb-4 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Please select a business to view details</p>
           <button
             onClick={() => navigate('/dashboard/integrations')}
             className="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
@@ -145,68 +147,72 @@ const BusinessDetails = () => {
   const websiteUri = extractValue(selectedBusiness.websiteUri, 'url', 'websiteUrl');
 
   return (
-    <div className="min-h-screen bg-[#0f1020] text-white py-8 px-4">
+    <div className={`min-h-screen py-8 px-4 ${theme === 'dark' ? 'bg-[#0f1020] text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <button
             onClick={() => navigate('/dashboard/integrations')}
-            className="flex items-center text-purple-400 hover:text-purple-300 mb-4 transition"
+            className={`flex items-center mb-4 transition ${theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`}
           >
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Integrations
           </button>
-          <h1 className="text-3xl font-bold text-white mb-2">{businessTitle}</h1>
-          <p className="text-white/60">Complete business information and settings</p>
+          <h1 className={`text-3xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{businessTitle}</h1>
+          <p className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Complete business information and settings</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content - Left Column (2/3) */}
           <div className="lg:col-span-2 space-y-6">
             {/* Basic Information */}
-            <div className="bg-[#1a1b2e]/90 rounded-xl border border-white/10 p-6">
+            <div className={`rounded-xl p-6 ${theme === 'dark' 
+              ? 'bg-[#1a1b2e]/90 border border-white/10' 
+              : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
               <div className="flex items-center mb-4">
                 <Building2 className="w-6 h-6 text-purple-400 mr-2" />
-                <h2 className="text-xl font-semibold text-white">Basic Information</h2>
+                <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Basic Information</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm font-medium text-white/60">Business Name</label>
-                  <p className="text-white font-semibold mt-1">{businessTitle}</p>
+                  <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Business Name</label>
+                  <p className={`font-semibold mt-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{businessTitle}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-white/60">Store Code</label>
-                  <p className="text-white mt-1">{storeCode}</p>
+                  <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Store Code</label>
+                  <p className={theme === 'dark' ? 'text-white mt-1' : 'text-gray-900 mt-1'}>{storeCode}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-white/60">Location ID</label>
-                  <p className="text-white font-mono text-sm mt-1">{locationId}</p>
+                  <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Location ID</label>
+                  <p className={`font-mono text-sm mt-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{locationId}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-white/60">Account ID</label>
-                  <p className="text-white font-mono text-sm mt-1">{accountId}</p>
+                  <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Account ID</label>
+                  <p className={`font-mono text-sm mt-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{accountId}</p>
                 </div>
                 <div>
-                  <label className="text-sm font-medium text-white/60">Language</label>
-                  <p className="text-white mt-1 uppercase">{languageCode}</p>
+                  <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Language</label>
+                  <p className={`mt-1 uppercase ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{languageCode}</p>
                 </div>
               </div>
             </div>
 
             {/* Contact Information */}
-            <div className="bg-[#1a1b2e]/90 rounded-xl border border-white/10 p-6">
+            <div className={`rounded-xl p-6 ${theme === 'dark' 
+              ? 'bg-[#1a1b2e]/90 border border-white/10' 
+              : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
               <div className="flex items-center mb-4">
                 <Phone className="w-6 h-6 text-purple-400 mr-2" />
-                <h2 className="text-xl font-semibold text-white">Contact Information</h2>
+                <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Contact Information</h2>
               </div>
               <div className="space-y-4">
                 {primaryPhone && primaryPhone !== 'N/A' && (
                   <div className="flex items-center">
-                    <Phone className="w-5 h-5 text-white/60 mr-3" />
+                    <Phone className={`w-5 h-5 mr-3 ${theme === 'dark' ? 'text-white/60' : 'text-gray-500'}`} />
                     <div>
-                      <label className="text-sm font-medium text-white/60">Primary Phone</label>
-                      <p className="text-white font-semibold">
-                        <a href={`tel:${primaryPhone}`} className="hover:text-purple-400">
+                      <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Primary Phone</label>
+                      <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                        <a href={`tel:${primaryPhone}`} className={theme === 'dark' ? 'hover:text-purple-400' : 'text-purple-600 hover:text-purple-700'}>
                           {primaryPhone}
                         </a>
                       </p>
@@ -215,14 +221,14 @@ const BusinessDetails = () => {
                 )}
                 {selectedBusiness.phoneNumbers?.additionalPhones?.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-white/60 mb-2 block">Additional Phones</label>
+                    <label className={`text-sm font-medium mb-2 block ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Additional Phones</label>
                     <div className="space-y-2">
                       {selectedBusiness.phoneNumbers.additionalPhones.map((phone, idx) => {
                         const phoneNumber = extractValue(phone, 'number', 'phoneNumber');
                         return (
                           <div key={idx} className="flex items-center">
-                            <Phone className="w-4 h-4 text-white/60 mr-2" />
-                            <a href={`tel:${phoneNumber}`} className="text-white hover:text-purple-400">
+                            <Phone className={`w-4 h-4 mr-2 ${theme === 'dark' ? 'text-white/60' : 'text-gray-500'}`} />
+                            <a href={`tel:${phoneNumber}`} className={theme === 'dark' ? 'text-white hover:text-purple-400' : 'text-gray-900 hover:text-purple-600'}>
                               {phoneNumber}
                             </a>
                           </div>
@@ -233,15 +239,15 @@ const BusinessDetails = () => {
                 )}
                 {websiteUri && websiteUri !== 'N/A' && (
                   <div className="flex items-center">
-                    <Globe className="w-5 h-5 text-white/60 mr-3" />
+                    <Globe className={`w-5 h-5 mr-3 ${theme === 'dark' ? 'text-white/60' : 'text-gray-500'}`} />
                     <div>
-                      <label className="text-sm font-medium text-white/60">Website</label>
-                      <p className="text-white">
+                      <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Website</label>
+                      <p className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
                         <a 
                           href={websiteUri} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className="text-purple-400 hover:text-purple-300 flex items-center"
+                          className={`flex items-center ${theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`}
                         >
                           {websiteUri}
                           <ExternalLink className="w-4 h-4 ml-1" />
@@ -255,20 +261,22 @@ const BusinessDetails = () => {
 
             {/* Location & Map */}
             {(selectedBusiness.latlng?.latitude || selectedBusiness.latlng?.longitude) && (
-              <div className="bg-[#1a1b2e]/90 rounded-xl border border-white/10 p-6">
+              <div className={`rounded-xl p-6 ${theme === 'dark' 
+                ? 'bg-[#1a1b2e]/90 border border-white/10' 
+                : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
                 <div className="flex items-center mb-4">
                   <MapPin className="w-6 h-6 text-purple-400 mr-2" />
-                  <h2 className="text-xl font-semibold text-white">Location</h2>
+                  <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Location</h2>
                 </div>
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="text-sm font-medium text-white/60">Latitude</label>
-                      <p className="text-white font-mono">{extractValue(selectedBusiness.latlng?.latitude, 'value', 'lat')}</p>
+                      <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Latitude</label>
+                      <p className={`font-mono ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{extractValue(selectedBusiness.latlng?.latitude, 'value', 'lat')}</p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-white/60">Longitude</label>
-                      <p className="text-white font-mono">{extractValue(selectedBusiness.latlng?.longitude, 'value', 'lng')}</p>
+                      <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Longitude</label>
+                      <p className={`font-mono ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{extractValue(selectedBusiness.latlng?.longitude, 'value', 'lng')}</p>
                     </div>
                   </div>
                   {selectedBusiness.metadata?.mapsUri && (
@@ -276,7 +284,7 @@ const BusinessDetails = () => {
                       href={extractValue(selectedBusiness.metadata?.mapsUri, 'url', 'uri')}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center text-purple-400 hover:text-purple-300"
+                      className={theme === 'dark' ? 'inline-flex items-center text-purple-400 hover:text-purple-300' : 'inline-flex items-center text-purple-600 hover:text-purple-700'}
                     >
                       <Navigation className="w-4 h-4 mr-2" />
                       View on Google Maps
@@ -284,7 +292,7 @@ const BusinessDetails = () => {
                     </a>
                   )}
                   {selectedBusiness.latlng?.latitude && selectedBusiness.latlng?.longitude && (
-                    <div className="mt-4 rounded-lg overflow-hidden border border-white/10">
+                    <div className={`mt-4 rounded-lg overflow-hidden ${theme === 'dark' ? 'border border-white/10' : 'border border-gray-200'}`}>
                       <iframe
                         width="100%"
                         height="300"
@@ -302,10 +310,12 @@ const BusinessDetails = () => {
 
             {/* Business Hours */}
             {selectedBusiness.regularHours?.periods && selectedBusiness.regularHours.periods.length > 0 && (
-              <div className="bg-[#1a1b2e]/90 rounded-xl border border-white/10 p-6">
+              <div className={`rounded-xl p-6 ${theme === 'dark' 
+                ? 'bg-[#1a1b2e]/90 border border-white/10' 
+                : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
                 <div className="flex items-center mb-4">
                   <Clock className="w-6 h-6 text-purple-400 mr-2" />
-                  <h2 className="text-xl font-semibold text-white">Business Hours</h2>
+                  <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Business Hours</h2>
                 </div>
                 <div className="space-y-2">
                   {selectedBusiness.regularHours.periods.map((period, idx) => {
@@ -316,9 +326,9 @@ const BusinessDetails = () => {
                     const closeTime = period.closeTime || {};
                     
                     return (
-                      <div key={idx} className="flex items-center justify-between py-2 border-b border-white/10 last:border-0">
-                        <span className="text-white font-medium">{getDayName(openDay)}</span>
-                        <span className="text-white">
+                      <div key={idx} className={`flex items-center justify-between py-2 last:border-0 ${theme === 'dark' ? 'border-b border-white/10' : 'border-b border-gray-200'}`}>
+                        <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{getDayName(openDay)}</span>
+                        <span className={theme === 'dark' ? 'text-white' : 'text-gray-900'}>
                           {formatTime(openTime)} - {formatTime(closeTime)}
                         </span>
                       </div>
@@ -330,31 +340,37 @@ const BusinessDetails = () => {
 
             {/* Categories */}
             {selectedBusiness.categories && (
-              <div className="bg-[#1a1b2e]/90 rounded-xl border border-white/10 p-6">
+              <div className={`rounded-xl p-6 ${theme === 'dark' 
+                ? 'bg-[#1a1b2e]/90 border border-white/10' 
+                : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
                 <div className="flex items-center mb-4">
                   <Tag className="w-6 h-6 text-purple-400 mr-2" />
-                  <h2 className="text-xl font-semibold text-white">Categories</h2>
+                  <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Categories</h2>
                 </div>
                 <div className="space-y-4">
                   {selectedBusiness.categories.primaryCategory && (
                     <div>
-                      <label className="text-sm font-medium text-white/60 mb-2 block">Primary Category</label>
-                      <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg p-3">
-                        <p className="text-white font-semibold">
+                      <label className={`text-sm font-medium mb-2 block ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Primary Category</label>
+                      <div className={`rounded-lg p-3 ${theme === 'dark' 
+                        ? 'bg-purple-500/10 border border-purple-500/20' 
+                        : 'bg-purple-100 border border-purple-200'}`}>
+                        <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                           {extractValue(selectedBusiness.categories.primaryCategory, 'displayName', 'name')}
                         </p>
                         {selectedBusiness.categories.primaryCategory.name && (
-                          <p className="text-purple-300 text-sm mt-1 font-mono">
+                          <p className={`text-sm mt-1 font-mono ${theme === 'dark' ? 'text-purple-300' : 'text-purple-700'}`}>
                             {extractValue(selectedBusiness.categories.primaryCategory.name)}
                           </p>
                         )}
                       </div>
                       {selectedBusiness.categories.primaryCategory.serviceTypes?.length > 0 && (
                         <div className="mt-3">
-                          <label className="text-sm font-medium text-white/60 mb-2 block">Service Types</label>
+                          <label className={`text-sm font-medium mb-2 block ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Service Types</label>
                           <div className="flex flex-wrap gap-2">
                             {selectedBusiness.categories.primaryCategory.serviceTypes.map((type, idx) => (
-                              <span key={idx} className="px-3 py-1 bg-white/10 text-white rounded-full text-sm">
+                              <span key={idx} className={`rounded-full text-sm ${theme === 'dark' 
+                                ? 'px-3 py-1 bg-white/10 text-white' 
+                                : 'px-3 py-1 bg-purple-100 text-purple-900'}`}>
                                 {extractValue(type, 'displayName', 'serviceTypeId', 'name')}
                               </span>
                             ))}
@@ -365,10 +381,12 @@ const BusinessDetails = () => {
                   )}
                   {selectedBusiness.categories.additionalCategories?.length > 0 && (
                     <div>
-                      <label className="text-sm font-medium text-white/60 mb-2 block">Additional Categories</label>
+                      <label className={`text-sm font-medium mb-2 block ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Additional Categories</label>
                       <div className="flex flex-wrap gap-2">
                         {selectedBusiness.categories.additionalCategories.map((cat, idx) => (
-                          <span key={idx} className="px-3 py-1 bg-white/10 text-white rounded-full text-sm">
+                          <span key={idx} className={`rounded-full text-sm ${theme === 'dark' 
+                            ? 'px-3 py-1 bg-white/10 text-white' 
+                            : 'px-3 py-1 bg-purple-100 text-purple-900'}`}>
                             {extractValue(cat, 'displayName', 'name')}
                           </span>
                         ))}
@@ -383,18 +401,22 @@ const BusinessDetails = () => {
           {/* Sidebar - Right Column (1/3) */}
           <div className="space-y-6">
             {/* Quick Actions */}
-            <div className="bg-[#1a1b2e]/90 rounded-xl border border-white/10 p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
+            <div className={`rounded-xl p-6 mb-6 ${theme === 'dark' 
+              ? 'bg-[#1a1b2e]/90 border border-white/10' 
+              : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
+              <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Quick Actions</h2>
               <div className="space-y-3">
                 {selectedBusiness.metadata?.newReviewUri && (
                   <a
                     href={extractValue(selectedBusiness.metadata.newReviewUri, 'url', 'uri')}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-between p-3 bg-purple-500/10 hover:bg-purple-500/20 rounded-lg transition"
+                    className={`w-full flex items-center justify-between p-3 rounded-lg transition ${theme === 'dark' 
+                      ? 'bg-purple-500/10 hover:bg-purple-500/20' 
+                      : 'bg-purple-100 hover:bg-purple-200'}`}
                   >
-                    <span className="text-purple-300 font-medium">Get Reviews</span>
-                    <ExternalLink className="w-4 h-4 text-purple-400" />
+                    <span className={theme === 'dark' ? 'text-purple-300 font-medium' : 'text-purple-700 font-medium'}>Get Reviews</span>
+                    <ExternalLink className={`w-4 h-4 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
                   </a>
                 )}
                 {selectedBusiness.metadata?.mapsUri && (
@@ -402,10 +424,12 @@ const BusinessDetails = () => {
                     href={extractValue(selectedBusiness.metadata.mapsUri, 'url', 'uri')}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-between p-3 bg-green-500/10 hover:bg-green-500/20 rounded-lg transition"
+                    className={`w-full flex items-center justify-between p-3 rounded-lg transition ${theme === 'dark' 
+                      ? 'bg-green-500/10 hover:bg-green-500/20' 
+                      : 'bg-green-100 hover:bg-green-200'}`}
                   >
-                    <span className="text-green-300 font-medium">View on Maps</span>
-                    <ExternalLink className="w-4 h-4 text-green-400" />
+                    <span className={theme === 'dark' ? 'text-green-300 font-medium' : 'text-green-700 font-medium'}>View on Maps</span>
+                    <ExternalLink className={`w-4 h-4 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
                   </a>
                 )}
                 {websiteUri && websiteUri !== 'N/A' && (
@@ -413,10 +437,12 @@ const BusinessDetails = () => {
                     href={websiteUri}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full flex items-center justify-between p-3 bg-blue-500/10 hover:bg-blue-500/20 rounded-lg transition"
+                    className={`w-full flex items-center justify-between p-3 rounded-lg transition ${theme === 'dark' 
+                      ? 'bg-blue-500/10 hover:bg-blue-500/20' 
+                      : 'bg-blue-100 hover:bg-blue-200'}`}
                   >
-                    <span className="text-blue-300 font-medium">Visit Website</span>
-                    <ExternalLink className="w-4 h-4 text-blue-400" />
+                    <span className={theme === 'dark' ? 'text-blue-300 font-medium' : 'text-blue-700 font-medium'}>Visit Website</span>
+                    <ExternalLink className={`w-4 h-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
                   </a>
                 )}
               </div>
@@ -424,48 +450,50 @@ const BusinessDetails = () => {
 
             {/* Metadata & Status */}
             {selectedBusiness.metadata && (
-              <div className="bg-[#1a1b2e]/90 rounded-xl border border-white/10 p-6">
+              <div className={`rounded-xl p-6 ${theme === 'dark' 
+                ? 'bg-[#1a1b2e]/90 border border-white/10' 
+                : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
                 <div className="flex items-center mb-4">
                   <Info className="w-6 h-6 text-purple-400 mr-2" />
-                  <h2 className="text-xl font-semibold text-white">Status & Permissions</h2>
+                  <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Status & Permissions</h2>
                 </div>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/60">Can Delete</span>
+                    <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Can Delete</span>
                     {selectedBusiness.metadata.canDelete ? (
                       <CheckCircle2 className="w-5 h-5 text-green-500" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-red-500" />
+                      <XCircle className={`w-5 h-5 ${theme === 'dark' ? 'text-red-500' : 'text-red-400'}`} />
                     )}
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/60">Can Modify Service List</span>
+                    <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Can Modify Service List</span>
                     {selectedBusiness.metadata.canModifyServicelist ? (
                       <CheckCircle2 className="w-5 h-5 text-green-500" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-red-500" />
+                      <XCircle className={`w-5 h-5 ${theme === 'dark' ? 'text-red-500' : 'text-red-400'}`} />
                     )}
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/60">Google Updated</span>
+                    <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Google Updated</span>
                     {selectedBusiness.metadata.hasGoogleUpdated ? (
                       <CheckCircle2 className="w-5 h-5 text-green-500" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-white/40" />
+                      <XCircle className={`w-5 h-5 ${theme === 'dark' ? 'text-white/40' : 'text-gray-400'}`} />
                     )}
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-white/60">Voice of Merchant</span>
+                    <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Voice of Merchant</span>
                     {selectedBusiness.metadata.hasVoiceOfMerchant ? (
                       <CheckCircle2 className="w-5 h-5 text-green-500" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-white/40" />
+                      <XCircle className={`w-5 h-5 ${theme === 'dark' ? 'text-white/40' : 'text-gray-400'}`} />
                     )}
                   </div>
                   {selectedBusiness.metadata.placeId && (
-                    <div className="pt-3 border-t border-white/10">
-                      <label className="text-sm font-medium text-white/60">Place ID</label>
-                      <p className="text-white font-mono text-xs mt-1 break-all">
+                    <div className={`pt-3 ${theme === 'dark' ? 'border-t border-white/10' : 'border-t border-gray-200'}`}>
+                      <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Place ID</label>
+                      <p className={`font-mono text-xs mt-1 break-all ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         {extractValue(selectedBusiness.metadata.placeId, 'id', 'placeId')}
                       </p>
                     </div>
@@ -475,19 +503,21 @@ const BusinessDetails = () => {
             )}
 
             {/* Additional Information */}
-            <div className="bg-[#1a1b2e]/90 rounded-xl border border-white/10 p-6">
-              <h2 className="text-xl font-semibold text-white mb-4">Additional Info</h2>
+            <div className={`rounded-xl p-6 ${theme === 'dark' 
+              ? 'bg-[#1a1b2e]/90 border border-white/10' 
+              : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
+              <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Additional Info</h2>
               <div className="space-y-3 text-sm">
                 {selectedBusiness.storefrontAddress && (
                   <div>
-                    <label className="text-white/60 font-medium">Address</label>
-                    <p className="text-white mt-1">{JSON.stringify(selectedBusiness.storefrontAddress)}</p>
+                    <label className={`font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Address</label>
+                    <p className={`mt-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{JSON.stringify(selectedBusiness.storefrontAddress)}</p>
                   </div>
                 )}
                 {selectedBusiness.serviceArea && (
                   <div>
-                    <label className="text-white/60 font-medium">Service Area</label>
-                    <p className="text-white mt-1">
+                    <label className={`font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Service Area</label>
+                    <p className={`mt-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       {selectedBusiness.serviceArea.businessTypeId ? 
                         `Type: ${selectedBusiness.serviceArea.businessTypeId}` : 
                         'Service area information'}
@@ -498,10 +528,12 @@ const BusinessDetails = () => {
                 )}
                 {selectedBusiness.labels && selectedBusiness.labels.length > 0 && (
                   <div>
-                    <label className="text-white/60 font-medium">Labels</label>
+                    <label className={`font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Labels</label>
                     <div className="flex flex-wrap gap-2 mt-1">
                       {selectedBusiness.labels.map((label, idx) => (
-                        <span key={idx} className="px-2 py-1 bg-purple-500/20 text-purple-300 rounded text-xs">
+                        <span key={idx} className={`rounded text-xs ${theme === 'dark' 
+                          ? 'px-2 py-1 bg-purple-500/20 text-purple-300' 
+                          : 'px-2 py-1 bg-purple-100 text-purple-700'}`}>
                           {extractValue(label, 'displayName', 'name')}
                         </span>
                       ))}
