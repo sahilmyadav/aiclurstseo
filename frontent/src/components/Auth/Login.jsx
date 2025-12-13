@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { FcGoogle } from "react-icons/fc";
 import { useAuth } from "../context/AuthContext";
 import { toast } from 'sonner';
+import { useTheme } from "../../context/ThemeContext";
 
 const Login = () => {
   const navigate = useNavigate();
   const { login, signupWithGoogle, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [alert, setAlert] = useState({ type: null, message: "" });
+  const { theme } = useTheme();
   const [formData, setFormData] = useState({
     identifier: "", // email or phone
     password: "",
@@ -27,7 +29,7 @@ const Login = () => {
       return;
     }
 
-    const { success, error, message,user } = await login(identifier, password);
+    const { success, error, message, user } = await login(identifier, password);
     if (success) {
       setAlert({ type: 'success', message: message || 'Login successful!' });
       if(user.role === 'admin'){
@@ -62,15 +64,27 @@ const Login = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0f0f1a] text-white px-4">
+    <div className={`min-h-screen flex flex-col items-center justify-center px-4 ${
+      theme === 'dark' 
+        ? 'bg-gray-900 text-white' 
+        : 'bg-gray-50 text-gray-900'
+    }`}>
       <div className="text-center mb-10 sm:mt-10 mt-20">
-        <h2 className="text-3xl md:text-4xl font-bold text-white uppercase">Welcome to</h2>
+        <h2 className={`text-3xl md:text-4xl font-bold ${
+          theme === 'dark' ? 'text-white' : 'text-gray-800'
+        } uppercase`}>
+          Welcome to
+        </h2>
         <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-purple-600 mt-2">
           Clurst AI Review
         </h1>
       </div>
 
-      <div className="w-full max-w-md bg-[#181818] rounded-xl shadow-2xl p-8 space-y-6">
+      <div className={`w-full max-w-md rounded-xl p-8 space-y-6 transition-all duration-300 backdrop-blur-xl ${
+        theme === 'dark' 
+          ? 'bg-gray-900/40 shadow-[0_8px_32px_0px_rgba(76,29,149,0.3)] border border-gray-600/30' 
+          : 'bg-white/50 shadow-[0_8px_32px_0px_rgba(147,51,234,0.1)] border border-white/30'
+      }`}>
         {alert.type && (
           <div className={`w-full px-4 py-3 rounded-lg text-sm ${alert.type === 'success' ? 'bg-green-500/15 text-green-300 border border-green-600/40' : 'bg-red-500/15 text-red-300 border border-red-600/40'}`}>
             {alert.message}
@@ -86,7 +100,11 @@ const Login = () => {
               value={formData.identifier}
               onChange={handleChange}
               placeholder="Email or Phone"
-              className="w-full px-4 py-3 rounded-lg bg-[#222] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className={`w-full px-4 py-3 rounded-lg ${
+                theme === 'dark' 
+                  ? 'bg-gray-700 text-white placeholder-gray-400' 
+                  : 'bg-gray-100 text-gray-900 placeholder-gray-500'
+              } focus:outline-none focus:ring-2 focus:ring-purple-500`}
               required
             />
           </div>
@@ -98,13 +116,19 @@ const Login = () => {
               value={formData.password}
               onChange={handleChange}
               placeholder="Password"
-              className="w-full px-4 py-3 rounded-lg bg-[#222] text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 pr-12"
+              className={`w-full px-4 py-3 rounded-lg ${
+                theme === 'dark' 
+                  ? 'bg-gray-700 text-white placeholder-gray-400' 
+                  : 'bg-gray-100 text-gray-900 placeholder-gray-500'
+              } focus:outline-none focus:ring-2 focus:ring-purple-500 pr-12`}
               required
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-white"
+              className={`absolute right-3 top-3.5 ${
+                theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-500 hover:text-gray-700'
+              }`}
             >
               {showPassword ? "Hide" : "Show"}
             </button>
@@ -130,7 +154,11 @@ const Login = () => {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white text-gray-800 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+            className={`w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg font-medium transition-colors ${
+              theme === 'dark' 
+                ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                : 'bg-white text-gray-800 hover:bg-gray-100'
+            }`}
           >
             <FcGoogle className="text-xl" />
             Continue with Google
