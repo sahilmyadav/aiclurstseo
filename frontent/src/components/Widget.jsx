@@ -2,14 +2,16 @@ import { Copy, Filter, RefreshCw, Star } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 import { useSidebar } from "./context/SidebarContext";
+import { useTheme } from "../context/ThemeContext";
 
 // Component to display a single review
-const ReviewCard = ({ review, darkMode }) => {
+const ReviewCard = ({ review }) => {
+  const { theme } = useTheme();
   const ratingMap = { 'ONE': 1, 'TWO': 2, 'THREE': 3, 'FOUR': 4, 'FIVE': 5 };
   const rating = ratingMap[review.starRating] || 5;
   
   return (
-    <div className={`p-4 rounded-lg shadow ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+    <div className={`p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
       <div className="flex items-center mb-2">
         {[...Array(5)].map((_, i) => (
           <Star 
@@ -19,8 +21,10 @@ const ReviewCard = ({ review, darkMode }) => {
         ))}
         <span className="ml-2 text-sm font-medium">{rating}.0</span>
       </div>
-      <p className="text-sm mb-2">{review.comment || "No comment provided"}</p>
-      <div className="flex justify-between text-xs text-gray-500">
+      <p className={`text-sm mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+        {review.comment || "No comment provided"}
+      </p>
+      <div className={`flex justify-between text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
         <span>{review.reviewer.displayName}</span>
         <span>{new Date(review.createTime).toLocaleDateString()}</span>
       </div>
@@ -29,14 +33,15 @@ const ReviewCard = ({ review, darkMode }) => {
 };
 
 // Carousel component for reviews
-const ReviewCarousel = ({ reviews, darkMode }) => {
+const ReviewCarousel = ({ reviews }) => {
+  const { theme } = useTheme();
   const reviewsToShow = 3; // Number of reviews to show at once
 
   if (!reviews || reviews.length === 0) {
     return (
-      <div className={`border rounded-lg p-10 text-center ${darkMode ? 'border-gray-600' : 'border-purple-800'}`}>
+      <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-purple-800'}`}>
         <Star className={`w-10 h-10 mx-auto mb-4 text-yellow-400`} />
-        <p className="mb-4">No reviews available yet</p>
+        <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No reviews available yet</p>
       </div>
     );
   }
@@ -67,7 +72,7 @@ const ReviewCarousel = ({ reviews, darkMode }) => {
       <div className="carousel-track">
         {duplicatedReviews.map((review, index) => (
           <div key={index} className="min-w-[33.33%] px-2">
-            <ReviewCard review={review} darkMode={darkMode} />
+            <ReviewCard review={review} />
           </div>
         ))}
       </div>
@@ -78,7 +83,8 @@ const ReviewCarousel = ({ reviews, darkMode }) => {
 };
 
 // Component to display all reviews
-const AllReviewsWidget = ({ reviews, darkMode, filters, businessName }) => {
+const AllReviewsWidget = ({ reviews, filters, businessName }) => {
+  const { theme } = useTheme();
   // Apply filters
   const filteredReviews = (reviews || []).filter(review => {
     if (!review) return false;
@@ -93,21 +99,21 @@ const AllReviewsWidget = ({ reviews, darkMode, filters, businessName }) => {
 
   if (!reviews || reviews.length === 0) {
     return (
-      <div className={`border rounded-lg p-10 text-center ${darkMode ? 'border-gray-600' : 'border-purple-800'}`}>
+      <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-purple-800'}`}>
         <Star className={`w-10 h-10 mx-auto mb-4 text-yellow-400`} />
-        <p className="mb-4">No reviews available yet</p>
+        <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No reviews available yet</p>
       </div>
     );
   }
 
   if (filteredReviews.length === 0) {
     return (
-      <div className={`border rounded-lg p-10 text-center ${darkMode ? 'border-gray-600' : 'border-purple-800'}`}>
+      <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-purple-800'}`}>
         <Star className={`w-10 h-10 mx-auto mb-4 text-yellow-400`} />
-        <p className="mb-4">No reviews match your filters</p>
+        <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No reviews match your filters</p>
         <button 
           onClick={() => window.location.reload()}
-          className={`px-6 py-2 rounded-lg transition flex items-center gap-2 mx-auto ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-[#1e1e3a] hover:bg-purple-700'}`}
+          className={`px-6 py-2 rounded-lg transition flex items-center gap-2 mx-auto ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-[#1e1e3a] hover:bg-purple-700'}`}
         >
           <RefreshCw className="w-4 h-4" /> Reload
         </button>
@@ -120,16 +126,16 @@ const AllReviewsWidget = ({ reviews, darkMode, filters, businessName }) => {
       <div className="mb-2">
         {businessName && (
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-medium text-gray-400">Business:</span>
-            <span className="text-sm font-medium text-purple-300">{businessName}</span>
+            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Business:</span>
+            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-purple-300' : 'text-purple-600'}`}>{businessName}</span>
           </div>
         )}
         <div className="flex justify-between items-center">
-          <h3 className="text-lg font-medium">
+          <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
             {filteredReviews.length} {filteredReviews.length === 1 ? 'Review' : 'Reviews'}
           </h3>
           {filteredReviews.length > 0 && (
-            <div className="flex items-center gap-2 text-sm text-gray-400">
+            <div className={`flex items-center gap-2 text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
               <span>Showing {filteredReviews.length} of {reviews.length} reviews</span>
             </div>
           )}
@@ -141,7 +147,6 @@ const AllReviewsWidget = ({ reviews, darkMode, filters, businessName }) => {
           <ReviewCard 
             key={review.name || index} 
             review={review} 
-            darkMode={darkMode} 
           />
         ))}
       </div>
@@ -151,6 +156,7 @@ const AllReviewsWidget = ({ reviews, darkMode, filters, businessName }) => {
 
 export default function WebsiteWidgets() {
   const { isCollapsed } = useSidebar();
+  const { theme } = useTheme();
   const { 
     selectedBusiness, 
     reviews = [], 
@@ -161,7 +167,6 @@ export default function WebsiteWidgets() {
   const [activeTab, setActiveTab] = useState("Carousel");
   const [toggles, setToggles] = useState({
     removePoweredBy: false,
-    darkMode: false,
     hideScore: false,
     hideReviewData: false,
     showOnlyHighRatings: false,
@@ -177,7 +182,7 @@ export default function WebsiteWidgets() {
 
   // Generate widget code
   const generateWidgetCode = () => {
-    const darkModeClass = toggles.darkMode ? 'dark' : '';
+    const darkModeClass = theme === 'dark' ? 'dark' : '';
     const hideScore = toggles.hideScore ? 'hide-score' : '';
     const hideReviewData = toggles.hideReviewData ? 'hide-date' : '';
     const showOnlyHighRatings = toggles.showOnlyHighRatings ? 'high-ratings-only' : '';
@@ -203,7 +208,7 @@ export default function WebsiteWidgets() {
   script.onload = function() {
     initReviewsWidget({
       businessId: '${selectedBusiness ? selectedBusiness.name.split("/")[1] : 'YOUR_BUSINESS_ID'}',
-      darkMode: ${toggles.darkMode},
+      darkMode: ${theme === 'dark'},
       hideScore: ${toggles.hideScore},
       hideReviewData: ${toggles.hideReviewData},
       showOnlyHighRatings: ${toggles.showOnlyHighRatings}
@@ -218,10 +223,10 @@ export default function WebsiteWidgets() {
   max-width: 800px; 
   margin: 0 auto; 
   font-family: Arial, sans-serif;
-  ${toggles.darkMode ? 'color: #fff; background-color: #1a1a1a;' : 'color: #333; background-color: #fff;'}
+  ${theme === 'dark' ? 'color: #fff; background-color: #1a1a1a;' : 'color: #333; background-color: #fff;'}
 }
 .review-card { 
-  border: 1px solid ${toggles.darkMode ? '#444' : '#e0e0e0'}; 
+  border: 1px solid ${theme === 'dark' ? '#444' : '#e0e0e0'};
   border-radius: 8px; 
   padding: 16px; 
   margin-bottom: 16px; 
@@ -231,7 +236,7 @@ export default function WebsiteWidgets() {
 .reviewer { font-weight: bold; }
 .widget-header h3 { 
   margin: 0 0 16px 0; 
-  ${toggles.darkMode ? 'color: #fff;' : 'color: #333;'}
+  ${theme === 'dark' ? 'color: #fff;' : 'color: #333;'}
 }
 ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size: 12px; color: #777; margin-top: 16px; }'}
 </style>`;
@@ -298,7 +303,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
         <div className="carousel-track">
           {duplicatedReviews.map((review, index) => (
             <div key={index} className="carousel-card">
-              <ReviewCard review={review} darkMode={toggles.darkMode} />
+              <ReviewCard review={review} />
             </div>
           ))}
         </div>
@@ -442,7 +447,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1b1730] to-[#120f25] text-white w-full">
+    <div className={`min-h-screen w-full ${theme === 'dark' ? 'bg-gradient-to-br from-[#1b1730] to-[#120f25] text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="w-full mx-auto max-w-[2000px] px-0 sm:px-2 md:px-4 lg:px-6">
         <div className="p-3 sm:p-4 md:p-6">
           <h2 className="text-2xl font-bold mb-6">Website Widgets</h2>
@@ -453,7 +458,9 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap ${
-                  activeTab === tab ? "bg-purple-700" : "bg-[#1e1e3a] hover:bg-[#2a2a4a] transition-colors"
+                  activeTab === tab 
+                    ? "bg-purple-700" 
+                    : `${theme === 'dark' ? 'bg-[#1e1e3a] hover:bg-[#2a2a4a] text-white' : 'bg-white hover:bg-gray-100 text-gray-900'} transition-colors`
                 }`}
               >
                 {tab}
@@ -496,7 +503,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                   <p className="mb-4">No business selected</p>
                 </div>
 ) : reviews && reviews.length > 0 ? (
-                <div className="relative h-[600px] overflow-hidden rounded-xl bg-gradient-to-br from-[#1e1e3a] to-[#2a2a4a] p-1">
+                <div className={`relative h-[600px] overflow-hidden rounded-xl p-1 ${theme === 'dark' ? 'bg-gradient-to-br from-[#1e1e3a] to-[#2a2a4a]' : 'bg-white'}`}>
                   <style>{`
                     @keyframes scroll {
                       0% { transform: translateY(0); }
@@ -513,17 +520,18 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                       animation-play-state: paused;
                     }
                     .video-review {
-                      background: rgba(255, 255, 255, 0.03);
-                      backdrop-filter: blur(10px);
                       border-radius: 12px;
                       padding: 1.5rem;
                       transition: all 0.3s ease;
                       border: 1px solid rgba(255, 255, 255, 0.1);
+                      background: ${theme === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.03)'};
+                      backdrop-filter: blur(10px);
+                      ${theme === 'dark' ? '' : 'color: #333;'}
                     }
                     .video-review:hover {
                       transform: scale(1.02);
                       box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
-                      border-color: rgba(168, 85, 247, 0.5);
+                      border-color: ${theme === 'dark' ? 'rgba(168, 85, 247, 0.5)' : 'rgba(139, 92, 246, 0.3)'};
                     }
                     .video-review-header {
                       display: flex;
@@ -549,10 +557,11 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                     .video-review-content {
                       padding: 0.5rem 0;
                       line-height: 1.6;
+                      color: ${theme === 'dark' ? '#e2e8f0' : '#333'};
                     }
                     .video-review-date {
                       font-size: 0.75rem;
-                      color: rgba(255, 255, 255, 0.6);
+                      color: ${theme === 'dark' ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)'};
                       text-align: right;
                       margin-top: 0.5rem;
                     }
@@ -616,12 +625,12 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                   padding: 1rem;
                 }
                 .feed-card {
-                  background: rgba(30, 30, 58, 0.9);
                   border-radius: 12px;
                   overflow: hidden;
                   transition: all 0.3s ease;
                   border: 1px solid rgba(139, 92, 246, 0.2);
                   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                  background: ${theme === 'dark' ? 'rgba(30, 30, 58, 0.9)' : 'rgba(255, 255, 255, 0.9)'};
                 }
                 .feed-card:hover {
                   transform: translateY(-5px);
@@ -630,7 +639,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                 }
                 .card-header {
                   padding: 1.25rem;
-                  background: rgba(139, 92, 246, 0.1);
+                  background: ${theme === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)'};
                   border-bottom: 1px solid rgba(139, 92, 246, 0.2);
                   display: flex;
                   align-items: center;
@@ -654,7 +663,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                   font-size: 0.95rem;
                 }
                 .user-info p {
-                  color: #a78bfa;
+                  color: ${theme === 'dark' ? '#a78bfa' : '#6366f1'};
                   font-size: 0.8rem;
                   margin: 0.1rem 0 0;
                 }
@@ -662,7 +671,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                   padding: 1.25rem;
                 }
                 .review-text {
-                  color: #e2e8f0;
+                  color: ${theme === 'dark' ? '#e2e8f0' : '#333'};
                   line-height: 1.6;
                   margin-bottom: 1rem;
                   font-size: 0.95rem;
@@ -679,7 +688,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                 .rating-value {
                   font-size: 0.9rem;
                   font-weight: 600;
-                  color: #fbbf24;
+                  color: ${theme === 'dark' ? '#fbbf24' : '#d97706'};
                 }
                 .card-footer {
                   padding: 0.75rem 1.25rem;
@@ -688,7 +697,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                   justify-content: space-between;
                   align-items: center;
                   font-size: 0.8rem;
-                  color: #94a3b8;
+                  color: ${theme === 'dark' ? '#94a3b8' : '#64748b'};
                 }
                 .review-date {
                   display: flex;
@@ -703,7 +712,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                   display: flex;
                   align-items: center;
                   gap: 0.25rem;
-                  color: #94a3b8;
+                  color: ${theme === 'dark' ? '#94a3b8' : '#64748b'};
                   transition: color 0.2s;
                   background: none;
                   border: none;
@@ -711,7 +720,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                   font-size: 0.8rem;
                 }
                 .action-btn:hover {
-                  color: #8b5cf6;
+                  color: ${theme === 'dark' ? '#8b5cf6' : '#4f46e5'};
                 }
                 .action-btn svg {
                   width: 16px;
@@ -741,8 +750,8 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                             {initials}
                           </div>
                           <div className="user-info">
-                            <h4>{review.reviewer?.displayName || 'Anonymous User'}</h4>
-                            <p>Verified Customer</p>
+                            <h4 className={`${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{review.reviewer?.displayName || 'Anonymous User'}</h4>
+                            <p className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>Verified Customer</p>
                           </div>
                         </div>
                         <div className="card-body">
@@ -755,14 +764,14 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                                 />
                               ))}
                             </div>
-                            <span className="rating-value">{rating}.0</span>
+                            <span className={`rating-value ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{rating}.0</span>
                           </div>
-                          <p className="review-text">
+                          <p className={`review-text ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                             {review.comment || 'No review text provided.'}
                           </p>
                         </div>
                         <div className="card-footer">
-                          <div className="review-date">
+                          <div className={`review-date ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                               <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
                               <line x1="16" y1="2" x2="16" y2="6"></line>
@@ -793,23 +802,23 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
               ) : (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Star className="w-16 h-16 text-yellow-400 mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">No Reviews Yet</h3>
-                  <p className="text-gray-400 text-center max-w-md">
+                  <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No Reviews Yet</h3>
+                  <p className={`text-center max-w-md ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                     Be the first to leave a review for {selectedBusiness?.locationName || 'this business'}!
                   </p>
                 </div>
               )}
             </div>
           ) : (
-            <div className="border border-purple-800 rounded-lg p-10 text-center">
+            <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-purple-800'}`}>
               <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
-              <p className="mb-4">No Review Are Currently Available</p>
+              <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No Review Are Currently Available</p>
             </div>
           )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 md:gap-6 mt-6 sm:mt-8">
-            <div className="bg-[#1e1e3a] rounded-lg p-4 sm:p-5 space-y-3 sm:space-y-4">
-              <button className="flex items-center gap-2 mb-4 px-3 py-1 bg-black/40 rounded-md text-sm">
+            <div className={`rounded-lg p-4 sm:p-5 space-y-3 sm:space-y-4 ${theme === 'dark' ? 'bg-[#1e1e3a]' : 'bg-white'}`}>
+              <button className={`flex items-center gap-2 mb-4 px-3 py-1 rounded-md text-sm ${theme === 'dark' ? 'bg-black/40 text-white' : 'bg-gray-200 text-gray-800'}`}>
                 <Filter className="w-4 h-4" /> FILTER
               </button>
 
@@ -822,7 +831,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
               ].map((item) => (
                 <label
                   key={item.key}
-                  className="flex items-center justify-between text-sm"
+                  className={`flex items-center justify-between text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}
                 >
                   {item.label}
                   <input
@@ -835,10 +844,10 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
               ))}
             </div>
 
-            <div className="bg-[#1e1e3a] rounded-lg p-4 sm:p-5 space-y-3 sm:space-y-4">
+            <div className={`rounded-lg p-4 sm:p-5 space-y-3 sm:space-y-4 ${theme === 'dark' ? 'bg-[#1e1e3a]' : 'bg-white'}`}>
               <div className="flex items-center justify-between">
-                <span>Integrations</span>
-                <label className="flex items-center gap-2 text-sm">
+                <span className={`${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Integrations</span>
+                <label className={`flex items-center gap-2 text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
                   Feedback
                   <input
                     type="checkbox"
@@ -850,17 +859,17 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
               </div>
 
               <div>
-                <p className="mb-2 text-sm font-medium">HTML Code</p>
-                <div className="flex items-center justify-between bg-black/30 px-3 py-2 rounded-md text-[10px] xs:text-xs font-mono overflow-hidden">
+                <p className={`mb-2 text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>HTML Code</p>
+                <div className={`flex items-center justify-between px-3 py-2 rounded-md text-[10px] xs:text-xs font-mono overflow-hidden ${theme === 'dark' ? 'bg-black/30 text-gray-300' : 'bg-gray-200 text-gray-800'}`}>
                   <span className="truncate max-w-[180px] xs:max-w-xs">&lt;div class="reviews-widget"&gt;...&lt;/div&gt;</span>
                   <button onClick={copyToClipboard}>
-                    <Copy className="w-4 h-4 text-gray-400 hover:text-white" />
+                    <Copy className={`w-4 h-4 ${theme === 'dark' ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`} />
                   </button>
                 </div>
                 {copied && <p className="text-xs text-green-400 mt-1">Copied to clipboard!</p>}
               </div>
 
-              <p className="text-[11px] xs:text-xs text-gray-400 border border-purple-800 rounded-md p-2 sm:p-3">
+              <p className={`text-[11px] xs:text-xs border rounded-md p-2 sm:p-3 ${theme === 'dark' ? 'text-gray-400 border-purple-800' : 'text-gray-600 border-gray-300'}`}>
                 To get started with our AI Review Generator and SEO Optimization
                 platform, simply copy and paste the following code as HTML into your
                 project. This will allow you to quickly display AI-powered review

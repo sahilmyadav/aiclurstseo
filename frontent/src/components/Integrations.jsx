@@ -3,34 +3,39 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "./context/AuthContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
+import { useTheme } from "../context/ThemeContext";
 import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
 import { FiExternalLink, FiStar, FiChevronRight, FiLogOut, FiAlertCircle, FiCheckCircle, FiMapPin } from "react-icons/fi";
 import { FaGoogle } from "react-icons/fa";
 
-const SkeletonLoader = ({ count = 1, height = 20, className = '' }) => (
-  <div className="animate-pulse space-y-3">
-    {[...Array(count)].map((_, i) => (
-      <div 
-        key={i} 
-        className={`bg-gray-700 rounded ${className}`}
-        style={{ height: `${height}px` }}
-      />
-    ))}
-  </div>
-);
+const SkeletonLoader = ({ count = 1, height = 20, className = '' }) => {
+  const { theme } = useTheme();
+  return (
+    <div className="animate-pulse space-y-3">
+      {[...Array(count)].map((_, i) => (
+        <div 
+          key={i} 
+          className={`rounded ${className} ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}
+          style={{ height: `${height}px` }}
+        />
+      ))}
+    </div>
+  );
+};
 
 const StarRating = ({ rating }) => {
+  const { theme } = useTheme();
   const stars = [];
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 >= 0.5;
 
   for (let i = 1; i <= 5; i++) {
     if (i <= fullStars) {
-      stars.push(<FiStar key={i} className="text-yellow-400 fill-current w-4 h-4" />);
+      stars.push(<FiStar key={i} className="fill-current w-4 h-4 text-yellow-400" />);
     } else if (i === fullStars + 1 && hasHalfStar) {
-      stars.push(<FiStar key={i} className="text-yellow-400 fill-current w-4 h-4" />);
+      stars.push(<FiStar key={i} className="fill-current w-4 h-4 text-yellow-400" />);
     } else {
-      stars.push(<FiStar key={i} className="text-gray-400 w-4 h-4" />);
+      stars.push(<FiStar key={i} className={`w-4 h-4 ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`} />);
     }
   }
 
@@ -62,6 +67,7 @@ const getStarRating = (starRating) => {
 
 const Integrations = () => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const { user: authUser, subscriptionData } = useAuth();
 
   const {
@@ -129,19 +135,21 @@ const Integrations = () => {
   const connected = !!googleOAuth?.access_token;
 
   return (
-    <div className="flex min-h-screen w-full bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 transition-colors duration-200">
+    <div className={`flex min-h-screen w-full ${theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} transition-colors duration-200`}>
       <div className="flex-1 p-4 md:p-8 transition-all duration-200">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">Google Business Integration</h1>
-              <p className="text-gray-600 dark:text-gray-400">Manage your Google Business Profile and reviews in one place</p>
+              <h1 className={`text-2xl md:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Google Business Integration</h1>
+              <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Manage your Google Business Profile and reviews in one place</p>
             </div>
 
             {connected && (
               <button 
                 onClick={handleDisconnect} 
-                className="flex items-center space-x-2 px-4 py-2 bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors border border-red-100 dark:border-red-800/50"
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg transition-colors border ${theme === 'dark' 
+                  ? 'bg-red-900/30 text-red-400 hover:bg-red-900/50 border-red-800/50' 
+                  : 'bg-red-50 text-red-600 hover:bg-red-100 border-red-100'}`}
               >
                 <FiLogOut className="w-5 h-5" />
                 <span>Disconnect</span>
@@ -153,12 +161,16 @@ const Integrations = () => {
             // ===================
             // CONNECT UI
             // ===================
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center max-w-2xl mx-auto">
-              <div className="bg-blue-50 dark:bg-blue-900/30 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
-                <FaGoogle className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+            <div className={`rounded-xl shadow-sm border p-8 text-center max-w-2xl mx-auto ${theme === 'dark' 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border-gray-200'}`}>
+              <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${theme === 'dark' 
+                ? 'bg-purple-900/30' 
+                : 'bg-purple-50'}`}>
+                <FaGoogle className={`w-8 h-8 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-500'}`} />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Connect Your Google Business Account</h2>
-              <p className="text-gray-600 dark:text-gray-300 mb-8 max-w-md mx-auto">
+              <h2 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Connect Your Google Business Account</h2>
+              <p className={`mb-8 max-w-md mx-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                 Connect your Google Business account to manage reviews and respond to customers all in one place.
               </p>
               <button 
@@ -175,15 +187,17 @@ const Integrations = () => {
             // CONNECTED UI
             // ===================
             <>
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+              <div className={`rounded-xl shadow-sm border p-6 mb-8 ${theme === 'dark' 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'}`}>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                   <div className="flex items-center space-x-4">
-                    <div className="bg-blue-100 dark:bg-blue-900/30 p-2 rounded-full">
-                      <FaGoogle className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <div className={`p-2 rounded-full ${theme === 'dark' ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
+                      <FaGoogle className={`w-6 h-6 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
                     </div>
                     <div>
-                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{user?.email || 'Google Account'}</h2>
-                      <p className="text-sm text-green-600 dark:text-green-400 font-medium flex items-center">
+                      <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{user?.email || 'Google Account'}</h2>
+                      <p className={`text-sm font-medium flex items-center ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
                         <FiCheckCircle className="w-4 h-4 mr-1" />
                         Connected
                       </p>
@@ -192,7 +206,7 @@ const Integrations = () => {
                 </div>
 
                 <div className="mb-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Your Business Locations</h3>
+                  <h3 className={`text-lg font-medium mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Your Business Locations</h3>
 
                   <div className="mb-6">
                     <BusinessProfileDropdown 
@@ -209,15 +223,19 @@ const Integrations = () => {
                   ) : businesses.length > 0 && selectedBusiness ? (
                     <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                       <div 
-                        className="border rounded-xl p-5 transition-all border-blue-500 dark:border-blue-600 ring-2 ring-blue-100 dark:ring-blue-900/30 bg-blue-50 dark:bg-blue-900/20"
+                        className={`border rounded-xl p-5 transition-all ${theme === 'dark' 
+                          ? 'border-purple-500 ring-purple-900/30 bg-purple-900/20' 
+                          : 'border-purple-400 ring-purple-100 bg-purple-50'}`}
                       >
                         <div className="flex justify-between items-start mb-3">
-                          <h4 className="font-medium text-gray-900 dark:text-white line-clamp-2">{selectedBusiness.title}</h4>
-                          <span className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-200 text-xs px-2.5 py-0.5 rounded-full">
+                          <h4 className={`font-medium line-clamp-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{selectedBusiness.title}</h4>
+                          <span className={`text-xs px-2.5 py-0.5 rounded-full ${theme === 'dark' 
+                            ? 'bg-purple-900/50 text-purple-200' 
+                            : 'bg-purple-100 text-purple-800'}`}>
                             {selectedBusiness.primaryCategory?.displayName || 'Business'}
                           </span>
                         </div>
-                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mb-3">
+                        <div className={`flex items-center text-sm mb-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                           <FiMapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
                           <span className="truncate">
                             {[
@@ -227,9 +245,11 @@ const Integrations = () => {
                             ].filter(Boolean).join(', ')}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-700">
+                        <div className={`flex items-center justify-between pt-3 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                           <button 
-                            className="text-sm font-medium text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 flex items-center transition-colors"
+                            className={`text-sm font-medium flex items-center transition-colors ${theme === 'dark' 
+                              ? 'text-purple-400 hover:text-purple-300' 
+                              : 'text-purple-600 hover:text-purple-800'}`}
                             onClick={() => handleBusinessSelect(selectedBusiness)}
                           >
                             View Reviews
@@ -240,7 +260,9 @@ const Integrations = () => {
                               href={selectedBusiness.websiteUri} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                              className={`transition-colors ${theme === 'dark' 
+                                ? 'text-gray-400 hover:text-gray-300' 
+                                : 'text-gray-400 hover:text-gray-600'}`}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <FiExternalLink className="w-4 h-4" />
@@ -250,29 +272,35 @@ const Integrations = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="text-center py-8 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                      <FiAlertCircle className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                      <p className="text-gray-500 dark:text-gray-400">No business locations found</p>
+                    <div className={`text-center py-8 border-2 border-dashed rounded-lg ${theme === 'dark' 
+                      ? 'border-gray-700 bg-gray-800/50' 
+                      : 'border-gray-200 bg-gray-50'}`}>
+                      <FiAlertCircle className={`w-12 h-12 mx-auto mb-3 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
+                      <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>No business locations found</p>
                     </div>
                   )}
                 </div>
               </div>
 
               {selectedLocation && (
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className={`rounded-xl shadow-sm border p-6 ${theme === 'dark' 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-white border-gray-200'}`}>
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       {reviews.length} {reviews.length === 1 ? 'Review' : 'Reviews'}
                     </h3>
                     <div className="flex items-center space-x-3">
-                      <div className="flex items-center px-3 py-1.5 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg border border-yellow-100 dark:border-yellow-800/50">
-                        <FiStar className="w-4 h-4 text-yellow-500 dark:text-yellow-400 fill-current mr-1" />
-                        <span className="text-sm font-medium text-yellow-700 dark:text-yellow-300">
+                      <div className={`flex items-center px-3 py-1.5 rounded-lg border ${theme === 'dark' 
+                        ? 'bg-yellow-900/30 border-yellow-800/50' 
+                        : 'bg-yellow-50 border-yellow-100'}`}>
+                        <FiStar className={`w-4 h-4 fill-current mr-1 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-500'}`} />
+                        <span className={`text-sm font-medium ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>
                           {(reviews.reduce((acc, curr) => acc + getStarRating(curr.starRating), 0) / (reviews.length || 1)).toFixed(1)}
-                          <span className="text-yellow-600 dark:text-yellow-400">/5</span>
+                          <span className={theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}>/5</span>
                         </span>
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                         Total: {reviews.length} reviews
                       </div>
                     </div>
@@ -283,7 +311,9 @@ const Integrations = () => {
                   ) : reviews.length > 0 ? (
                     <div className="space-y-6">
                       {reviews.map((review, i) => (
-                        <div key={i} className="border border-gray-100 dark:border-gray-700 rounded-lg p-5 hover:shadow-sm dark:hover:shadow-gray-800/20 transition-all bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/70">
+                        <div key={i} className={`border rounded-lg p-5 hover:shadow-sm transition-all ${theme === 'dark' 
+                          ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-800/70 hover:shadow-gray-800/20' 
+                          : 'border-gray-100 bg-white hover:bg-gray-50'}`}>
                           <div className="flex items-start space-x-4">
                             <div className="flex-shrink-0">
                               {review.reviewer?.profilePhotoUrl ? (
@@ -298,9 +328,11 @@ const Integrations = () => {
                                   }}
                                 />
                               ) : null}
-                              <div className={`w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-semibold text-lg ${
+                              <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-lg ${
                                 review.reviewer?.profilePhotoUrl ? 'hidden' : 'flex'
-                              }`}>
+                              } ${theme === 'dark' 
+                                ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
+                                : 'bg-gradient-to-br from-purple-400 to-purple-600'}`}>
                                 {(review.reviewer?.displayName || 'U').charAt(0).toUpperCase()}
                               </div>
                             </div>
@@ -308,35 +340,37 @@ const Integrations = () => {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between mb-3">
                                 <div>
-                                  <h4 className="font-semibold text-gray-900 dark:text-white text-lg">
+                                  <h4 className={`font-semibold text-lg ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                                     {review.reviewer?.displayName || 'Anonymous'}
                                   </h4>
                                   <div className="flex items-center space-x-3 mt-1">
                                     <StarRating rating={getStarRating(review.starRating)} />
-                                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                    <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
                                       {getStarRating(review.starRating)}/5 stars
                                     </span>
                                   </div>
                                 </div>
-                                <div className="text-right text-sm text-gray-500 dark:text-gray-400">
+                                <div className={`text-right text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                                   {review.createTime && formatDate(review.createTime)}
                                 </div>
                               </div>
 
-                              <p className="text-gray-800 dark:text-gray-200 leading-relaxed whitespace-pre-line mb-4">
+                              <p className={`leading-relaxed whitespace-pre-line mb-4 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                                 {review.comment || 'No review text provided.'}
                               </p>
                               
                               {review.reviewReply && (
-                                <div className="mt-4 pl-4 border-l-4 border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-r-lg">
-                                  <div className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
-                                    <span className="text-blue-600 dark:text-blue-400">Your Response</span>
+                                <div className={`mt-4 pl-4 border-l-4 p-3 rounded-r-lg ${theme === 'dark' 
+                                  ? 'border-purple-700 bg-purple-900/20' 
+                                  : 'border-purple-200 bg-purple-50'}`}>
+                                  <div className={`flex items-center text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
+                                    <span className={theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}>Your Response</span>
                                     <span className="mx-2 text-gray-400">•</span>
-                                    <span className="text-gray-500 dark:text-gray-400 text-xs">
+                                    <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                                       {review.reviewReply.updateTime && formatDate(review.reviewReply.updateTime)}
                                     </span>
                                   </div>
-                                  <p className="text-gray-700 dark:text-gray-300 text-sm">
+                                  <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
                                     {review.reviewReply.comment}
                                   </p>
                                 </div>
@@ -348,10 +382,12 @@ const Integrations = () => {
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800/50">
-                      <FiStar className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-                      <h4 className="text-gray-700 dark:text-gray-200 font-medium mb-1">No reviews yet</h4>
-                      <p className="text-gray-500 dark:text-gray-400 max-w-md mx-auto">
+                    <div className={`text-center py-12 border-2 border-dashed rounded-xl ${theme === 'dark' 
+                      ? 'border-gray-700 bg-gray-800/50' 
+                      : 'border-gray-200 bg-gray-50'}`}>
+                      <FiStar className={`w-12 h-12 mx-auto mb-3 ${theme === 'dark' ? 'text-gray-600' : 'text-gray-300'}`} />
+                      <h4 className={`font-medium mb-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>No reviews yet</h4>
+                      <p className={`max-w-md mx-auto ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                         No reviews found for this business.
                       </p>
                     </div>
