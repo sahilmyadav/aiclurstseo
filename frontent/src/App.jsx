@@ -5,6 +5,8 @@ import Navbar from './components/common/Navbar'
 import Home from './components/common/Home'
 import Login from './components/Auth/Login'
 import Signup from './components/Auth/Signup'
+import ForgotPassword from './components/Auth/ForgotPassword'
+import ResetPassword from './components/Auth/ResetPassword'
 import Dashboard from './components/Dashboard'
 import DashboardLayout from './components/Layout/DashboardLayout'
 import { Toaster } from 'sonner'
@@ -65,6 +67,8 @@ const AppContent = () => {
         <Route path="/about" element={<About />} />
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
         <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />
+        <Route path="/forgot-password" element={ <ForgotPassword /> } />
+        <Route path="/reset-password" element={!isAuthenticated ? <ResetPassword /> : <Navigate to="/dashboard" />} />
         <Route path="/review/:locationId" element={<MakeReview />} />
         <Route path="/subscription/success" element={<SubscriptionSuccess />} />
         <Route path="/analytics-dashboard" element={isAuthenticated ? <AnalyticsDashboard /> : <Navigate to="/login" />} />
