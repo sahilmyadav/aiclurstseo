@@ -7,7 +7,21 @@ import { useGoogleBusiness } from '../components/context/GoogleBusinessContext';
 function MakeReview() {
   const { locationId } = useParams();
   const [searchParams] = useSearchParams();
-  const businessName = 'Our Business'; // Default business name
+  
+  // Get business name and category from URL params
+  const businessName = searchParams.get('businessName') 
+    ? searchParams.get('businessName')
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+    : 'Our Business'; // Fallback if no business name in URL
+    
+  const businessCategory = searchParams.get('category') 
+    ? searchParams.get('category')
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+    : 'business'; // Fallback if no category in URL
   
   const [selectedRating, setSelectedRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -42,7 +56,12 @@ function MakeReview() {
       try {
         const businessData = {
           name: businessName,
-          primaryCategory: searchParams.get('category') || 'business',
+          primaryCategory: businessCategory,
+          categories: {
+            primaryCategory: {
+              name: businessCategory
+            }
+          },
           location: {
             address: {
               locality: searchParams.get('city') || '',
