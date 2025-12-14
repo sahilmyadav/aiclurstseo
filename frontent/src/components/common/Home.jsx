@@ -253,13 +253,13 @@ const Home = () => {
             }`}>
               Watch Demo
             </button>
-            <button className={`px-6 py-3 border font-semibold rounded-lg transition transform hover:-translate-y-1 hover:shadow-lg ${
+            {/* <button className={`px-6 py-3 border font-semibold rounded-lg transition transform hover:-translate-y-1 hover:shadow-lg ${
               theme === 'dark'
                 ? 'border-gray-400 text-white hover:bg-white/10'
                 : 'border-purple-300 text-purple-700 hover:bg-purple-50'
             }`}>
               Learn More
-            </button>
+            </button> */}
           </div>
 
           <div className={`flex flex-wrap items-center gap-6 text-sm ${
