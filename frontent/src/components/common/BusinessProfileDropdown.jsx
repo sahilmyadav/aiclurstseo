@@ -174,10 +174,10 @@ const BusinessProfileDropdown = ({
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full flex justify-between items-center px-4 py-2 rounded border ${
-          theme === 'dark'
-            ? 'bg-gray-800 border-gray-700'
-            : 'bg-white border-gray-300'
+        className={`w-full flex items-center justify-between px-4 py-2 text-sm font-medium rounded-lg border ${
+          theme === 'dark' 
+            ? 'border-gray-700 bg-gray-800 text-white' 
+            : 'border-gray-300 bg-white text-purple-700'
         }`}
       >
         <span className="truncate text-sm">
@@ -214,7 +214,7 @@ const BusinessProfileDropdown = ({
                   isSelected
                     ? 'bg-blue-500 text-white'
                     : selectable
-                    ? 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                    ? `hover:bg-gray-100 dark:hover:bg-gray-700 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`
                     : 'text-gray-400 cursor-not-allowed'
                 }`}
               >

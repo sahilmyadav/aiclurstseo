@@ -7,12 +7,14 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import { toast } from "sonner";
-import { useAuth } from "./context/AuthContext";
-import { useGoogleBusiness } from "./context/GoogleBusinessContext";
+import { useTheme } from "../context/ThemeContext";
 import BulkUploadComponent from "./BulkUploadComponent";
 import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
+import { useAuth } from "./context/AuthContext";
+import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 
 const SMSComponent = () => {
+  const { theme } = useTheme();
   const { user, token } = useAuth();
   const {
     businesses,
@@ -132,7 +134,9 @@ const SMSComponent = () => {
   if (businessesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <FaSpinner className="animate-spin text-2xl text-purple-500" />
+        <FaSpinner className={`animate-spin text-2xl ${
+          theme === 'dark' ? 'text-purple-500' : 'text-purple-600'
+        }`} />
       </div>
     );
   }
@@ -151,23 +155,54 @@ const SMSComponent = () => {
     );
   }
 
+  // Theme classes
+  const mainContainerClasses = `max-w-4xl mx-auto p-6 min-h-screen ${
+    theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+  }`;
+
+  const cardClasses = `rounded-lg shadow-lg p-6 mb-8 ${
+    theme === 'dark' ? 'bg-gray-800' : 'bg-white border border-gray-200'
+  }`;
+
+  const inputClasses = `w-full pl-10 px-4 py-2 rounded-md focus:ring-2 focus:border-transparent ${
+    theme === 'dark' 
+      ? 'bg-gray-700 border-gray-600 text-white focus:ring-purple-500' 
+      : 'bg-white border-gray-300 text-gray-900 focus:ring-purple-500 border'
+  }`;
+
+  const buttonClasses = `w-full flex items-center justify-center px-6 py-3 ${
+    theme === 'dark' 
+      ? 'bg-indigo-600 hover:bg-indigo-700' 
+      : 'bg-purple-600 hover:bg-purple-700'
+  } text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed`;
+
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-900 text-white min-h-screen">
+    <div className={mainContainerClasses}>
       <div className="mb-8">
-        <h1 className="text-2xl font-bold mb-2">Send SMS Invitations</h1>
-        <p className="text-gray-400">
+        <h1 className={`text-2xl font-bold mb-2 ${
+          theme === 'dark' ? 'text-white' : 'text-gray-900'
+        }`}>
+          Send SMS Invitations
+        </h1>
+        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
           Invite your customers to leave a review via SMS
         </p>
       </div>
 
-      <div className="bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
+      <div className={cardClasses}>
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-xl font-semibold">
+          <h2 className={`text-xl font-semibold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>
             {showBulkUpload ? "Bulk Upload Contacts" : "Single Invitation"}
           </h2>
           <button
             onClick={() => setShowBulkUpload(!showBulkUpload)}
-            className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md text-sm font-medium transition-colors"
+            className={`flex items-center px-4 py-2 ${
+              theme === 'dark' 
+                ? 'bg-indigo-600 hover:bg-indigo-700' 
+                : 'bg-purple-600 hover:bg-purple-700'
+            } text-white rounded-md text-sm font-medium transition-colors`}
           >
             {showBulkUpload ? (
               <>
@@ -189,7 +224,9 @@ const SMSComponent = () => {
           <form onSubmit={handleSendSMS} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="w-full mb-4">
-                <label className="block text-sm font-medium text-gray-300 mb-1">
+                <label className={`block text-sm font-medium mb-1 ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                }`}>
                   Select Business
                 </label>
                 <BusinessProfileDropdown
@@ -203,13 +240,15 @@ const SMSComponent = () => {
                       businessName
                     }));
                   }}
-                  className="w-full"
+                  className={`w-full ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
                 />
               </div>
               <div>
                 <label
                   htmlFor="customerName"
-                  className="block text-sm font-medium text-gray-300 mb-1"
+                  className={`block text-sm font-medium mb-1 ${
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}
                 >
                   Customer Name (Optional)
                 </label>
@@ -224,14 +263,16 @@ const SMSComponent = () => {
                     value={formData.customerName}
                     onChange={handleInputChange}
                     placeholder="John Doe"
-                    className="w-full pl-10 px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className={inputClasses}
                   />
                 </div>
               </div>
               <div className="md:col-span-2">
                 <label
                   htmlFor="customerPhone"
-                  className="block text-sm font-medium text-gray-300 mb-1"
+                  className={`block text-sm font-medium mb-1 ${
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}
                 >
                   Phone Number <span className="text-red-500">*</span>
                 </label>
@@ -246,11 +287,13 @@ const SMSComponent = () => {
                     value={formData.customerPhone}
                     onChange={handleInputChange}
                     placeholder="+1234567890"
-                    className="w-full pl-10 px-4 py-2 bg-gray-700 border border-gray-600 rounded-md focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    className={inputClasses}
                     required
                   />
                 </div>
-                <p className="text-xs text-gray-400 mt-1">
+                <p className={`text-xs mt-1 ${
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                }`}>
                   Include country code (e.g., +1 for US)
                 </p>
               </div>
@@ -260,7 +303,7 @@ const SMSComponent = () => {
               <button
                 type="submit"
                 disabled={isSending || businesses.length === 0}
-                className="w-full flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className={buttonClasses}
               >
                 {isSending ? (
                   <>
@@ -279,25 +322,12 @@ const SMSComponent = () => {
         )}
       </div>
 
-      <div className="bg-gray-800 rounded-lg shadow-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">SMS Preview</h2>
-        <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
-          <p className="text-gray-300 mb-4">
-            Hi {formData.customerName || "there"}, we'd love your feedback!
-            Please take a moment to leave us a review: [Review Link]
-          </p>
-          <p className="text-sm text-gray-400">
-            Sent from:{" "}
-            {businesses.find((b) => b.id === formData.businessId)?.name ||
-              "Our Business"}
-          </p>
-          <p className="mt-2 text-sm text-gray-400">
-            Best regards,
-            <br />
-            {businesses.find((b) => b.id === formData.businessId)?.name ||
-              "Our Team"}
-          </p>
-        </div>
+      <div className={cardClasses}>
+        <h2 className={`text-xl font-semibold mb-4 ${
+          theme === 'dark' ? 'text-white' : 'text-gray-900'
+        }`}>
+          SMS Preview
+        </h2>
       </div>
     </div>
   );

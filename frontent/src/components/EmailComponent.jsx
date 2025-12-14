@@ -4,8 +4,10 @@ import { FaPaperPlane, FaSpinner, FaUser, FaUpload } from "react-icons/fa";
 import { useAuth } from "./context/AuthContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
+import { useTheme } from "../context/ThemeContext";
 
 const EmailComponent = () => {
+  const { theme } = useTheme();
   const { token } = useAuth();
   const { 
     businesses = [], 
@@ -124,17 +126,46 @@ const EmailComponent = () => {
       </div>
     );
 
+  // Theme classes
+  const mainContainerClasses = `max-w-4xl mx-auto p-6 ${
+    theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'
+  } rounded-lg min-h-screen`;
+
+  const cardClasses = `rounded-lg shadow-lg p-6 mb-8 ${
+    theme === 'dark' ? 'bg-gray-800' : 'bg-white border border-gray-200'
+  }`;
+
+  const inputClasses = `w-full px-3 py-2 rounded ${
+    theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white text-gray-900 border border-gray-300'
+  }`;
+
+  const buttonClasses = `w-full flex items-center justify-center px-6 py-3 ${
+    theme === 'dark' 
+      ? 'bg-indigo-600 hover:bg-indigo-700' 
+      : 'bg-purple-600 hover:bg-purple-700'
+  } text-white font-medium rounded-md`;
+
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-gray-900 text-white rounded min-h-screen">
-      <h2 className="text-lg font-semibold mb-3">Send Email Invitation</h2>
-      <div className="bg-gray-800 rounded-lg shadow-lg p-6 mb-8">
+    <div className={mainContainerClasses}>
+      <h2 className={`text-lg font-semibold mb-3 ${
+        theme === 'dark' ? 'text-white' : 'text-gray-900'
+      }`}>
+        Send Email Invitation
+      </h2>
+      <div className={cardClasses}>
         <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-semibold">
+          <h3 className={`text-xl font-semibold ${
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}>
             {showBulkUpload ? "Bulk Upload Email Contacts" : "Single Invitation"}
           </h3>
           <button
             onClick={() => setShowBulkUpload(!showBulkUpload)}
-            className="flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 rounded-md text-sm font-medium transition-colors"
+            className={`flex items-center px-4 py-2 ${
+              theme === 'dark' 
+                ? 'bg-indigo-600 hover:bg-indigo-700' 
+                : 'bg-purple-600 hover:bg-purple-700'
+            } text-white rounded-md text-sm font-medium transition-colors`}
           >
             {showBulkUpload ? (
               <>
@@ -156,7 +187,9 @@ const EmailComponent = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="w-full">
-                <label className="block text-sm text-gray-300 mb-1">
+                <label className={`block text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                } mb-1`}>
                   Business
                 </label>
                 <BusinessProfileDropdown
@@ -172,7 +205,7 @@ const EmailComponent = () => {
                   name="customerName"
                   value={form.customerName}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 rounded bg-gray-800 text-white"
+                  className={inputClasses}
                   placeholder="John Doe"
                   required
                 />
@@ -185,7 +218,7 @@ const EmailComponent = () => {
                   type="email"
                   value={form.customerEmail}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 rounded bg-gray-800 text-white"
+                  className={inputClasses}
                   placeholder="customer@example.com"
                   required
                 />
@@ -194,7 +227,7 @@ const EmailComponent = () => {
                   <button
                     type="submit"
                     disabled={isSending}
-                    className="w-full flex items-center justify-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md"
+                    className={buttonClasses}
                   >
                     {isSending ? (
                       <>
@@ -224,16 +257,26 @@ const EmailComponent = () => {
           value={form.content}
           onChange={handleChange}
           rows={6}
-          className="w-full px-4 py-3 bg-gray-800 text-white rounded-lg border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+          className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-${theme === 'dark' ? 'indigo-500' : 'purple-500'} focus:border-transparent ${
+            theme === 'dark' 
+              ? 'bg-gray-800 text-white border-gray-700' 
+              : 'bg-white text-gray-900 border-gray-300'
+          }`}
           placeholder="Enter your email content here..."
         />
-        <p className="mt-1 text-xs text-gray-400">
+        <p className={`mt-1 text-xs ${
+          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+        }`}>
           You can use plain text or basic HTML for formatting
         </p>
       </div>
 
-      <div className="bg-gray-800 rounded-lg shadow-lg p-6 mt-6">
-        <h3 className="text-lg font-semibold text-gray-200 mb-4">Email Preview</h3>
+      <div className={`${cardClasses} mt-6`}>
+        <h3 className={`text-lg font-semibold mb-4 ${
+          theme === 'dark' ? 'text-gray-200' : 'text-gray-800'
+        }`}>
+          Email Preview
+        </h3>
         <div className="bg-white p-6 rounded-lg">
           <div className="bg-indigo-600 text-white p-4 rounded-t-lg">
             <h2 className="text-xl font-bold text-center">Share Your Experience</h2>
