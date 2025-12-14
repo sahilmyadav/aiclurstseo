@@ -24,7 +24,9 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between md:justify-around gap-6 items-center h-12">
           <Link to="/" className="flex items-center" onClick={closeMobileMenu}>
-            <img src={logoPath} alt="Logo" className="h-10 w-auto" />
+            <div className="bg-white p-1 rounded-lg">
+              <img src={logoPath} alt="Logo" className="h-10 w-auto" />
+            </div>
           </Link>
 
           <div className="md:hidden flex items-center">
