@@ -100,29 +100,22 @@ export const generateReviewSuggestions = async (businessData, rating, existingRe
     
     // Prepare the prompt for Gemini
     const isHighRating = rating >= 4;
-    const prompt = `Generate 3 unique and natural-sounding ${rating}-star review suggestions for a business with the following details:
-    
-Business Name: ${name || 'a local business'}
-Category: ${primaryCategory || 'various services'}
-Location: ${location?.address?.locality || ''}, ${location?.address?.regionCode || ''}
-Website: ${websiteUri || 'Not specified'}
-Price Level: ${priceInfo?.priceLevel ? '$'.repeat(parseInt(priceInfo.priceLevel)) : 'Not specified'}
+    const prompt = `Generate 3 unique and natural-sounding ${rating}-star review suggestions from a CUSTOMER'S PERSPECTIVE for ${name || 'a local business'} (${primaryCategory || 'various services'}).
 
-Existing reviews to learn from (but don't copy directly):
-${existingReviews.slice(0, 3).map((r, i) => `${i + 1}. "${r.comment}"`).join('\n')}
+IMPORTANT RULES:
+1. Write from a first-person perspective ("I", "my", "me") as if you're a real customer
+2. Be specific about your experience - mention what you liked
+3. For ${rating}-star reviews, explain why you're giving this rating
+4. Keep it conversational and natural, like a real person wrote it
+5. Each review should be 15-30 words
+6. Vary the focus between service, quality, atmosphere, etc.
+7. Include small details that make it sound authentic
+8. Don't use generic phrases like "highly recommend" without saying why
+9. Make it sound like a genuine customer review, not a business owner
+10. Return ONLY a valid JSON array of 3 strings, no other text
 
-Guidelines for generating reviews:
-1. Keep each suggestion between 10-20 words
-2. Make them sound natural and human-like
-3. Vary the tone and focus (e.g., service, quality, atmosphere, specific menu items/features)
-4. For ${rating}-star reviews, focus on highlighting what makes this business stand out
-5. Include specific, positive details that would be relevant to this type of business
-6. For 4-star reviews: mention any minor areas for improvement while maintaining an overall positive tone
-7. For 5-star reviews: emphasize exceptional experiences and what makes this business worth the perfect score
-8. Return ONLY a valid JSON array of 3 strings, no other text
-
-Example format:
-["Great service and friendly staff!", "The quality of the products exceeded my expectations.", "Lovely atmosphere and excellent customer service."]`;
+Example format (from customer perspective):
+["I was really impressed with the friendly service and the delicious food. The staff went above and beyond to make our anniversary special!", "The atmosphere was cozy and inviting, and my steak was cooked to perfection. Definitely coming back for the chocolate lava cake!", "As someone who's tried many similar places, this one stands out for their attention to detail. The server remembered my name and drink order from my last visit!"]`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
@@ -167,31 +160,35 @@ Example format:
         .slice(0, 3);
     } catch (e) {
       console.error('Error parsing AI response:', e);
-      return getFallbackSuggestions(rating);
+      const { name, primaryCategory, categories } = businessData || {};
+      const category = primaryCategory || categories?.primaryCategory?.name || 'business';
+      return getFallbackSuggestions(rating, name, category);
     }
   } catch (error) {
     console.error('Error generating suggestions:', error);
-    return getFallbackSuggestions(rating);
+    const { name, primaryCategory, categories } = businessData || {};
+    const category = primaryCategory || categories?.primaryCategory?.name || 'business';
+    return getFallbackSuggestions(rating, name, category);
   }
 };
 
 // Fallback suggestions in case the API call fails
-const getFallbackSuggestions = (rating) => {
+const getFallbackSuggestions = (rating, businessName = 'this place', businessType = 'business') => {
   const suggestions = {
     5: [
-      "Absolutely outstanding in every way! The attention to detail and exceptional service made this a memorable experience. Will be telling all my friends!",
-      "Perfection from start to finish! The quality exceeded my expectations and the staff made us feel truly valued. Can't wait to return!",
-      "This place sets the gold standard! Every aspect was flawless - the service, atmosphere, and quality were all 10/10. A must-visit!"
+      `I was blown away by my experience at ${businessName}! The ${businessType} was exceptional and the staff made me feel like a valued customer. Can't wait to come back!`,
+      `Five stars isn't enough for ${businessName}! As someone who's tried many ${businessType}s, this one stands out for its amazing quality and friendly service.`,
+      `I can't recommend ${businessName} enough! The attention to detail in their ${businessType} is impressive, and the staff goes above and beyond. A true gem!`
     ],
     4: [
-      "Really impressed with the overall experience! The food was delicious and the service was excellent. Only minor suggestion would be more vegetarian options.",
-      "Great place with a wonderful atmosphere! The staff was attentive and friendly. The only thing keeping it from 5 stars was the slightly long wait time.",
-      "Had a fantastic time! The quality was top-notch and the service was great. Would love to see more variety in the menu next time."
+      `I had a great experience at ${businessName}. The ${businessType} was really good and the service was friendly. Just a couple of small things could make it perfect!`,
+      `${businessName} is a solid choice for ${businessType}. The quality is there and the staff is nice. I'd definitely recommend giving it a try!`,
+      `I was really impressed with the ${businessType} at ${businessName}. The atmosphere was nice and the staff was attentive. Would definitely come back!`
     ],
     default: [
-      "Good experience overall with friendly service.",
-      "Pleasant atmosphere and decent quality.",
-      "Worth a try if you're in the area."
+      `I had a decent experience at ${businessName}. The ${businessType} was okay, but nothing special. Maybe I'll try it again sometime.`,
+      `The service was friendly at ${businessName}, though the ${businessType} could use some improvement. It's an okay place overall.`,
+      `It was an okay experience. The ${businessType} was fine but I've had better. Might give it another try sometime.`
     ]
   };
 

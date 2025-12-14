@@ -152,8 +152,13 @@ const QRCodeComponent = () => {
     const locationId = business.name.split('/').pop();
     const frontendUrl = import.meta.env.VITE_FRONTEND_URL || window.location.origin;
     
-    // Create base URL up to reviewUri=
-    const baseUrl = `${frontendUrl}/review/${locationId}?reviewUri=`;
+    // Get business name and category for URL parameters
+    const businessName = business.title ? encodeURIComponent(business.title.replace(/\s+/g, '-').toLowerCase()) : '';
+    const businessCategory = business.categories?.primaryCategory?.name ? 
+      encodeURIComponent(business.categories.primaryCategory.name.toLowerCase().replace(/\s+/g, '-')) : '';
+    
+    // Create base URL with location ID, business name, and category
+    const baseUrl = `${frontendUrl}/review/${locationId}?businessName=${businessName}&category=${businessCategory}&reviewUri=`;
     
     // Always use manualReviewUri if it exists, otherwise fall back to business metadata
     const reviewUri = manualReviewUri || extractReviewUri(business.metadata?.newReviewUri) || '';
