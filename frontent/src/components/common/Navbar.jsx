@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import ThemeToggle from '../ThemeToggle';
 
-const logoPath = '/logo png[1].png';
+const lightLogo = '/clurst transparent logo 2 for white baground.png';
+const darkLogo = '/clurst transparent logo.png';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -24,8 +25,12 @@ const Navbar = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between md:justify-around gap-6 items-center h-12">
           <Link to="/" className="flex items-center" onClick={closeMobileMenu}>
-            <div className="bg-white p-1 rounded-lg">
-              <img src={logoPath} alt="Logo" className="h-10 w-auto" />
+            <div className="p-2">
+              <img 
+                src={theme === 'dark' ? darkLogo : lightLogo} 
+                alt="Clurst Logo" 
+                className="h-50 w-auto"
+              />
             </div>
           </Link>
 
@@ -181,7 +186,12 @@ const Navbar = () => {
         <div className="pt-5 pb-6 px-5">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
-              <img src={logoPath} alt="Logo" className="w-auto h-10" />
+              <img 
+                src={theme === 'dark' ? darkLogo : lightLogo} 
+                alt="Clurst Logo" 
+                className="h-12 w-auto"
+                style={{ maxWidth: '180px' }}
+              />
               <ThemeToggle />
             </div>
             <button 
