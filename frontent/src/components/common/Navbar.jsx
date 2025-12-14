@@ -163,10 +163,11 @@ const Navbar = () => {
                   Sign Up
                 </Link>
                 <div className="ml-2">
-                  <ThemeToggle />
                 </div>
               </div>
             )}
+                  <ThemeToggle />
+
           </div>
         </div>
       </div>
