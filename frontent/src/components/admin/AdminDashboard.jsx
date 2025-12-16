@@ -1,9 +1,11 @@
-import { BarChart3, Users, Clock, FileText, Settings, AlertCircle, MessageSquare, Activity, ArrowUpRight, Loader2 } from 'lucide-react';
+import { BarChart3, Users, Clock, FileText, Settings, AlertCircle, MessageSquare, Activity, ArrowUpRight, Loader2, BarChart, PieChart, UserPlus } from 'lucide-react';
 import { useState, useContext, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminContext } from '../../context/AdminContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const AdminDashboard = () => {
+  const { theme } = useTheme();
   const { 
     users, 
     allUsers, 
@@ -93,8 +95,10 @@ const AdminDashboard = () => {
   // Render loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+      <div className={`flex items-center justify-center min-h-screen ${
+        theme === 'dark' ? 'bg-[#0f1020]' : 'bg-gray-50'
+      }`}>
+        <Loader2 className="w-8 h-8 animate-spin text-purple-500" />
       </div>
     );
   }
@@ -102,8 +106,12 @@ const AdminDashboard = () => {
   // Render error state
   if (error) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-500 text-center p-4">
+      <div className={`flex items-center justify-center min-h-screen ${
+        theme === 'dark' ? 'bg-[#0f1020]' : 'bg-gray-50'
+      }`}>
+        <div className={`text-red-500 text-center p-4 ${
+          theme === 'dark' ? 'text-white' : 'text-gray-900'
+        }`}>
           <AlertCircle className="w-8 h-8 mx-auto mb-2" />
           <p>Error loading dashboard data: {error}</p>
         </div>
@@ -113,128 +121,199 @@ const AdminDashboard = () => {
 
   // Render main content
   return (
-    <div className="min-h-screen bg-gray-900">
-      <div className="pt-20 px-4 sm:px-6 lg:px-8 pb-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white">Dashboard Overview</h1>
-              <p className="mt-1 text-sm text-gray-400">Welcome back! Here's what's happening with your platform.</p>
+    <div className={`min-h-screen w-full flex ${
+      theme === 'dark' ? 'text-white bg-[#0f1020]' : 'text-gray-900 bg-gray-50'
+    }`}>
+      <div className="flex-1 p-3 sm:p-6 transition-all duration-300 ease-in-out w-full">
+        <div className="h-screen overflow-auto">
+          <div className="pb-6">
+            <div className="flex items-center justify-between mb-6">
+              <h1 className={`text-2xl font-bold ${
+                theme === 'dark' ? 'text-white' : 'text-purple-900'
+              }`}>Admin Dashboard</h1>
             </div>
-            <div className="flex items-center space-x-2">
-              <span className="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-900/30 text-green-400">
-                <span className="w-2 h-2 mr-1.5 rounded-full bg-green-500"></span>
-                Live
-              </span>
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard
-              title="Total Users"
-              value={stats.totalUsers.toLocaleString()}
-              change={`${allUsers.length > 0 ? Math.round((stats.activeUsers / allUsers.length) * 100) : 0}% Active`}
-              icon={<Users className="w-6 h-6 text-blue-400" />}
-              color="blue"
-            />
-            <StatCard
-              title="Total Admins"
-              value={stats.totalAdmins.toLocaleString()}
-              change={`${allUsers.length > 0 ? Math.round((stats.totalAdmins / allUsers.length) * 100) : 0}% of total`}
-              icon={<Users className="w-6 h-6 text-indigo-400" />}
-              color="indigo"
-            />
-            <StatCard
-              title="Active Users"
-              value={stats.activeUsers.toLocaleString()}
-              change={`${allUsers.length > 0 ? Math.round((stats.activeUsers / allUsers.length) * 100) : 0}% of total`}
-              icon={<Activity className="w-6 h-6 text-green-400" />}
-              color="green"
-            />
-            <StatCard
-              title="Blocked Users"
-              value={stats.blockedUsers.toLocaleString()}
-              change={`${allUsers.length > 0 ? Math.round((stats.blockedUsers / allUsers.length) * 100) : 0}% of total`}
-              icon={<Users className="w-6 h-6 text-red-400" />}
-              color="red"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-            {/* Quick Actions - Left Side */}
-            <div className="lg:col-span-1">
-              <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-700">
-                  <h3 className="text-lg font-medium text-white">Quick Actions</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <div className={`p-6 rounded-xl shadow-sm transition-all duration-300 ${
+                theme === 'dark' ? 'bg-[#1a1b2e] hover:bg-[#23243a]' : 'bg-white hover:shadow-md'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${
+                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Total Users</p>
+                    <p className="text-2xl font-bold mt-1">{stats.totalUsers}</p>
+                    <p className={`text-xs mt-1 ${
+                      theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                    }`}>
+                      <span className="flex items-center">
+                        <ArrowUpRight className="w-3 h-3 mr-1" />
+                        +12% from last month
+                      </span>
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${
+                    theme === 'dark' ? 'bg-purple-900/30' : 'bg-purple-100'
+                  }`}>
+                    <Users className="w-6 h-6 text-purple-500" />
+                  </div>
                 </div>
-                <div className="divide-y divide-gray-700">
-                  {quickActions.map((action, index) => (
-                    <Link
-                      key={index}
-                      to={action.action}
-                      className="flex items-center justify-between px-6 py-4 hover:bg-gray-700/50 transition-colors duration-150"
-                    >
-                      <div className="flex items-center">
-                        <span className="p-2 rounded-lg bg-gray-700 text-gray-300 mr-3">
-                          {action.icon}
-                        </span>
-                        <span className="font-medium text-gray-200">{action.title}</span>
-                      </div>
-                      <ArrowUpRight className="w-4 h-4 text-gray-400" />
-                    </Link>
-                  ))}
+              </div>
+
+              <div className={`p-6 rounded-xl shadow-sm transition-all duration-300 ${
+                theme === 'dark' ? 'bg-[#1a1b2e] hover:bg-[#23243a]' : 'bg-white hover:shadow-md'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${
+                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Active Users</p>
+                    <p className="text-2xl font-bold mt-1">{stats.activeUsers}</p>
+                    <p className={`text-xs mt-1 ${
+                      theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                    }`}>
+                      <span className="flex items-center">
+                        <ArrowUpRight className="w-3 h-3 mr-1" />
+                        +5% from last week
+                      </span>
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${
+                    theme === 'dark' ? 'bg-green-900/30' : 'bg-green-100'
+                  }`}>
+                    <Activity className="w-6 h-6 text-green-500" />
+                  </div>
+                </div>
+              </div>
+
+              <div className={`p-6 rounded-xl shadow-sm transition-all duration-300 ${
+                theme === 'dark' ? 'bg-[#1a1b2e] hover:bg-[#23243a]' : 'bg-white hover:shadow-md'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${
+                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Admin Users</p>
+                    <p className="text-2xl font-bold mt-1">{stats.totalAdmins}</p>
+                    <p className={`text-xs mt-1 ${
+                      theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                    }`}>
+                      <span className="flex items-center">
+                        <ArrowUpRight className="w-3 h-3 mr-1" />
+                        +2 this month
+                      </span>
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${
+                    theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'
+                  }`}>
+                    <UserPlus className="w-6 h-6 text-blue-500" />
+                  </div>
+                </div>
+              </div>
+
+              <div className={`p-6 rounded-xl shadow-sm transition-all duration-300 ${
+                theme === 'dark' ? 'bg-[#1a1b2e] hover:bg-[#23243a]' : 'bg-white hover:shadow-md'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className={`text-sm font-medium ${
+                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    }`}>Blocked Users</p>
+                    <p className="text-2xl font-bold mt-1">{stats.blockedUsers}</p>
+                    <p className="text-xs mt-1 text-gray-500">
+                      <span className="flex items-center">
+                        <ArrowUpRight className="w-3 h-3 mr-1" />
+                        -1 this week
+                      </span>
+                    </p>
+                  </div>
+                  <div className={`p-3 rounded-lg ${
+                    theme === 'dark' ? 'bg-red-900/30' : 'bg-red-100'
+                  }`}>
+                    <AlertCircle className="w-6 h-6 text-red-500" />
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Recent Activity - Right Side */}
-            <div className="lg:col-span-3">
-              <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-700 flex justify-between items-center">
-                  <h3 className="text-lg font-medium text-white">Recent Activity</h3>
-                  <button className="text-sm text-blue-400 hover:text-blue-300 font-medium">View All</button>
-                </div>
-                <div className="divide-y divide-gray-700 max-h-[280px] overflow-y-auto">
-                  {recentActivities.map((activity) => (
-                    <div key={activity.id} className="px-6 py-4 hover:bg-gray-700/50 transition-colors duration-150">
-                      <div className="flex items-start">
-                        <div className="flex-shrink-0 mt-0.5">
-                          <span className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-700 text-gray-300">
-                            {activity.icon}
-                          </span>
-                        </div>
-                        <div className="ml-3 flex-1">
-                          <div className="flex items-center">
-                            <span className="font-medium text-white">{activity.user}</span>
-                            <span className="mx-1 text-gray-400">{activity.action}</span>
-                          </div>
-                          <p className="text-xs text-gray-400 mt-0.5">
-                            {activity.time}
-                            {activity.userEmail && (
-                              <span className="ml-2 text-gray-500">• {activity.userEmail}</span>
-                            )}
-                          </p>
-                        </div>
-                      </div>
+            <div className="mb-6">
+              <h2 className={`text-lg font-semibold mb-4 ${
+                theme === 'dark' ? 'text-white' : 'text-gray-800'
+              }`}>Quick Actions</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {quickActions.map((action, index) => (
+                  <Link
+                    key={index}
+                    to={action.action}
+                    className={`p-4 rounded-xl transition-all duration-300 flex flex-col items-center justify-center text-center ${
+                      theme === 'dark' 
+                        ? 'bg-[#1a1b2e] hover:bg-[#23243a] border border-gray-800' 
+                        : 'bg-white hover:shadow-md border border-gray-100'
+                    }`}
+                  >
+                    <div className={`p-3 rounded-full mb-2 ${
+                      theme === 'dark' ? 'bg-purple-900/30' : 'bg-purple-100'
+                    }`}>
+                      {action.icon}
                     </div>
-                  ))}
-                </div>
+                    <span className={`font-medium ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-800'
+                    }`}>{action.title}</span>
+                  </Link>
+                ))}
               </div>
             </div>
-          </div>
 
-          {/* Recent Reviews Section */}
-          <div className="mt-8 bg-gray-800 rounded-lg shadow-sm border border-gray-700 overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-700">
-              <h3 className="text-lg font-medium text-white">Recent Reviews</h3>
-            </div>
-            <div className="p-6 text-center">
-              <div className="text-gray-500 mb-2">
-                <MessageSquare className="w-10 h-10 mx-auto" />
+            <div className={`rounded-xl p-6 mb-6 ${
+              theme === 'dark' ? 'bg-[#1a1b2e] border border-gray-800' : 'bg-white border border-gray-100'
+            }`}>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className={`text-lg font-semibold ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-800'
+                }`}>
+                  Recent Activity
+                </h2>
+                <Link 
+                  to="/ad-dashboard/users" 
+                  className={`text-sm ${
+                    theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-800'
+                  } font-medium transition-colors`}
+                >
+                  View All
+                </Link>
               </div>
-              <h4 className="text-gray-400 text-sm">No recent reviews available</h4>
-              <p className="text-gray-500 text-xs mt-1">New reviews will appear here</p>
+              <div className="space-y-4">
+                {recentActivities.map((activity, index) => (
+                  <div 
+                    key={index} 
+                    className={`flex items-start pb-4 ${
+                      index !== recentActivities.length - 1 ? `border-b ${theme === 'dark' ? 'border-gray-800' : 'border-gray-100'}` : ''
+                    } last:pb-0`}
+                  >
+                    <div className={`p-2 rounded-full mr-3 ${
+                      theme === 'dark' ? 'bg-purple-900/30' : 'bg-purple-100'
+                    }`}>
+                      {activity.icon}
+                    </div>
+                    <div className="flex-1">
+                      <p className={`text-sm font-medium ${
+                        theme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        {activity.user} <span className={`${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        } font-normal`}>
+                          {activity.action}
+                        </span>
+                      </p>
+                      <p className={`text-xs mt-1 ${
+                        theme === 'dark' ? 'text-gray-500' : 'text-gray-400'
+                      }`}>
+                        {activity.time}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -263,12 +342,18 @@ const StatCard = ({ title, value, change, icon, color }) => {
   };
 
   return (
-    <div className="bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6 hover:bg-gray-700/50 transition-colors duration-200">
+    <div className={`bg-gray-800 rounded-lg shadow-sm border border-gray-700 p-6 hover:bg-gray-700/50 transition-colors duration-200 ${
+      theme === 'dark' ? 'bg-[#1a1b2e] hover:bg-[#23243a]' : 'bg-white hover:shadow-md'
+    }`}>
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-medium text-gray-400">{title}</p>
-          <p className="mt-1 text-2xl font-semibold text-white">{value}</p>
-          <div className={`mt-2 inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full ${colorClasses[color]}`}>
+          <p className={`text-sm font-medium ${
+            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+          }`}>{title}</p>
+          <p className="text-2xl font-bold mt-1">{value}</p>
+          <div className={`mt-2 inline-flex items-center text-xs font-medium px-2.5 py-1 rounded-full ${
+            colorClasses[color]
+          }`}>
             {change}
           </div>
         </div>
