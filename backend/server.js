@@ -14,7 +14,9 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import invitationRoutes from './routes/invitationRoutes.js';
 import scheduleRoutes from './routes/scheduleRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import analyticsRoutes from './routes/analytics.js';
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import a from "./routes/analytics.js";
 import planRoutes from "./routes/planRoutes.js";
 import { startSubscriptionJobs } from './jobs/subscriptionJobs.js';
 dotenv.config();
@@ -85,6 +87,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/post', scheduleRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Test routes
 app.get('/', (req, res) => {
