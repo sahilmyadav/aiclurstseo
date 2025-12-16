@@ -62,11 +62,14 @@ const AppContent = () => {
         {
           user?.role !== 'admin' &&
         <Route path="/" element={
-         
-          <>
-            <Home />
-            <Features />
-          </>
+          user?.role === 'admin' ? (
+            <Navigate to="/ad-dashboard" />
+          ) : (
+            <>
+              <Home />
+              <Features />
+            </>
+          )
         } />
         }
         <Route path="/about" element={<About />} />
