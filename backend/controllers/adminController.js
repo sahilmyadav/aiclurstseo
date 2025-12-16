@@ -109,6 +109,10 @@ export const getAllUsers = async (req, res) => {
         
         const users = await User.find()
             .select('-password')
+            .populate({
+                path: 'subscription.currentSubscriptionId',
+                model: 'Subscription' // Make sure this matches your Subscription model name
+            })
             .sort({ createdAt: -1 })
             .skip(skip)
             .limit(parseInt(limit));

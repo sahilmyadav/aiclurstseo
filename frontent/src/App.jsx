@@ -42,7 +42,7 @@ import UserSubscriptionDetails from './components/subscription/UserSubsriptionDe
 
 const AppContent = () => {
   const location = useLocation()
-  const isDashboardRoute = location.pathname.startsWith('/dashboard')
+  const isDashboardRoute = location.pathname.startsWith('/dashboard') || location.pathname.startsWith('/review/')
   const { isAuthenticated, user, isLoading, isInitialized } = useAuth()
 
   // Show loading state while checking authentication
@@ -56,14 +56,19 @@ const AppContent = () => {
 
   return (
     <>
-      {!isDashboardRoute && <Navbar />}
+      {!isDashboardRoute && user?.role !== 'admin' && <Navbar />}
       <Routes>
+
+        {
+          user?.role !== 'admin' &&
         <Route path="/" element={
+         
           <>
             <Home />
             <Features />
           </>
         } />
+        }
         <Route path="/about" element={<About />} />
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
         <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />

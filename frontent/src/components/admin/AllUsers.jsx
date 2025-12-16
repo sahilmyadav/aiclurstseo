@@ -23,6 +23,7 @@ import {
   CreditCard,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../../context/ThemeContext";
 
 // Pagination Component
 const Pagination = ({ currentPage, totalPages, onPageChange }) => {
@@ -92,6 +93,7 @@ const debounce = (func, wait) => {
 };
 
 const AllUsers = () => {
+  const { theme } = useTheme();
   const { 
     users, 
     allUsers, 
@@ -176,7 +178,7 @@ const AllUsers = () => {
     fetchData();
   }, [fetchUsers]);
 
-  // ✅ Debounced search
+  // Debounced search
   const debouncedSearch = useCallback(
     debounce((val) => setSearchTerm(val), 300),
     []
@@ -186,7 +188,7 @@ const AllUsers = () => {
     debouncedSearch(e.target.value);
   };
 
-  // ✅ Update Role
+  // Update Role
   const handleRoleChange = async (id, currentRole) => {
     const newRole = currentRole === "admin" ? "user" : "admin";
     setIsUpdating(id);
@@ -215,7 +217,7 @@ const AllUsers = () => {
     }
   };
 
-  // ✅ Block/Unblock user
+  // Block/Unblock user
   const handleBlockUnblock = async (userId, isCurrentlyBlocked) => {
     setIsBlocking(userId);
     try {
@@ -238,7 +240,7 @@ const AllUsers = () => {
     }
   };
 
-  // ✅ Delete user
+  // Delete user
   const handleDelete = (id) => {
     // Show confirmation dialog
     toast(({ closeToast }) => (
@@ -295,7 +297,7 @@ const AllUsers = () => {
     });
   };
 
-  // ✅ Navigate to billing page for a specific user
+  // Navigate to billing page for a specific user
   const handleViewBilling = (userId) => {
     navigate(`/ad-dashboard/billing?userId=${userId}`);
   };
@@ -304,8 +306,12 @@ const AllUsers = () => {
   const getTabClass = (tab) =>
     `px-4 py-2 text-sm font-medium rounded-md flex items-center space-x-2 ${
       activeTab === tab
-        ? "bg-blue-100 text-blue-700 border-b-2 border-blue-500"
-        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+        ? theme === 'dark'
+          ? 'bg-blue-900/30 text-white border-b-2 border-blue-500'
+          : 'bg-blue-100 text-blue-700 border-b-2 border-blue-500'
+        : theme === 'dark'
+          ? 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+          : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
     }`;
 
   const roleBadge = (role) =>
@@ -313,7 +319,7 @@ const AllUsers = () => {
       ? "bg-green-100 text-green-800"
       : "bg-blue-100 text-blue-800";
 
-  // ✅ Loading state
+  // Loading state
   if (loading)
     return (
       <div className="flex flex-col items-center justify-center h-64 space-y-3">
@@ -322,7 +328,7 @@ const AllUsers = () => {
       </div>
     );
 
-  // ✅ Error state
+  // Error state
   if (error)
     return (
       <div className="text-center mt-10 text-red-600">
@@ -337,197 +343,194 @@ const AllUsers = () => {
     );
 
   return (
-    <div className="p-4 md:p-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-gray-800 mb-4 md:mb-0">
-          User Management
-        </h1>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <input
-            type="text"
-            placeholder="Search users..."
-            onChange={handleSearchChange}
-            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full md:w-64"
-          />
+    <div className={`min-h-screen w-full ${theme === 'dark' ? 'bg-[#0f1020] text-white' : 'bg-gray-50 text-gray-900'}`}>
+      <div className="p-4 md:p-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+          <h1 className={`text-2xl font-bold mb-4 md:mb-0 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+            User Management
+          </h1>
+          <div className="relative">
+            <Search className={`absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} />
+            <input
+              type="text"
+              placeholder="Search users..."
+              onChange={handleSearchChange}
+              className={`pl-10 pr-4 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full md:w-64 ${
+                theme === 'dark'
+                  ? 'bg-[#121324] border border-gray-700 text-white placeholder-gray-400'
+                  : 'bg-white border border-gray-300 text-gray-900 placeholder-gray-500'
+              }`}
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="mb-6 border-b border-gray-200">
-        <nav className="flex space-x-4">
-          <button onClick={() => setActiveTab("all")} className={getTabClass("all")}>
-            <Users className="w-4 h-4" />
-            <span>All ({allUsers.length})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("admins")}
-            className={getTabClass("admins")}
-          >
-            <Shield className="w-4 h-4" />
-            <span>Admins ({allUsers.filter(u => u.role === "admin").length})</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("users")}
-            className={getTabClass("users")}
-          >
-            <User className="w-4 h-4" />
-            <span>Users ({allUsers.filter(u => u.role === "user").length})</span>
-          </button>
-        </nav>
-      </div>
+        {/* Tabs */}
+        <div className={`mb-6 border-b ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
+          <nav className="flex space-x-4">
+            <button onClick={() => setActiveTab("all")} className={getTabClass("all")}>
+              <Users className={`w-4 h-4 ${activeTab === "all" ? (theme === 'dark' ? 'text-white' : 'text-blue-700') : (theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}`} />
+              <span>All ({allUsers.length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("admins")}
+              className={getTabClass("admins")}
+            >
+              <Shield className={`w-4 h-4 ${activeTab === "admins" ? (theme === 'dark' ? 'text-white' : 'text-blue-700') : (theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}`} />
+              <span>Admins ({allUsers.filter(u => u.role === "admin").length})</span>
+            </button>
+            <button
+              onClick={() => setActiveTab("users")}
+              className={getTabClass("users")}
+            >
+              <User className={`w-4 h-4 ${activeTab === "users" ? (theme === 'dark' ? 'text-white' : 'text-blue-700') : (theme === 'dark' ? 'text-gray-400' : 'text-gray-500')}`} />
+              <span>Users ({allUsers.filter(u => u.role === "user").length})</span>
+            </button>
+          </nav>
+        </div>
 
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
 
-      {/* Table */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-
-            <tbody className="bg-white divide-y divide-gray-200">
-              {currentUsers.length === 0 ? (
+        {/* Table */}
+        <div className={`rounded-2xl overflow-hidden ${theme === 'dark' ? 'bg-[#121324]/90 border border-white/5' : 'bg-white border border-gray-200'} shadow-sm`}>
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className={theme === 'dark' ? 'bg-[#1a1b2e]' : 'bg-gray-50'}>
                 <tr>
-                  <td
-                    colSpan="4"
-                    className="text-center text-gray-500 py-6 text-sm"
-                  >
-                    No users found
-                  </td>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase`}>
+                    Name
+                  </th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase`}>
+                    Email
+                  </th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase`}>
+                    Role
+                  </th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase`}>
+                    Subscription
+                  </th>
+                  <th className={`px-6 py-3 text-left text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'} uppercase`}>
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                currentUsers.map((user) => (
-                  <tr key={user._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap flex items-center space-x-3">
-                      <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center font-semibold text-blue-600">
-                        {user.name?.charAt(0).toUpperCase() || "U"}
-                      </div>
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {user.name || "Unnamed User"}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-500">
-                      {user.email}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 inline-flex text-xs font-semibold rounded-full ${roleBadge(
-                          user.role
-                        )}`}
-                      >
-                        {user.role}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-2 inline-flex text-xs font-semibold rounded-full ${
-                          user.isBlocked ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'
-                        }`}
-                      >
-                        {user.isBlocked ? 'Blocked' : 'Active'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm font-medium space-x-3">
-                      {!isMainAdmin(user) && (adminUsersCount > 1 || user.role !== 'admin') ? (
-                        <>
-                          <button
-                            onClick={() => handleRoleChange(user._id, user.role)}
-                            disabled={isUpdating === user._id}
-                            className={`inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white ${
-                              user.role === "admin"
-                                ? "bg-yellow-600 hover:bg-yellow-700"
-                                : "bg-indigo-600 hover:bg-indigo-700"
-                            }`}
-                          >
-                            {isUpdating === user._id ? (
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                            ) : (
-                              <UserCog className="w-3 h-3 mr-1" />
-                            )}
-                            {user.role === "admin" ? "Make User" : "Make Admin"}
-                          </button>
-                          
-                          {/* Only show View Billing for non-admin users */}
-                          {user.role !== 'admin' && (
-                            <button
-                              onClick={() => handleViewBilling(user._id)}
-                              className="inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white bg-purple-600 hover:bg-purple-700"
-                            >
-                              <CreditCard className="w-3 h-3 mr-1" />
-                              View Billing
-                            </button>
-                          )}
-                          
-                          <button
-                            onClick={() => handleDelete(user._id)}
-                            disabled={isDeleting === user._id}
-                            className="inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white bg-red-600 hover:bg-red-700"
-                          >
-                            {isDeleting === user._id ? (
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                            ) : (
-                              <Trash2 className="w-3 h-3 mr-1" />
-                            )}
-                            Delete
-                          </button>
-                          
-                          <button
-                            onClick={() => handleBlockUnblock(user._id, user.isBlocked)}
-                            disabled={isBlocking === user._id}
-                            className={`inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white ${
-                              user.isBlocked ? 'bg-green-600 hover:bg-green-700' : 'bg-orange-600 hover:bg-orange-700'
-                            }`}
-                          >
-                            {isBlocking === user._id ? (
-                              <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                            ) : user.isBlocked ? (
-                              <Unlock className="w-3 h-3 mr-1" />
-                            ) : (
-                              <Lock className="w-3 h-3 mr-1" />
-                            )}
-                            {user.isBlocked ? 'Unblock' : 'Block'}
-                          </button>
-                        </>
-                      ) : (
-                        <span className="text-sm text-gray-500">Admin actions not available</span>
-                      )}
+              </thead>
+
+              <tbody className={`divide-y ${theme === 'dark' ? 'divide-gray-700' : 'divide-gray-200'}`}>
+                {currentUsers.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan="5"
+                      className="text-center text-gray-500 py-6 text-sm"
+                    >
+                      No users found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  currentUsers.map((user) => (
+                    <tr key={user._id} className={theme === 'dark' ? 'hover:bg-[#1a1b2e]' : 'hover:bg-gray-50'}>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center space-x-3">
+                          <div className={`h-10 w-10 rounded-full ${theme === 'dark' ? 'bg-blue-900/30 text-blue-300' : 'bg-blue-100 text-blue-600'} flex items-center justify-center font-semibold`}>
+                            {user.name?.charAt(0).toUpperCase() || "U"}
+                          </div>
+                          <div className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            {user.name || "Unnamed User"}
+                          </div>
+                        </div>
+                      </td>
+                      <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
+                        {user.email}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2 inline-flex text-xs font-semibold rounded-full ${
+                          user.role === 'admin' 
+                            ? theme === 'dark' 
+                              ? 'bg-green-900/30 text-green-300' 
+                              : 'bg-green-100 text-green-800' 
+                            : theme === 'dark' 
+                              ? 'bg-blue-900/30 text-blue-300' 
+                              : 'bg-blue-100 text-blue-800'
+                        }`}>
+                          {user.role}
+                        </span>
+                      </td>
+                      <td className={`px-6 py-4 text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}`}>
+                        {user.subscription?.currentSubscriptionId ? (
+                          <div className="space-y-1">
+                            <div className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                              {user.subscription.currentSubscriptionId.planType || 'No Plan'}
+                            </div>
+                            <div className={`text-xs px-2 py-1 rounded-full inline-flex items-center ${
+                              user.subscription.currentSubscriptionId.status === 'active' 
+                                ? theme === 'dark'
+                                  ? 'bg-green-900/30 text-green-300'
+                                  : 'bg-green-100 text-green-800'
+                                : user.subscription.currentSubscriptionId.status === 'expired' 
+                                  ? theme === 'dark'
+                                    ? 'bg-red-900/30 text-red-300'
+                                    : 'bg-red-100 text-red-800'
+                                  : theme === 'dark'
+                                    ? 'bg-gray-800/50 text-gray-300'
+                                    : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {user.subscription.currentSubscriptionId.status === 'active' 
+                                ? 'Active' 
+                                : user.subscription.currentSubscriptionId.status === 'expired' 
+                                  ? 'Expired' 
+                                  : 'Inactive'}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-gray-400">No subscription</div>
+                        )}
+                      </td>
+                      <td className={`px-6 py-4 text-sm font-medium space-x-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-900'}`}>
+                        {!isMainAdmin(user) && (adminUsersCount > 1 || user.role !== 'admin') ? (
+                          <div className="flex space-x-2">
+                            {user.role !== 'admin' && (
+                              <button
+                                onClick={() => handleViewBilling(user._id)}
+                                className="inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white bg-purple-600 hover:bg-purple-700"
+                              >
+                                <CreditCard className="w-3 h-3 mr-1" />
+                                View Billing
+                              </button>
+                            )}
+                            <button
+                              onClick={() => handleDelete(user._id)}
+                              disabled={isDeleting === user._id}
+                              className="inline-flex items-center px-3 py-1.5 text-xs rounded-md text-white bg-red-600 hover:bg-red-700"
+                            >
+                              {isDeleting === user._id ? (
+                                <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                              ) : (
+                                <Trash2 className="w-3 h-3 mr-1" />
+                              )}
+                              Delete
+                            </button>
+                          </div>
+                        ) : (
+                          <span className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            Admin actions not available
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         {/* Pagination */}

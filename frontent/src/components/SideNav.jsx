@@ -19,6 +19,10 @@ import {
   BarChart2,
   CreditCard,
 } from 'lucide-react';
+
+const lightLogo = '/clurst transparent logo 2 for white baground.png';
+const darkLogo = '/clurst transparent logo.png';
+
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useSidebar } from './context/SidebarContext';
 import { useAuth } from './context/AuthContext';
@@ -163,18 +167,22 @@ const SideNav = () => {
           }`}>
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-500 flex items-center justify-center text-white font-bold">
-                  C
-                </div>
-                {!isCollapsed && (
-                  <span className="ml-3 text-lg font-semibold whitespace-nowrap bg-clip-text text-transparent font-bold font-weight-800 bg-gradient-to-r from-[#5d3be6] via-[#7b5fff] to-[#9a7dff]">
-                    Clurst Review
-                  </span>
-                )}
-              </div>
-              <div className={`${!isCollapsed ? 'ml-2' : ''}`}>
+                 <div className={`${!isCollapsed ? 'ml-2' : ''}`}>
                 <ThemeToggle />
               </div>
+                {!isCollapsed && (
+                  <Link to="/" className="flex items-center">
+                             <div className="p-2">
+                               <img 
+                                 src={theme === 'dark' ? darkLogo : lightLogo} 
+                                 alt="Clurst Logo" 
+                                 className="h-50 w-auto"
+                               />
+                             </div>
+                           </Link>
+                )}
+              </div>
+             
             </div>
             {!((mobileOpen && isMobileView())) && !isCollapsed ? (
               <button onClick={toggleSidebar} className="ml-auto p-1 rounded-md text-gray-400 hover:bg-gray-700">
