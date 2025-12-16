@@ -259,7 +259,7 @@ const SideNav = () => {
             {/* Profile Dropdown */}
             {isProfileOpen && (
               <div className="mt-1 bg-[#1a1b2e] rounded-lg overflow-hidden">
-                <Link
+                {/* <Link
                   to="/"
                   onClick={() => {
                     setIsProfileOpen(false);
@@ -269,7 +269,7 @@ const SideNav = () => {
                 >
                   <Home size={16} className="text-gray-400" />
                   <span>Home</span>
-                </Link>
+                </Link> */}
                 <button
                   onClick={(e) => {
                     e.preventDefault();
