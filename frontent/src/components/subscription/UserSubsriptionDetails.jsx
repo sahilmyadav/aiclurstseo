@@ -212,106 +212,6 @@ const UserSubscriptionDetails = () => {
       currency: 'USD'
     }).format(amount);
   };
-
-  const getSubscriptionStatus = (subscription) => {
-    if (!subscription) return 'No subscription';
-    
-    const now = new Date();
-    const endDate = new Date(subscription.endDate);
-    
-    if (subscription.status === 'cancelled') {
-      return 'Cancelled';
-    } else if (endDate < now) {
-      return 'Expired';
-    } else {
-      return 'Active';
-    }
-  };
-
-  const getStatusBadge = (status) => {
-    const baseClasses = "px-3 py-1 rounded-full text-sm font-medium";
-    
-    if (status === 'active' || status === 'completed' || status === 'paid') {
-      return (
-        <span className={`${baseClasses} bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400`}>
-          Active
-        </span>
-      );
-    }
-    if (status === 'expired' || status === 'cancelled' || status === 'failed') {
-      return (
-        <span className={`${baseClasses} bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400`}>
-          {status.charAt(0).toUpperCase() + status.slice(1)}
-        </span>
-      );
-    }
-    return (
-      <span className={`${baseClasses} bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400`}>
-        {status || 'Unknown'}
-      </span>
-    );
-  };
-
-  const getPlanDetails = (subscription) => {
-    // If no subscription data, return free plan details
-    if (!subscription) {
-      return {
-        name: 'Free Plan',
-        features: [
-          '1 Business Profile',
-          'Basic Analytics',
-          'Email Support'
-        ],
-        price: '0.00',
-        color: 'gray',
-        profileLimit: 1,
-        pricePerProfile: '0.00',
-        billingCycle: 'month',
-        isFree: true,
-        status: 'inactive'
-      };
-    }
-    
-    console.log('Processing subscription data:', subscription);
-
-    const pricePerProfile = subscription.pricePerProfile !== undefined 
-      ? (subscription.pricePerProfile / 100).toFixed(2) 
-      : '0.00';
-      
-    const totalPrice = subscription.totalPrice !== undefined
-      ? (subscription.totalPrice / 100).toFixed(2)
-      : '0.00';
-      
-    const profileCount = subscription.profiles || 0;
-    const isYearly = subscription.planType === 'yearly';
-    const isActive = subscription.status === 'active';
-    
-    console.log('Plan details:', { pricePerProfile, totalPrice, profileCount, isYearly, isActive });
-    
-    return {
-      name: isYearly ? 'Pro Yearly Plan' : 'Pro Monthly Plan',
-      features: [
-        `${profileCount} Business Profile${profileCount !== 1 ? 's' : ''}`,
-        isYearly ? 'Yearly Billing (Save 20%)' : 'Monthly Billing',
-        `$${pricePerProfile} per profile`,
-        'Priority Support',
-        'Advanced Analytics',
-        'API Access'
-      ],
-      price: totalPrice,
-      color: isActive ? 'indigo' : 'gray',
-      profileLimit: profileCount,
-      pricePerProfile: pricePerProfile,
-      billingCycle: isYearly ? 'year' : 'month',
-      isFree: false,
-      status: subscription.status || 'inactive',
-      startDate: subscription.startDate,
-      endDate: subscription.endDate
-    };
-  };
-
-  const planDetails = getPlanDetails(subscriptionData);
-  
   // Calculate days left in subscription
   const getDaysLeft = () => {
     try {
@@ -431,7 +331,13 @@ const UserSubscriptionDetails = () => {
                   {subscriptionData ? 'Manage your subscription' : 'No active subscription'}
                 </p>
               </div>
-              {subscriptionData && getStatusBadge(getSubscriptionStatus(subscriptionData))}
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                subscriptionData.status?.toLowerCase() === 'expired' 
+                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' 
+                  : 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+              }`}>
+                {subscriptionData.status}
+              </span>
             </div>
             
             {subscriptionData ? (
@@ -439,11 +345,9 @@ const UserSubscriptionDetails = () => {
                 <div className="text-center">
                   <p className="text-sm text-indigo-300 mb-1">Current Plan</p>
                   <p className="text-xl font-bold text-white">
-                    {subscriptionData.planType === 'monthly' ? 'Monthly' : 'Yearly'} Plan
+                    {subscriptionData.planType } Plan
                   </p>
-                  <p className="text-indigo-200 text-sm mt-2">
-                    {planDetails.profileLimit} profile{planDetails.profileLimit !== 1 ? 's' : ''}
-                  </p>
+                 
                 </div>
                 
                 <div className="pt-4 border-t border-indigo-700">
@@ -490,137 +394,7 @@ const UserSubscriptionDetails = () => {
         </div>
       </div>
 
-      {/* Plan Features and Usage */}
-      {/* {subscriptionData && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="lg:col-span-2 bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-700">
-            <h2 className="text-lg font-semibold text-white mb-4">Plan Features</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {planDetails.features.map((feature, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <svg className="h-5 w-5 text-green-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <div>
-                    <p className="text-white">{feature}</p>
-                    <p className="text-sm text-gray-400">Included in your plan</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <div className="mt-6 pt-6 border-t border-gray-700">
-              <h3 className="text-md font-medium text-white mb-3">Usage Summary</h3>
-              <div className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-400">Profiles Used</span>
-                    <span className="text-white">
-                      {subscriptionData.profilesUsed || 0} of {subscriptionData.profiles || 1}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-blue-500 h-2 rounded-full" 
-                      style={{ 
-                        width: `${Math.min(100, ((subscriptionData.profilesUsed || 0) / (subscriptionData.profiles || 1)) * 100)}%` 
-                      }}
-                    ></div>
-                  </div>
-                </div>
-                
-                <div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-400">API Requests (this month)</span>
-                    <span className="text-white">
-                      {subscriptionData.apiCalls || 0} of {subscriptionData.apiLimit || 'Unlimited'}
-                    </span>
-                  </div>
-                  <div className="w-full bg-gray-700 rounded-full h-2">
-                    <div 
-                      className="bg-purple-500 h-2 rounded-full" 
-                      style={{ 
-                        width: subscriptionData.apiLimit === 'Unlimited' ? '100%' : 
-                          `${Math.min(100, ((subscriptionData.apiCalls || 0) / (subscriptionData.apiLimit || 1)) * 100)}%` 
-                      }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-700">
-            <h2 className="text-lg font-semibold text-white mb-4">Billing Information</h2>
-            
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-400">Current Plan</p>
-                <p className="text-lg font-medium text-white">
-                  {planDetails.name} Plan
-                  {subscriptionData.isTrial && (
-                    <span className="ml-2 text-xs bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full">
-                      Trial
-                    </span>
-                  )}
-                </p>
-                <p className="text-2xl font-bold text-white mt-1">
-                  {formatCurrency(subscriptionData.amount || planDetails.price)}
-                  <span className="text-base font-normal text-gray-400"> / {subscriptionData.billingCycle || 'month'}</span>
-                </p>
-              </div>
-              
-              <div className="pt-4 border-t border-gray-700">
-                <p className="text-sm text-gray-400 mb-2">Next Billing Date</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-lg font-medium text-white">
-                    {subscriptionData.nextBillingDate 
-                      ? formatDate(subscriptionData.nextBillingDate)
-                      : 'N/A'}
-                  </p>
-                  <button className="text-sm text-blue-400 hover:text-blue-300">
-                    Update Payment
-                  </button>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t border-gray-700">
-                <p className="text-sm text-gray-400 mb-2">Payment Method</p>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="h-8 w-12 bg-gray-700 rounded-md flex items-center justify-center mr-3">
-                      <svg className="h-5 w-5 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-2c1.11 0 2 .89 2 2 0 1.11-.89 2-2 2-1.11 0-2-.89-2-2 0-1.11.89-2 2-2zm0-4c1.11 0 2 .89 2 2s-.89 2-2 2-2-.89-2-2 .9-2 2-2z"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-white font-medium">Visa ending in 4242</p>
-                      <p className="text-xs text-gray-400">Expires 12/25</p>
-                    </div>
-                  </div>
-                  <button className="text-sm text-blue-400 hover:text-blue-300">
-                    Change
-                  </button>
-                </div>
-              </div>
-              
-              <div className="pt-4 border-t border-gray-700">
-                <h3 className="text-sm font-medium text-white mb-2">Billing Address</h3>
-                <p className="text-sm text-gray-300">
-                  {userData.billingAddress?.line1 || '123 Main St'}<br />
-                  {userData.billingAddress?.line2 && <>{userData.billingAddress.line2}<br /></>}
-                  {userData.billingAddress?.city || 'San Francisco'}, {userData.billingAddress?.state || 'CA'} {userData.billingAddress?.postalCode || '94105'}<br />
-                  {userData.billingAddress?.country || 'United States'}
-                </p>
-                <button className="mt-2 text-sm text-blue-400 hover:text-blue-300">
-                  Update Address
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )} */}
-
+     
       {/* Transaction History */}
       <div className="bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-700">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
