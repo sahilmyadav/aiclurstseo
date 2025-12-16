@@ -132,7 +132,7 @@ const AdminDashboard = () => {
                 theme === 'dark' ? 'text-white' : 'text-purple-900'
               }`}>Admin Dashboard</h1>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
               <div className={`p-6 rounded-xl shadow-sm transition-all duration-300 ${
                 theme === 'dark' ? 'bg-[#1a1b2e] hover:bg-[#23243a]' : 'bg-white hover:shadow-md'
               }`}>
@@ -211,7 +211,7 @@ const AdminDashboard = () => {
                 </div>
               </div>
 
-              <div className={`p-6 rounded-xl shadow-sm transition-all duration-300 ${
+              {/* <div className={`p-6 rounded-xl shadow-sm transition-all duration-300 ${
                 theme === 'dark' ? 'bg-[#1a1b2e] hover:bg-[#23243a]' : 'bg-white hover:shadow-md'
               }`}>
                 <div className="flex items-center justify-between">
@@ -233,7 +233,7 @@ const AdminDashboard = () => {
                     <AlertCircle className="w-6 h-6 text-red-500" />
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             <div className="mb-6">
