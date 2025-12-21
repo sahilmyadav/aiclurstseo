@@ -67,7 +67,7 @@ const AppContent = () => {
           ) : (
             <>
               <Home />
-              <Features />
+              {/* <Features /> */}
             </>
           )
         } />
