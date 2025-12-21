@@ -350,30 +350,32 @@ const UserSubscriptionDetails = () => {
                  
                 </div>
                 
-                <div className="pt-4 border-t border-indigo-700">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-indigo-300">Subscription Progress</span>
-                    <span className="text-indigo-200">{daysLeft} days remaining</span>
+                {subscriptionData.status?.toLowerCase() !== 'expired' && (
+                  <div className="pt-4 border-t border-indigo-700">
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-indigo-300">Subscription Progress</span>
+                      <span className="text-indigo-200">{daysLeft} days remaining</span>
+                    </div>
+                    <div className="w-full bg-indigo-900/50 rounded-full h-2.5">
+                      <div 
+                        className="bg-green-400 h-2.5 rounded-full" 
+                        style={{ width: `${Math.min(100, Math.max(0, daysLeft))}%` }}
+                      ></div>
+                    </div>
+                    <div className="flex justify-between text-xs text-indigo-400 mt-1">
+                      <span>
+                        Started: {subscriptionData?.startDate 
+                          ? formatSubscriptionDate(subscriptionData.startDate) 
+                          : 'N/A'}
+                      </span>
+                      <span>
+                        {subscriptionData?.endDate 
+                          ? `Renews: ${formatSubscriptionDate(subscriptionData.endDate)}`
+                          : 'No active subscription'}
+                      </span>
+                    </div>
                   </div>
-                  <div className="w-full bg-indigo-900/50 rounded-full h-2.5">
-                    <div 
-                      className="bg-green-400 h-2.5 rounded-full" 
-                      style={{ width: `${Math.min(100, Math.max(0, daysLeft))}%` }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-xs text-indigo-400 mt-1">
-                    <span>
-                      Started: {subscriptionData?.startDate 
-                        ? formatSubscriptionDate(subscriptionData.startDate) 
-                        : 'N/A'}
-                    </span>
-                    <span>
-                      {subscriptionData?.endDate 
-                        ? `Renews: ${formatSubscriptionDate(subscriptionData.endDate)}`
-                        : 'No active subscription'}
-                    </span>
-                  </div>
-                </div>
+                )}
                 
               </div>
             ) : (

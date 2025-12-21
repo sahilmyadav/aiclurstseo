@@ -430,20 +430,24 @@ const AnalyticsDashboard = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-          <p className="text-gray-500">
+      <div className="w-full space-y-4">
+        {/* Header */}
+        <div className="flex flex-col">
+          <h1 className="text-2xl sm:text-3xl font-bold">Analytics Dashboard</h1>
+          <p className="text-sm sm:text-base text-gray-500">
             Track your transaction metrics and performance
           </p>
         </div>
-        <div className="flex items-center gap-4 mt-4 md:mt-0">
-          <div className="flex items-center gap-2">
+        
+        {/* Date Controls */}
+        <div className="flex flex-col space-y-4">
+          {/* Quick Date Buttons */}
+          <div className="flex flex-wrap gap-2">
             <Button 
               variant={dateRange.from?.getTime() === startOfMonth(new Date()).getTime() ? "default" : "outline"}
               onClick={getThisMonth}
               size="sm"
-              className={`${dateRange.from?.getTime() === startOfMonth(new Date()).getTime() ? '' : 'hover:bg-opacity-20'}`}
+              className="flex-1 sm:flex-none text-xs sm:text-sm"
             >
               This Month
             </Button>
@@ -451,48 +455,53 @@ const AnalyticsDashboard = () => {
               variant={dateRange.from?.getTime() === subDays(new Date(), 30).getTime() ? "default" : "outline"}
               onClick={getLast30Days}
               size="sm"
-              className={`${dateRange.from?.getTime() === subDays(new Date(), 30).getTime() ? '' : 'hover:bg-opacity-20'}`}
+              className="flex-1 sm:flex-none text-xs sm:text-sm"
             >
               Last 30 Days
             </Button>
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">Start Date</label>
-              <input
-                type="date"
-                value={format(dateRange.from, 'yyyy-MM-dd')}
-                onChange={(e) => {
-                  const newDate = new Date(e.target.value);
-                  setDateRange(prev => ({
-                    ...prev,
-                    from: newDate,
-                    to: newDate > prev.to ? newDate : prev.to
-                  }));
-                }}
-                max={format(dateRange.to, 'yyyy-MM-dd')}
-                className="p-2 border rounded text-sm bg-white text-gray-900 border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white w-40"
-              />
+          {/* Date Range Picker */}
+          <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
+            <div className="w-full">
+              <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={format(dateRange.from, 'yyyy-MM-dd')}
+                  onChange={(e) => {
+                    const newDate = new Date(e.target.value);
+                    setDateRange(prev => ({
+                      ...prev,
+                      from: newDate,
+                      to: newDate > prev.to ? newDate : prev.to
+                    }));
+                  }}
+                  max={format(dateRange.to, 'yyyy-MM-dd')}
+                  className="w-full p-2 border rounded text-sm bg-white text-gray-900 border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                />
+              </div>
             </div>
             
-            <div className="flex flex-col">
-              <label className="text-xs text-gray-500 mb-1">End Date</label>
-              <input
-                type="date"
-                value={format(dateRange.to, 'yyyy-MM-dd')}
-                min={format(dateRange.from, 'yyyy-MM-dd')}
-                max={format(new Date(), 'yyyy-MM-dd')}
-                onChange={(e) => {
-                  const newDate = new Date(e.target.value);
-                  setDateRange(prev => ({
-                    ...prev,
-                    to: newDate,
-                    from: newDate < prev.from ? newDate : prev.from
-                  }));
-                }}
-                className="p-2 border rounded text-sm bg-white text-gray-900 border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white w-40"
-              />
+            <div className="w-full">
+              <label className="block text-xs text-gray-500 mb-1">End Date</label>
+              <div className="relative">
+                <input
+                  type="date"
+                  value={format(dateRange.to, 'yyyy-MM-dd')}
+                  min={format(dateRange.from, 'yyyy-MM-dd')}
+                  max={format(new Date(), 'yyyy-MM-dd')}
+                  onChange={(e) => {
+                    const newDate = new Date(e.target.value);
+                    setDateRange(prev => ({
+                      ...prev,
+                      to: newDate,
+                      from: newDate < prev.from ? newDate : prev.from
+                    }));
+                  }}
+                  className="w-full p-2 border rounded text-sm bg-white text-gray-900 border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                />
+              </div>
             </div>
           </div>
         </div>
