@@ -137,16 +137,18 @@ const Billing = () => {
   };
 
   return (
-    <div className={`min-h-screen p-4 md:p-6 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-purple-50 to-indigo-50'}`}>
+    <div className={`min-h-screen p-3 sm:p-4 md:p-6 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-purple-50 to-indigo-50'}`}>
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div>
-            <h1 className={`text-2xl md:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Billing & Subscription</h1>
-            <p className={`mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <div className="flex-1 min-w-0">
+            <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} truncate`}>Billing & Subscription</h1>
+            <p className={`mt-1 text-sm sm:text-base ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
               Manage your subscription and billing information
             </p>
           </div>
-          {getStatusBadge()}
+          <div className="mt-2 sm:mt-0">
+            {getStatusBadge()}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -189,7 +191,7 @@ const Billing = () => {
                 </div>
 
                 {/* Plan Features */}
-                <div className="mt-8 grid grid-cols-3 gap-4">
+                <div className="mt-6 sm:mt-8 grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
                   {/* Profiles */}
                   <div className="p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
                     <div className="flex items-center space-x-3">
@@ -238,16 +240,16 @@ const Billing = () => {
 
                 {/* Price Information */}
                 <div className="mt-6 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex flex-col xs:flex-row justify-between gap-4">
+                    <div className="flex-1">
                       <p className="text-xs text-white/80 mb-1">Price per Profile</p>
-                      <p className="text-2xl font-bold text-white">
+                      <p className="text-xl sm:text-2xl font-bold text-white whitespace-nowrap">
                         {formatCurrency(pricePerProfile || 0)}/mo
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="flex-1 xs:text-right">
                       <p className="text-xs text-white/80 mb-1">Total</p>
-                      <p className="text-2xl font-bold text-white">
+                      <p className="text-xl sm:text-2xl font-bold text-white whitespace-nowrap">
                         {formatCurrency(totalPrice || 0)}/mo
                       </p>
                     </div>
@@ -258,15 +260,15 @@ const Billing = () => {
            
           </div>
 
-            <div className={`rounded-xl shadow-sm border p-5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white/80 border-purple-200 backdrop-blur-sm'}`}>
-              <h2 className={`text-lg font-semibold mb-3 ${theme === 'dark' ? 'text-white' : 'text-purple-900'}`}>Need Help?</h2>
-              <p className={`text-sm mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-purple-700'}`}>
+            <div className={`rounded-xl shadow-sm border p-4 sm:p-5 ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white/80 border-purple-200 backdrop-blur-sm'}`}>
+              <h2 className={`text-base sm:text-lg font-semibold mb-2 sm:mb-3 ${theme === 'dark' ? 'text-white' : 'text-purple-900'}`}>Need Help?</h2>
+              <p className={`text-xs sm:text-sm mb-3 sm:mb-4 ${theme === 'dark' ? 'text-gray-300' : 'text-purple-700'}`}>
                 Our support team is here to help with any questions about your subscription.
               </p>
-              <button className={`w-full font-medium py-2 px-4 rounded-lg transition-colors ${
+              <button className={`w-full text-sm sm:text-base font-medium py-2 px-3 sm:px-4 rounded-lg transition-colors ${
                 theme === 'dark' 
-                  ? 'border-gray-600 text-gray-200 hover:bg-gray-700' 
-                  : 'border-purple-300 text-purple-700 hover:bg-purple-50'
+                  ? 'border border-gray-600 text-gray-200 hover:bg-gray-700' 
+                  : 'border border-purple-300 text-purple-700 hover:bg-purple-50'
               }`}>
                 Contact Support
               </button>
@@ -279,9 +281,9 @@ const Billing = () => {
         
          {/* Transaction History */}
             <div className={`rounded-xl shadow-sm border overflow-hidden ${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
-              <div className="p-5">
-                <div className="flex items-center justify-between mb-5">
-                  <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Transaction History</h2>
+              <div className="p-4 sm:p-5">
+                <div className="flex items-center justify-between mb-4 sm:mb-5">
+                  <h2 className={`text-lg sm:text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Transaction History</h2>
                 </div>
                 
                 {transactionsError ? (

@@ -111,25 +111,25 @@ const SideNav = () => {
     { name: 'Dashboard', icon: Home, path: '/dashboard', active: location.pathname === '/dashboard' },
     { name: 'Get Reviews', icon: Send, path: '/dashboard/reviews', active: location.pathname === '/dashboard/reviews' },
     { name: 'Audit', icon: BarChart3, path: '/dashboard/audit', active: location.pathname === '/dashboard/audit' },
-       { name: 'Business Details', icon: CreditCard, path: '/dashboard/business-details', active: location.pathname === '/dashboard/business-details' },
+    { name: 'Business Details', icon: CreditCard, path: '/dashboard/business-details', active: location.pathname === '/dashboard/business-details' },
     { name: 'Reviews', icon: Star, path: '/dashboard/handle-reviews', active: location.pathname === '/dashboard/handle-reviews' },
     { name: 'Feedback', icon: LinkIcon, path: '/dashboard/review-link', active: location.pathname === '/dashboard/review-link' },
     { name: 'Widgets', icon: LayoutGrid, path: '/dashboard/widgets', active: location.pathname === '/dashboard/widgets' },
     { name: 'Integrations', icon: GitBranch, path: '/dashboard/integrations', active: location.pathname === '/dashboard/integrations' },
     { name: 'Auto Posting', icon: Share2, path: '/dashboard/social-sharing', active: location.pathname === '/dashboard/social-sharing' },
-    // { name: 'Notifications', icon: BellRing, path: '/dashboard/notifications', active: location.pathname === '/dashboard/notifications' },
     { name: 'Settings', icon: Settings, path: '/dashboard/settings', active: location.pathname === '/dashboard/settings' },
     { name: 'Subscription', icon: CreditCard, path: '/dashboard/subscription', active: location.pathname === '/dashboard/subscription' },
     { name: 'Billing', icon: CreditCard, path: '/dashboard/billing', active: location.pathname === '/dashboard/billing' },
-   
+    { name: 'Logout', icon: LogOut, path: '#', active: false, isLogout: true },
   ];
-
+  
   const adminNavItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/ad-dashboard', active: location.pathname === '/ad-dashboard' },
     { name: 'Settings', icon: Settings, path: '/ad-dashboard/settings', active: location.pathname === '/ad-dashboard/settings' },
     { name: 'Users', icon: Users, path: '/ad-dashboard/users', active: location.pathname === '/ad-dashboard/users' },
     { name: 'Analytics', icon: BarChart2, path: '/ad-dashboard/analytics', active: location.pathname === '/ad-dashboard/analytics' },
     { name: 'Edit Plans', icon: CreditCard, path: '/ad-dashboard/plans', active: location.pathname === '/ad-dashboard/plans' },
+    { name: 'Logout', icon: LogOut, path: '#', active: false, isLogout: true },
   ];
 
   const navItems = user?.role === 'admin' ? adminNavItems : userNavItems;
@@ -140,17 +140,22 @@ const SideNav = () => {
 
   return (
     <>
-      <button
-        onClick={handleToggleMobileSidebar}
-        className={`fixed top-4 left-4 lg:hidden z-50 p-2 rounded-md ${
-          theme === 'dark' 
-            ? 'bg-[#0f1020] text-white border-white/10' 
-            : 'bg-white text-gray-800 border-gray-200'
-        } border shadow-lg`}
-        aria-label="Toggle sidebar"
-      >
-        {mobileOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
-      </button>
+      <div className="fixed top-4 left-4 right-4 lg:hidden z-50 flex items-center justify-between">
+        <button
+          onClick={handleToggleMobileSidebar}
+          className={`p-2 rounded-md ${
+            theme === 'dark' 
+              ? 'bg-[#0f1020] text-white border-white/10' 
+              : 'bg-white text-gray-800 border-gray-200'
+          } border shadow-lg`}
+          aria-label="Toggle sidebar"
+        >
+          {mobileOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
+        </button>
+        <div className="ml-2">
+          <ThemeToggle />
+        </div>
+      </div>
 
       <div
         className={`fixed top-0 left-0 h-screen ${
@@ -167,9 +172,9 @@ const SideNav = () => {
           }`}>
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
-                 <div className={`${!isCollapsed ? 'ml-2' : ''}`}>
-                <ThemeToggle />
-              </div>
+                <div className={`${!isCollapsed ? 'ml-2' : ''} hidden lg:block`}>
+                  <ThemeToggle />
+                </div>
                 {!isCollapsed && (
                   <Link to="/" className="flex items-center">
                              <div className="p-2">
@@ -210,10 +215,16 @@ const SideNav = () => {
                           : 'text-gray-700 hover:bg-gray-100'
                     }`}
                   >
-                    <item.icon className="w-5 h-5" />
-                    {!isCollapsed || (mobileOpen && isMobileView()) ? <span className="ml-3">{item.name}</span> : null}
-                    {!isCollapsed && item.count ? (
-                      <span className="ml-auto bg-[#2d2d47] text-xs font-medium px-2 py-0.5 rounded-full">{item.count}</span>
+                    <item.icon className={`w-5 h-5 ${item.isLogout ? 'text-red-500' : ''}`} />
+                    {!isCollapsed || (mobileOpen && isMobileView()) ? (
+                      <span className={`ml-3 ${item.isLogout ? 'text-red-500' : ''}`}>
+                        {item.name}
+                      </span>
+                    ) : null}
+                    {!isCollapsed && item.count && !item.isLogout ? (
+                      <span className="ml-auto bg-[#2d2d47] text-xs font-medium px-2 py-0.5 rounded-full">
+                        {item.count}
+                      </span>
                     ) : null}
                   </Link>
                 </li>
@@ -221,69 +232,7 @@ const SideNav = () => {
             </ul>
           </nav>
 
-          {/* Profile Section */}
-          <div className={`border-t p-4 ${
-            theme === 'dark' 
-              ? 'border-white/10 bg-[#0f1020]' 
-              : 'border-gray-200 bg-gray-50'
-          }`} ref={profileRef}>
-            <div 
-              onClick={() => setIsProfileOpen(!isProfileOpen)}
-              className={`flex items-center space-x-3 p-2 rounded-lg cursor-pointer ${
-                theme === 'dark' 
-                  ? 'hover:bg-[#1a1b2e]' 
-                  : 'hover:bg-gray-100'
-              }`}
-            >
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-blue-500 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-                {getUserInitials()}
-              </div>
-              {!isCollapsed && (
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{user?.name}</p>
-                  <div className={`text-sm ${
-              theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-              v1.0.0
-            </div>
-                  <p className="text-xs text-gray-400 truncate">{user?.email}</p>
-                </div>
-              )}
-              {!isCollapsed && (
-                <ChevronDown 
-                  className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform ${isProfileOpen ? 'transform rotate-180' : ''}`} 
-                />
-              )}
-            </div>
-
-            {/* Profile Dropdown */}
-            {isProfileOpen && (
-              <div className="mt-1 bg-[#1a1b2e] rounded-lg overflow-hidden">
-                {/* <Link
-                  to="/"
-                  onClick={() => {
-                    setIsProfileOpen(false);
-                    if (window.innerWidth < 1024) closeMobileSidebar();
-                  }}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-300 hover:bg-[#2d2d47] transition-colors"
-                >
-                  <Home size={16} className="text-gray-400" />
-                  <span>Home</span>
-                </Link> */}
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setIsProfileOpen(false);
-                    handleNavClick(e, { name: 'Logout' });
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left text-red-400 hover:bg-[#2d2d47] transition-colors"
-                >
-                  <LogOut size={16} className="text-red-400" />
-                  <span>Logout</span>
-                </button>
-              </div>
-            )}
-          </div>
+          {/* Removed Profile Section */}
         </div>
       </div>
 
