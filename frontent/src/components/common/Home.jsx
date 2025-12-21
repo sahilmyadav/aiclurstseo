@@ -1,316 +1,277 @@
-import { Star } from "lucide-react";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
 
-// Galaxy background styles
-const galaxyStyles = `
-  .galaxy-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: hidden;
-    z-index: -1;
-    background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e);
-  }
-
-  .stars {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-  }
-
-  .star {
-    position: absolute;
-    background-color: #fff;
-    border-radius: 50%;
-    pointer-events: none;
-    opacity: 0;
-    animation: twinkle 3s infinite;
-  }
-
-  @keyframes twinkle {
-    0%, 100% { opacity: 0.2; transform: scale(0.5); }
-    50% { opacity: 1; transform: scale(1); }
-  }
-
-  .shooting-star {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, #ffffff 50%, rgba(255,255,255,0) 100%);
-    opacity: 0;
-    filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.8));
-  }
-`;
-
-// Add the styles to the document head
-const addGalaxyStyles = () => {
-  const styleId = 'galaxy-styles';
-  if (!document.getElementById(styleId)) {
-    const styleElement = document.createElement('style');
-    styleElement.id = styleId;
-    styleElement.innerHTML = galaxyStyles;
-    document.head.appendChild(styleElement);
-  }
-};
-
-// Call the function to add styles
-if (typeof window !== 'undefined') {
-  addGalaxyStyles();
-}
-
-// Create stars for the galaxy
-const createStars = (container, count = 200) => {
-  if (!container) return [];
-  
-  const stars = [];
-  const containerRect = container.getBoundingClientRect();
-  
-  for (let i = 0; i < count; i++) {
-    const star = document.createElement('div');
-    const size = Math.random() * 2 + 1;
-    const x = Math.random() * containerRect.width;
-    const y = Math.random() * containerRect.height;
-    const delay = Math.random() * 3;
-    
-    star.className = 'star';
-    star.style.width = `${size}px`;
-    star.style.height = `${size}px`;
-    star.style.left = `${x}px`;
-    star.style.top = `${y}px`;
-    star.style.animationDelay = `${delay}s`;
-    
-    container.appendChild(star);
-    stars.push(star);
-  }
-  
-  return stars;
-};
-
-// Create shooting stars
-const createShootingStars = (container, count = 5) => {
-  if (!container) return [];
-  
-  const shootingStars = [];
-  const containerRect = container.getBoundingClientRect();
-  
-  for (let i = 0; i < count; i++) {
-    const star = document.createElement('div');
-    const length = Math.random() * 100 + 50;
-    const x = Math.random() * containerRect.width;
-    const y = Math.random() * containerRect.height;
-    const angle = Math.random() * Math.PI * 2;
-    const duration = Math.random() * 3 + 2;
-    const delay = Math.random() * 10;
-    
-    star.className = 'shooting-star';
-    star.style.width = `${length}px`;
-    star.style.transform = `rotate(${angle}rad)`;
-    star.style.left = `${x}px`;
-    star.style.top = `${y}px`;
-    star.style.animation = `shoot ${duration}s ${delay}s infinite`;
-    
-    container.appendChild(star);
-    shootingStars.push(star);
-  }
-  
-  return shootingStars;
-};
-
-// Add shooting star animation
-const addShootingStarAnimation = () => {
-  const styleId = 'shooting-star-animation';
-  if (!document.getElementById(styleId)) {
-    const styleElement = document.createElement('style');
-    styleElement.id = styleId;
-    styleElement.innerHTML = `
-      @keyframes shoot {
-        0% {
-          transform: rotate(var(--angle)) translateX(0);
-          opacity: 0;
-        }
-        10% {
-          opacity: 1;
-        }
-        90% {
-          opacity: 1;
-        }
-        100% {
-          transform: rotate(var(--angle)) translateX(500px);
-          opacity: 0;
-        }
-      }
-    `;
-    document.head.appendChild(styleElement);
-  }
-};
-
-const Home = () => {
+export default function Home() {
+  const navigate = useNavigate();
   const { theme } = useTheme();
-  const galaxyRef = useRef(null);
-  const starsRef = useRef([]);
-  const shootingStarsRef = useRef([]);
+  const isDark = theme === "dark";
+
+  const goToLogin = () => navigate("/login");
 
   useEffect(() => {
-    if (theme !== 'light') return;
+    const observer = new IntersectionObserver(
+      entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("active");
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
 
-    // Create galaxy container if it doesn't exist
-    let galaxy = document.getElementById('galaxy-bg');
-    if (!galaxy) {
-      galaxy = document.createElement('div');
-      galaxy.id = 'galaxy-bg';
-      galaxy.className = 'galaxy-bg';
-      const starsContainer = document.createElement('div');
-      starsContainer.className = 'stars';
-      galaxy.appendChild(starsContainer);
-      document.body.appendChild(galaxy);
-      galaxyRef.current = galaxy;
-      
-      // Add shooting star animation
-      addShootingStarAnimation();
-      
-      // Create stars and shooting stars
-      const starsContainerEl = galaxy.querySelector('.stars');
-      starsRef.current = createStars(starsContainerEl, 300);
-      shootingStarsRef.current = createShootingStars(starsContainerEl, 8);
-      
-      // Make stars twinkle at different intervals
-      starsRef.current.forEach((star, index) => {
-        const delay = Math.random() * 5;
-        const duration = 3 + Math.random() * 4;
-        star.style.animation = `twinkle ${duration}s ${delay}s infinite`;
-      });
-      
-      // Make shooting stars move
-      shootingStarsRef.current.forEach(star => {
-        const angle = Math.random() * Math.PI * 2;
-        star.style.setProperty('--angle', `${angle}rad`);
-        const delay = Math.random() * 15;
-        const duration = 2 + Math.random() * 3;
-        star.style.animation = `shoot ${duration}s ${delay}s infinite`;
-      });
-    }
-    
-    // Cleanup function
-    return () => {
-      if (galaxy && document.body.contains(galaxy)) {
-        document.body.removeChild(galaxy);
-      }
-      starsRef.current = [];
-      shootingStarsRef.current = [];
-    };
-  }, [theme]);
+    document.querySelectorAll(".reveal").forEach(el => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
-  // No need for mouse position tracking anymore
-  const styles = {};
-  
+  const glassCard = `
+    rounded-2xl backdrop-blur-xl transition-all duration-300
+    shadow-[0_20px_60px_rgba(99,102,241,0.25)]
+    hover:shadow-[0_30px_90px_rgba(99,102,241,0.45)]
+  `;
+
   return (
-    <div 
-      className={`min-h-screen py-12 md:py-16 lg:py-20 px-4 sm:px-6 lg:px-8 flex items-center justify-around relative ${
-        theme === 'dark' ? 'bg-[#2a2440]' : 'bg-transparent'
+    <div
+      className={`min-h-screen transition-colors duration-300 ${
+        isDark
+          ? "bg-gradient-to-br from-[#0b0c1a] via-[#0f1020] to-[#121326] text-white"
+          : "bg-gradient-to-br from-[#f7f5ff] via-white to-[#eef2ff] text-gray-800"
       }`}
     >
-      {/* Content container with higher z-index */}
-      <div className="relative z-10 w-full">
-      <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center mt-10">
-        
-        <div className="text-left px-10">
-          <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm mb-6 ${
-            theme === 'dark' 
-              ? 'bg-[#41375c] text-white' 
-              : 'bg-purple-100 text-purple-800'
-          }`}>
-            ⚡ AI-Powered Reviews & SEO
-          </div>
 
-          {/* Heading */}
-          <h1 className={`text-2xl sm:text-3xl md:text-4xl font-extrabold leading-tight mb-6 ${
-            theme === 'dark' ? 'text-white' : 'text-purple-100'
-          }`}>
-            Transform Your{" "}
-            <span className="bg-clip-text text-transparent font-bold font-weight-bold bg-gradient-to-r from-[#5d3be6] via-[#7b5fff] to-[#9a7dff]">
-              Business Reviews
-            </span>{" "}
-            with AI
-          </h1>
+      {/* ================= HERO ================= */}
+      <section className="max-w-5xl mx-auto px-6 pt-24 pb-28 text-center">
+        <div className={`reveal inline-flex px-4 py-2 rounded-full text-sm mb-6 ${glassCard} ${
+          isDark ? "bg-white/10 border border-white/10" : "bg-white/70"
+        }`}>
+          ⭐⭐⭐⭐⭐ Used by local businesses across USA & UK
+        </div>
 
-         <p className={`text-lg mb-8 max-w-lg font-semibold ${
-  theme === 'dark' ? 'text-white' : 'text-white'
-}`}>
-  Generate authentic reviews, craft perfect replies, and boost SEO rankings with our advanced AI platform. Trusted by 10,000+ businesses worldwide.
-</p>
+        <h1 className="reveal delay-100 text-4xl md:text-6xl font-extrabold mb-6">
+          Automate Your{" "}
+          <span className="bg-gradient-to-r from-indigo-400 to-purple-500 bg-clip-text text-transparent">
+            Google Growth
+          </span>{" "}
+          with AI
+        </h1>
 
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <button className={`px-6 py-3 font-semibold rounded-lg transition transform hover:-translate-y-1 hover:shadow-lg ${
-              theme === 'dark'
-                ? 'bg-white text-purple-600 hover:bg-gray-100'
-                : 'bg-purple-600 text-white hover:bg-purple-700'
+        <p className={`reveal delay-200 text-lg max-w-3xl mx-auto mb-10 ${
+          isDark ? "text-white/70" : "text-gray-600"
+        }`}>
+          Clurst automates Google SEO, reviews, replies, and reputation —
+          helping local businesses rank higher and win more customers.
+        </p>
+
+        <div className="reveal delay-300 flex flex-col sm:flex-row justify-center gap-4">
+          <button onClick={goToLogin}
+            className="px-8 py-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-xl hover:scale-105 transition">
+            Start Free 14-Day Trial →
+          </button>
+
+          <button onClick={goToLogin}
+            className={`px-8 py-4 rounded-full font-semibold transition ${
+              isDark
+                ? "bg-white/10 border border-white/10 hover:bg-white/20"
+                : "bg-white/80 shadow hover:bg-white"
             }`}>
-              Watch Demo
+            Watch Demo
+          </button>
+        </div>
+
+        <p className={`reveal delay-400 mt-6 text-sm ${
+          isDark ? "text-white/50" : "text-gray-500"
+        }`}>
+          No contracts • Cancel anytime • Secure Google integration
+        </p>
+      </section>
+
+      {/* ================= WHO IS CLURST FOR ================= */}
+      <section className="max-w-7xl mx-auto px-6 py-24">
+        <h2 className="reveal text-3xl md:text-4xl font-bold text-center mb-14">
+          Who Is Clurst For?
+        </h2>
+
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {[
+            "🦷 Dental Clinics & Medical Practices",
+            "💇 Salons, Spas & Beauty Businesses",
+            "🍽 Restaurants, Cafés & Takeaways",
+            "🏡 Real Estate Agents & Brokers",
+            "🛠 Home Service Businesses",
+            "🏋 Gyms, Fitness Studios & Trainers",
+            "🚗 Auto Repair & Local Shops",
+            "📈 Local SEO & Marketing Agencies"
+          ].map((item, i) => (
+            <div key={i}
+              className={`reveal delay-${(i + 1) * 100} p-6 text-center ${glassCard} ${
+                isDark ? "bg-white/5 border border-white/10" : "bg-white/70"
+              }`}>
+              {item}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ================= WHY CLURST WORKS (USA / UK) ================= */}
+      <section className="py-24">
+        <div className="max-w-5xl mx-auto px-6">
+          <h2 className="reveal text-3xl md:text-4xl font-bold text-center mb-14">
+            Why Clurst Works Best in USA & UK
+          </h2>
+
+          <div className="grid md:grid-cols-2 gap-8">
+            {[
+              "Customers trust Google reviews more than ads",
+              "Google Maps decides who gets calls & visits",
+              "Consistent activity boosts local rankings",
+              "Businesses prefer automation over agencies",
+              "AI-powered tools are widely adopted",
+              "Clurst is built for this exact behavior"
+            ].map((point, i) => (
+              <div key={i}
+                className={`reveal p-6 ${glassCard} ${
+                  isDark ? "bg-white/5 border border-white/10" : "bg-white/70"
+                }`}>
+                {point}
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ================= PRICING ================= */}
+      <section className="max-w-6xl mx-auto px-6 py-24">
+        <h2 className="reveal text-3xl md:text-4xl font-bold text-center mb-4">
+          Choose Your <span className="text-indigo-500">Growth Plan</span>
+        </h2>
+
+        <p className={`reveal delay-100 text-center mb-16 ${
+          isDark ? "text-white/60" : "text-gray-600"
+        }`}>
+          Start with a 14-day free trial. No credit card required.
+        </p>
+
+        <div className="grid md:grid-cols-2 gap-10 max-w-4xl mx-auto">
+
+          <div className={`reveal p-8 ${glassCard} ${
+            isDark ? "bg-white/5 border border-white/10" : "bg-white/70"
+          }`}>
+            <h3 className="text-xl font-bold mb-2">Monthly</h3>
+            <p className="text-4xl font-extrabold mb-1">$99</p>
+            <p className="text-sm opacity-70 mb-6">per month</p>
+
+            <ul className="space-y-3 opacity-80">
+              <li>✔ Full feature access</li>
+              <li>✔ Unlimited review requests</li>
+              <li>✔ AI review replies</li>
+              <li>✔ SEO-optimized posts</li>
+              <li>✔ Real-time dashboard</li>
+              <li>✔ Email support</li>
+            </ul>
+
+            <button onClick={goToLogin}
+              className="mt-8 w-full py-3 rounded-full font-semibold border hover:bg-indigo-500 hover:text-white transition">
+              Start Free Trial →
             </button>
-            {/* <button className={`px-6 py-3 border font-semibold rounded-lg transition transform hover:-translate-y-1 hover:shadow-lg ${
-              theme === 'dark'
-                ? 'border-gray-400 text-white hover:bg-white/10'
-                : 'border-purple-300 text-purple-700 hover:bg-purple-50'
-            }`}>
-              Learn More
-            </button> */}
           </div>
 
-          <div className={`flex flex-wrap items-center gap-6 text-sm ${
-            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+          <div className={`reveal delay-200 relative p-8 border-2 border-indigo-500 ${glassCard} ${
+            isDark ? "bg-white/5" : "bg-white/80"
           }`}>
-            <div className="flex items-center gap-2">
-              <Star className="text-yellow-400 w-5 h-5" />
-              <Star className="text-yellow-400 w-5 h-5" />
-              <Star className="text-yellow-400 w-5 h-5" />
-              <Star className="text-yellow-400 w-5 h-5" />
-              <Star className="text-yellow-400 w-5 h-5" />
-              <span>4.9/5 from 2,000+ reviews</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className={theme === 'dark' ? 'text-green-400' : 'text-green-600'}>📈</span>
-              <span>98% customer satisfaction</span>
-            </div>
+            <span className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-4 py-1 rounded-full text-sm shadow-lg">
+              MOST POPULAR • SAVE 50%
+            </span>
+
+            <h3 className="text-xl font-bold mb-2">Yearly</h3>
+            <p className="text-4xl font-extrabold mb-1">$49</p>
+            <p className="text-sm opacity-70 mb-6">per month • $594/year</p>
+
+            <ul className="space-y-3 opacity-80">
+              <li>✔ Everything in Monthly</li>
+              <li>✔ Priority support</li>
+              <li>✔ Free onboarding call</li>
+              <li>✔ Early access to features</li>
+              <li>✔ Dedicated success manager</li>
+            </ul>
+
+            <button onClick={goToLogin}
+              className="mt-8 w-full py-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-xl hover:scale-105 transition">
+              Start Free Trial →
+            </button>
           </div>
         </div>
-{/* Image Content - Right Side */}
-<div className="relative order-1 lg:order-2 flex justify-end">
-  <div className={`relative rounded-2xl overflow-hidden transform transition-all duration-300 hover:scale-105 w-full max-w-md ${
-    theme === 'dark' 
-      ? 'ring-1 ring-purple-900/50 shadow-[0_0_30px_rgba(147,51,234,0.5)]' 
-      : 'ring-1 ring-purple-200 shadow-[0_0_30px_rgba(147,51,234,0.3)] bg-white/10 backdrop-blur-sm'
-  }`}>
-    <img
-      src="https://png.pngtree.com/background/20250523/original/pngtree-futuristic-data-analytics-dashboard-with-neon-financial-graphs-picture-image_16528267.jpg"
-      alt="AI Dashboard"
-      className="w-full h-auto"
-    />
-    <div className={`absolute top-4 left-4 text-sm px-3 py-1 rounded-full shadow-lg ${
-      theme === 'dark' 
-        ? 'bg-black/60 text-green-400 border border-green-500/30' 
-        : 'bg-green-100 text-green-800 border border-green-200'
-    }`}>
-      ● AI Active
-    </div>
-    <div className={`absolute bottom-4 right-4 text-sm px-3 py-1 rounded-full shadow-lg ${
-      theme === 'dark' 
-        ? 'bg-purple-600 text-white' 
-        : 'bg-purple-100 text-purple-800 border border-purple-200'
-    }`}>
-      +247% Review Growth
-    </div>
-  </div>
-</div>
+      </section>
+
+      {/* ================= FAQ ================= */}
+      <section className="max-w-6xl mx-auto px-6 py-24">
+        <h2 className="reveal text-3xl md:text-4xl font-bold text-center mb-14">
+          Frequently Asked Questions
+        </h2>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          {[
+            ["Does Clurst work for my business?", "Yes. Works for any Google Business Profile."],
+            ["Is it safe to use?", "Yes. Uses secure, Google-approved APIs."],
+            ["How fast will I see results?", "Most businesses see results in 7–10 days."],
+            ["Do I need SEO knowledge?", "No. Fully automated."],
+            ["Can I cancel anytime?", "Yes. No contracts."],
+            ["Is it good for agencies?", "Yes. Multi-location & client support included."]
+          ].map(([q, a], i) => (
+            <div key={i}
+              className={`reveal p-6 ${glassCard} ${
+                isDark ? "bg-white/5 border border-white/10" : "bg-white/70"
+              }`}>
+              <h3 className="font-semibold mb-2">{q}</h3>
+              <p className={isDark ? "text-white/70" : "text-gray-600"}>{a}</p>
+            </div>
+          ))}
         </div>
-      </div>
+      </section>
+
+      {/* ================= TRUST LINES ================= */}
+      <section className="py-12">
+        <div className="max-w-5xl mx-auto px-6 grid sm:grid-cols-2 md:grid-cols-3 gap-6 text-center">
+          {[
+            "✔ Used by local businesses across USA & UK",
+            "✔ Designed for Google Maps & local search growth",
+            "✔ No agencies. No contracts. Just results.",
+            "✔ Predictable local business growth",
+            "✔ Automate what Google rewards the most"
+          ].map((line, i) => (
+            <div key={i} className="reveal text-sm font-medium opacity-80">
+              {line}
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ================= FINAL CTA ================= */}
+      <section className="max-w-4xl mx-auto px-6 py-24 text-center">
+        <h2 className="reveal text-3xl md:text-4xl font-extrabold mb-6">
+          Ready to Grow Your Google Visibility Automatically?
+        </h2>
+
+        <button onClick={goToLogin}
+          className="reveal delay-200 px-10 py-4 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-semibold shadow-2xl hover:scale-105 transition">
+          Start Your Free 14-Day Trial
+        </button>
+
+        <p className="reveal delay-300 mt-6 text-sm opacity-70">
+          No contracts • Cancel anytime • AI does the work
+        </p>
+      </section>
+
+      {/* ================= ONE LINE SUMMARY ================= */}
+      <section className="py-12 text-center">
+        <p className={`reveal text-sm md:text-base font-medium max-w-3xl mx-auto ${
+          isDark ? "text-white/60" : "text-gray-600"
+        }`}>
+          Clurst automates everything Google loves — reviews, replies, posts, and
+          keywords — so your business ranks higher and grows faster.
+        </p>
+      </section>
+
     </div>
   );
-};
-
-export default Home;
+}
