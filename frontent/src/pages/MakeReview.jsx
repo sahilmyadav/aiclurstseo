@@ -16,12 +16,17 @@ function MakeReview() {
         .join(' ')
     : 'Our Business'; // Fallback if no business name in URL
     
-  const businessCategory = searchParams.get('category') 
+    console.log("BusinesNE",businessName)
+    const businessCategory = searchParams.get('category') 
     ? searchParams.get('category')
-        .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(' ')
+    .split('-')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ')
     : 'business'; // Fallback if no category in URL
+    console.log("BusinesNE",businessCategory)
+
+     const reviewUri = searchParams.get('reviewUri');
+     console.log("reviewURI",reviewUri)
   
   const [selectedRating, setSelectedRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -125,7 +130,8 @@ function MakeReview() {
   };
 
   // Get reviewUri from URL parameters
-  const reviewUri = searchParams.get('reviewUri');
+  // const reviewUri = searchParams.get('reviewUri');
+  
   
   const handleGoogleReview = () => {
     if (!reviewUri) {

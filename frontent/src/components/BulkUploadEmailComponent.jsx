@@ -19,6 +19,10 @@ const BulkUploadEmailComponent = ({ onUploadComplete }) => {
   const [selectedBusinessId, setSelectedBusinessId] = useState("");
   const [uploadResult, setUploadResult] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
+
+  const { selectedBusiness } = useGoogleBusiness();
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || import.meta.env.VITE_APP_URL || "http://localhost:5173";
+
   const BACKEND_URL =
     import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ||
     "http://localhost:8000";
@@ -59,133 +63,126 @@ const BulkUploadEmailComponent = ({ onUploadComplete }) => {
     setSelectedFile(file);
   };
 
-  const validateFileContent = async (file) => {
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target.result;
-        const lines = content.split("\n");
-        const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+ const validateFileContent = async (file) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target.result;
+      const lines = content.split("\n");
+      const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
 
-        const requiredFields = ["email"];
+      const requiredFields = ["email"];
 
-        const missingFields = requiredFields.filter(
-          (field) => !headers.includes(field)
-        );
+      const missingFields = requiredFields.filter(
+        (field) => !headers.includes(field)
+      );
 
-        if (missingFields.length > 0) {
-          resolve({
-            isValid: false,
-            error: `Missing required fields: ${missingFields.join(", ")}`,
-          });
-          return;
-        }
-
-        // Check first 5 rows for data validation
-        const errors = [];
-        const dataRows = lines.slice(1, 6);
-
-        dataRows.forEach((row, index) => {
-          if (!row.trim()) return;
-
-          const values = row.split(",").map((v) => v.trim());
-          const rowData = {};
-          headers.forEach((header, i) => {
-            rowData[header] = values[i] || "";
-          });
-
-          if (rowData.email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(rowData.email)) {
-              errors.push(
-                `Row ${index + 2}: Invalid email format (${rowData.email})`
-              );
-            }
-          }
-        });
-
+      if (missingFields.length > 0) {
         resolve({
-          isValid: errors.length === 0,
-          errors: errors.length > 0 ? errors : null,
+          valid: false,
+          error: `Missing required fields: ${missingFields.join(", ")}`,
         });
-      };
-      reader.readAsText(file);
-    });
-  };
-
-  const handleUpload = async () => {
-    if (!selectedFile) {
-      toast.error("Please select a file first");
-      return;
-    }
-
-    if (!selectedBusinessId) {
-      toast.error("Please select a business");
-      return;
-    }
-
-    // Validate file content
-    const validation = await validateFileContent(selectedFile);
-    if (!validation.isValid) {
-      if (validation.errors) {
-        setValidationErrors(validation.errors);
+        return;
       }
-      toast.error(validation.error || "Invalid file content");
-      return;
-    }
 
-    const formData = new FormData();
-    formData.append("file", selectedFile);
-    formData.append(
-      "businessName",
-      businesses.find((b) => b.id === selectedBusinessId)?.title ||
-        "Selected Business"
+      // Check if there's at least one data row
+      if (lines.length < 2) {
+        resolve({
+          valid: false,
+          error: "CSV file must contain at least one data row",
+        });
+        return;
+      }
+
+      resolve({ valid: true });
+    };
+
+    reader.onerror = () => {
+      resolve({ valid: false, error: "Error reading file" });
+    };
+
+    reader.readAsText(file);
+  });
+};
+
+ // Add these imports if not already present
+
+
+// Inside the BulkUploadEmailComponent
+
+// Update the handleUpload function
+const handleUpload = async () => {
+  if (!selectedFile) {
+    toast.error("Please select a file first");
+    return;
+  }
+
+  if (!selectedBusinessId) {
+    toast.error("Please select a business");
+    return;
+  }
+
+  // const validation = validateFileContent(selectedFile);
+  // if (!validation.valid) {
+  //   toast.error(validation.error || "Invalid file content");
+  //   return;
+  // }
+  
+  // First, get the locationId
+  const locationId = selectedBusiness.name?.split('/').pop() || '';
+  
+  // Then get the business name and category
+  const businessName = selectedBusiness.title ? 
+    encodeURIComponent(selectedBusiness.title.replace(/\s+/g, '-').toLowerCase()) : '';
+    
+  const businessCategory = selectedBusiness.categories?.primaryCategory?.name ? 
+    encodeURIComponent(selectedBusiness.categories.primaryCategory.name.toLowerCase().replace(/\s+/g, '-')) : '';
+  
+  // Get the review URI
+  const reviewUri = selectedBusiness.metadata?.newReviewUri || selectedBusiness.title || '';
+  
+  // Construct the review link with proper URL parameter separation
+  const reviewLink = `${FRONTEND_URL}/review/${locationId}?businessName=${businessName}&category=${businessCategory}&reviewUri=${encodeURIComponent(reviewUri)}`;
+
+  const formData = new FormData();
+  formData.append("file", selectedFile);
+  formData.append("businessName", businessName);
+  formData.append("reviewLink", reviewLink);
+  formData.append("content", "We would love to hear your feedback about your recent experience with us. Your opinion is valuable to us and helps us improve our services.");
+
+  setIsUploading(true);
+  setValidationErrors([]);
+
+  try {
+    const response = await fetch(
+      `${BACKEND_URL}/api/invitations/email/upload`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      }
     );
 
-    setIsUploading(true);
-    setValidationErrors([]);
+    const result = await response.json();
 
-    try {
-      const response = await fetch(
-        `${BACKEND_URL}/api/invitations/email/upload`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Failed to process bulk upload");
-      }
-
-      setUploadResult(result);
-      toast.success(
-        `Successfully sent ${result.successCount} email invitation(s)`
-      );
-
-      if (onUploadComplete) {
-        onUploadComplete(result);
-      }
-
-      if (result.failedCount > 0) {
-        toast.warning(`${result.failedCount} invitations failed to send`);
-      }
-    } catch (error) {
-      console.error("Error uploading file:", error);
-      toast.error(error.message || "Failed to upload file");
-
-      if (error.errors) {
-        setValidationErrors(error.errors);
-      }
-    } finally {
-      setIsUploading(false);
+    if (!response.ok) {
+      throw new Error(result.error || "Failed to process bulk upload");
     }
-  };
+
+    setUploadResult(result);
+    toast.success(`Successfully sent ${result.successCount} emails`);
+    if (result.failedCount > 0) {
+      toast.warning(`Failed to send ${result.failedCount} emails`);
+    }
+  } catch (error) {
+    console.error("Upload error:", error);
+    toast.error(error.message || "Failed to process bulk upload");
+  } finally {
+    setIsUploading(false);
+  }
+};
 
   const handleDownloadTemplate = () => {
     const csvContent = [

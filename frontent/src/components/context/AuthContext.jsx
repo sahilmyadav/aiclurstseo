@@ -13,7 +13,7 @@ export const AuthContextProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true) // Start with true to indicate initial loading
   const [isInitialized, setIsInitialized] = useState(false)
-  console.log("User >>>>>>>",user)
+  // console.log("User >>>>>>>",user)
   // Subscription-related state
   const [subscriptionData, setSubscriptionData] = useState(null);
   // console.log("Subs >>>>>>>",subscriptionData);
@@ -68,7 +68,7 @@ export const AuthContextProvider = ({ children }) => {
           `${API_BASE}/api/subscription/check-trial-eligibility/${userId}`,
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
-        console.log('Trial eligibility:', eligibilityResponse.data);
+        // console.log('Trial eligibility:', eligibilityResponse.data);
         setTrialEligible(eligibilityResponse.data.eligible);
         if (!eligibilityResponse.data.eligible) {
           setTrialMessage(eligibilityResponse.data.reason);
@@ -85,7 +85,7 @@ export const AuthContextProvider = ({ children }) => {
           { headers: { 'Authorization': `Bearer ${token}` } }
         );
         
-        console.log('Subscription response:', response.data);
+        // console.log('Subscription response:', response.data);
         
         if (response.data.success) {
           if (response.data.subscription) {
@@ -111,7 +111,7 @@ export const AuthContextProvider = ({ children }) => {
               ...sub
             };
             
-            console.log('Setting subscription data:', subscription);
+            // console.log('Setting subscription data:', subscription);
             setSubscriptionData(subscription);
             
             if (subscription.isTrial) {
@@ -192,7 +192,7 @@ export const AuthContextProvider = ({ children }) => {
         }
       );
       
-      console.log('Trial activation response:', response.data);
+      // console.log('Trial activation response:', response.data);
       
       // Update trial status
       setTrialEligible(false);
