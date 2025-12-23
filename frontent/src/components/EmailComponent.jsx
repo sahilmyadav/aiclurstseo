@@ -199,7 +199,9 @@ const EmailComponent = () => {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-sm text-gray-300 mb-1">
+                <label className={`block text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                } mb-1`}>
                   Customer Name
                 </label>
                 <input
@@ -211,7 +213,9 @@ const EmailComponent = () => {
                   required
                 />
 
-                <label className="block text-sm text-gray-300 mb-1 mt-4">
+                 <label className={`block text-sm ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                } mb-1 mt-4`}>
                   Customer Email
                 </label>
                 <input
@@ -250,7 +254,9 @@ const EmailComponent = () => {
       </div>
 
       <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
+         <label className={`block text-sm font-medium ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                } mb-1`}>
           Email Content
         </label>
         <textarea

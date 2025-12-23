@@ -13,7 +13,7 @@
    const dbName = process.env.MONGODB_DB || 'clurst';
 
    try {
-     await mongoose.connect(uri, { dbName });
+     await mongoose.connect(uri);
      isConnected = true;
 
      mongoose.connection.on('disconnected', () => {
