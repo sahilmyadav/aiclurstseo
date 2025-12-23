@@ -4,30 +4,31 @@ import {
   handleGoogleCallback,
   getGoogleBusinesses,
   getGoogleReviews,
-  getGoogleStatus,
-  disconnectGoogle,
   createGooglePost,
-  getGooglePosts,
-  getGooglePostsAlt
+  getGooglePosts
 } from "../controllers/googleIntegrationController.js";
 
 const router = express.Router();
 
-// 🚀 Google OAuth Routes
+// 🚀 Google OAuth Login
 router.get("/login", initiateGoogleLogin);
+
+// 🔄 OAuth callback
 router.get("/google-callback", handleGoogleCallback);
 
-// 📊 Status and Management Routes
-router.get("/status", getGoogleStatus);
-router.post("/disconnect", disconnectGoogle);
-
-// 🏢 Business and Location Routes
+// 🏢 Business locations
 router.get("/businesses", getGoogleBusinesses);
+
+// ⭐️ Reviews
 router.get("/reviews/:accountId/:locationId", getGoogleReviews);
 
-// 📝 Google My Business Posts Routes
+// 📝 Create post (localPost)
 router.post("/accounts/:accountId/locations/:locationId/localPosts", createGooglePost);
+
+// 📋 Get posts (with pagination)
 router.get("/accounts/:accountId/locations/:locationId/localPosts", getGooglePosts);
-router.get("/posts/:accountId/:locationId", getGooglePostsAlt);
+
+// 🔁 Alt posts (simple) - using the same handler as the main posts endpoint
+router.get("/posts/:accountId/:locationId", getGooglePosts);
 
 export default router;

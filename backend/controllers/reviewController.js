@@ -1,5 +1,6 @@
 import express from "express";
 import Reviews from "../models/Reviews.js";
+import { sendThanksEmail } from "../utilities/sendMail.js";
 
 export const createReview = async (req, res) => {
     console.log(req.body)
@@ -22,9 +23,15 @@ export const createReview = async (req, res) => {
         });
         await review.save();
         console.log(review)
+
         res.json({
             success: true,
             message: "Review created successfully"
+        });
+        const reviewLink = `${process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:5173'}/business/${review.locationId}`;
+        await sendThanksEmail(email, name, businessName, reviewLink)
+        .catch(err => {
+            console.error("Thank you email failed:", err.message || err);
         });
     } catch (error) {
         console.error("Error creating review:", error);
@@ -36,17 +43,32 @@ export const createReview = async (req, res) => {
 };
 
 export const getAllReviewsByLocationId = async (req, res) => {
+    console.log("Getting all reviews by location ID");
 
-    console.log(req.params.locationId)
+    // console.log(req.params.locationId)
     try {
         const reviews = await Reviews.find({ locationId: req.params.locationId });
-        console.log(reviews,"reviews")
+        // console.log(reviews,"reviews")
         res.json(reviews);
     } catch (error) {
         console.error("Error fetching reviews:", error);
         res.status(500).json({
             success: false,
             error: "Failed to fetch reviews"
+        });
+    }
+}
+
+export const deleteReview = async (req, res) => {
+    console.log("Deleting review");
+    try {
+        const review = await Reviews.findByIdAndDelete(req.params.id);
+        res.json(review);
+    } catch (error) {
+        console.error("Error deleting review:", error);
+        res.status(500).json({
+            success: false,
+            error: "Failed to delete review"
         });
     }
 }

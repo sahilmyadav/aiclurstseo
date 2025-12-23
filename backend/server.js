@@ -11,7 +11,14 @@ import googleRoutes from './routes/googleRoutes.js';
 import authRoutes from './routes/auth.js';
 import auditRoutes from './routes/auditRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
-
+import invitationRoutes from './routes/invitationRoutes.js';
+import scheduleRoutes from './routes/scheduleRoutes.js';
+import adminRoutes from './routes/adminRoutes.js';
+import analyticsRoutes from './routes/analytics.js';
+import subscriptionRoutes from "./routes/subscriptionRoutes.js";
+import a from "./routes/analytics.js";
+import planRoutes from "./routes/planRoutes.js";
+import { startSubscriptionJobs } from './jobs/subscriptionJobs.js';
 dotenv.config();
 
 const app = express();
@@ -38,7 +45,7 @@ const corsOptions = {
     return callback(null, true);
   },
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS','PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization']
 };
 
@@ -49,12 +56,38 @@ app.use(bodyParser.json({ limit: '200kb' }));
 connectDB();
 initializeFirebase();
 
-// Routes
+// Start subscription jobs
+if (process.env.NODE_ENV !== 'test') {
+  startSubscriptionJobs();
+}
+
+// Start the post scheduler (runs every 5 minutes)
+if (process.env.NODE_ENV !== 'test') {
+  import('./services/postScheduler.js')
+    .then(({ startScheduler }) => startScheduler(5)) // Check every 5 minutes
+    .catch(err => console.error('Failed to start post scheduler:', err));
+}
+
+
+app.use((req, res, next) => {
+  if (req.originalUrl === "/api/subscription/webhook") {
+    next();
+  } else {
+    express.json()(req, res, next);
+  }
+});
+
+app.use("/api/subscription", subscriptionRoutes);
+app.use("/api/admin/plans", planRoutes);
 app.use("/auth/google", googleRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/invitations', invitationRoutes);
+app.use('/api/post', scheduleRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // Test routes
 app.get('/', (req, res) => {
@@ -77,7 +110,7 @@ app.get('/api/status', (req, res) => {
     });
 });
 
-// DB and server start
+// DB and server start .
 const PORT = process.env.PORT || 8000;
 
 
