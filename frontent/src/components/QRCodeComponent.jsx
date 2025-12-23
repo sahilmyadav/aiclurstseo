@@ -284,9 +284,10 @@ const QRCodeComponent = () => {
             <div className="space-y-6">
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm font-medium text-gray-300">
-                    Google Review Link
-                  </label>
+                  {/* <label className="block text-sm font-medium text-gray-300"> */}
+                     <label className={`block text-sm font-medium ${
+                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                } mb-1`}>Google Review Link</label>
                   <button 
                     type="button" 
                     onClick={() => setShowHelpModal(true)}

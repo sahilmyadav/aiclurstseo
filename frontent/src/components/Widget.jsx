@@ -453,7 +453,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
           <h2 className="text-2xl font-bold mb-6">Website Widgets</h2>
 
           <div className="flex flex-wrap gap-3 sm:gap-4 md:gap-6 mb-4 sm:mb-6 overflow-x-auto pb-2 -mx-2 px-2">
-            {["Carousel", "Feed", "Video", "All Reviews"].map((tab) => (
+            {["Carousel", "Feed", "Video", ].map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
