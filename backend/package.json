@@ -32,6 +32,7 @@
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.10",
     "nodemon": "^3.1.10",
+    "stripe": "^20.1.0",
     "twilio": "^5.10.4"
   }
 }
