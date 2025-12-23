@@ -41,6 +41,8 @@ export const sendBulkEmailInvitations = async (req, res) => {
   try {
     const { businessName, invitations } = req.body;
 
+     console.log("sendBulkEmailInvitations",req.body)
+
     if (!businessName || !invitations || !Array.isArray(invitations) || invitations.length === 0) {
       return res.status(400).json({ success: false, error: "Missing required fields: businessName or invitations array" });
     }
@@ -63,7 +65,7 @@ export const sendBulkEmailInvitations = async (req, res) => {
 export const handleBulkEmailUpload = async (req, res) => {
   try {
     const file = req.file;
-    const { businessName } = req.body;
+    const { businessName, reviewLink, content } = req.body;
 
     if (!file) {
       return res.status(400).json({ success: false, error: "No file uploaded" });
@@ -97,6 +99,8 @@ export const handleBulkEmailUpload = async (req, res) => {
         invitations.push({
           customerName: rowData.name || '',
           customerEmail: rowData.email,
+          content: rowData.content || content, // Use row-specific content or fallback to default
+          reviewLink: rowData.reviewlink || reviewLink // Use row-specific review link or fallback to default
         });
       }
     }
@@ -105,10 +109,7 @@ export const handleBulkEmailUpload = async (req, res) => {
       return res.status(400).json({ success: false, error: "No valid email addresses found in CSV" });
     }
 
-    // Reuse the bulk processing logic
-    const results = await processBulkEmailInvitations(businessName, invitations);
-
-    console.log(`Bulk Email Upload: ${results.successCount} successful, ${results.failedCount} failed out of ${invitations.length}`);
+    const results = await processBulkEmailInvitations(businessName, invitations, content, reviewLink);
 
     return res.status(200).json({
       success: true,
@@ -119,23 +120,27 @@ export const handleBulkEmailUpload = async (req, res) => {
     });
   } catch (error) {
     console.error("handleBulkEmailUpload error:", error);
-    return res.status(500).json({ success: false, error: error.message || "Failed to process bulk email upload" });
+    return res.status(500).json({ 
+      success: false, 
+      error: error.message || "Failed to process bulk email upload" 
+    });
   }
 };
 
 // Helper function to process bulk email invitations
-const processBulkEmailInvitations = async (businessName, invitations) => {
+const processBulkEmailInvitations = async (businessName, invitations, content = '', reviewLink = '') => {
   const results = [];
   let successCount = 0;
   let failedCount = 0;
 
   const frontUrl = process.env.FRONTEND_URL || process.env.APP_URL || 'http://localhost:5173';
-  const inviteLink = `${frontUrl}/business/${encodeURIComponent(businessName)}`;
+  // Use the provided reviewLink or fall back to the default format
+  const defaultInviteLink = reviewLink || `${frontUrl}/business/${encodeURIComponent(businessName)}`;
 
   for (const invitation of invitations) {
     try {
-      const { customerName, customerEmail } = invitation;
-
+      const { customerName, customerEmail, content: invitationContent, reviewLink: invitationLink } = invitation;
+           console.log("okk",invitation)
       if (!customerEmail) {
         results.push({
           customerEmail: customerEmail || "unknown",
@@ -158,8 +163,18 @@ const processBulkEmailInvitations = async (businessName, invitations) => {
         continue;
       }
 
-      // Send email
-      await sendReviewInvitation(customerEmail, customerName || "Customer", businessName, inviteLink);
+      // Use the most specific content and link available (invitation level > function parameter > default)
+      const emailContent = invitationContent || content || '';
+      const finalInviteLink = invitationLink || reviewLink || defaultInviteLink;
+
+      // Send email with all parameters that the single email function uses
+      await sendReviewInvitation(
+        customerEmail, 
+        customerName || "Customer", 
+        businessName, 
+        finalInviteLink,
+        emailContent
+      );
 
       results.push({
         customerEmail,

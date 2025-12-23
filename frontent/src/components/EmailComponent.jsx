@@ -5,6 +5,7 @@ import { useAuth } from "./context/AuthContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
 import { useTheme } from "../context/ThemeContext";
+import BulkUploadEmailComponent from "./BulkUploadEmailComponent";
 
 const EmailComponent = () => {
   const { theme } = useTheme();

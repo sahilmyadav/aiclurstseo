@@ -175,9 +175,9 @@ export const GoogleBusinessProvider = ({ children }) => {
     'Content-Type': 'application/json',
   });
   
-  console.log("TOken Details",tokenDetails)
-  console.log("Google OAuth",googleOAuth)
-  console.log("Review Stats",reviewStats)
+  // console.log("TOken Details",tokenDetails)
+  // console.log("Google OAuth",googleOAuth)
+  // console.log("Review Stats",reviewStats)
 
   // ==============================
   // GET Google params FOR API
@@ -379,7 +379,7 @@ export const GoogleBusinessProvider = ({ children }) => {
       recentReviews
     };
     
-    console.log('Calculated review stats:', result);
+    // console.log('Calculated review stats:', result);
     return result;
   }, []);
 
@@ -431,11 +431,11 @@ export const GoogleBusinessProvider = ({ children }) => {
         headers: authHeaders(),
       });
       
-      console.log('Frontend: Response status:', response.status);
+      // console.log('Frontend: Response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Frontend: Received data:', data);
+        // console.log('Frontend: Received data:', data);
         setScheduledPosts(data.data || []);
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -520,7 +520,7 @@ export const GoogleBusinessProvider = ({ children }) => {
         throw new Error(errorData.error || 'Failed to fetch performance metrics');
       }
       const data = await response.json();
-      console.log("Performace",data)
+      // console.log("Performace",data)
       setPerformanceData(data.totals);
       return data;
     } catch (error) {
