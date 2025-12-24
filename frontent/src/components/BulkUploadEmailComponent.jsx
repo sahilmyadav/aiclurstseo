@@ -21,10 +21,10 @@ const BulkUploadEmailComponent = ({ onUploadComplete }) => {
   const [validationErrors, setValidationErrors] = useState([]);
 
   const { selectedBusiness } = useGoogleBusiness();
-const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || import.meta.env.VITE_APP_URL || "http://localhost:5173";
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || "http://localhost:5173";
 
   const BACKEND_URL =
-    import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ||
+    import.meta.env.VITE_API_BASE?.replace(/\/$/, "") ||
     "http://localhost:8000";
 
   useEffect(() => {
