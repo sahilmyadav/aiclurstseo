@@ -78,7 +78,8 @@ const Dashboard = () => {
   const performanceScore = calculatePerformanceScore();
 
   return (
-    <div className={`min-h-screen w-full flex ${
+    <div className={`min-h-screen w-full bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] "
+ flex ${
       theme === 'dark' ? 'text-white bg-[#0f1020]' : 'text-gray-900 bg-gray-50'
     }`}>
       <div className={`flex-1 p-3 sm:p-6 transition-all duration-300 ease-in-out w-full`}>

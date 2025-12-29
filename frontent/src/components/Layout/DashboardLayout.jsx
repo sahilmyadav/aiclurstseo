@@ -28,7 +28,8 @@ const DashboardContent = () => {
     <div className={`min-h-screen transition-colors duration-300 ${
       theme === 'dark' 
         ? 'bg-[#0f1020] text-gray-100' 
-        : 'bg-gray-50 text-gray-900'
+        : 'bg-gradient-to-b from-[hsl(250,50%,98%)] to-white min-h-screen'
+
     }`}>
       <SideNav />
       <main 

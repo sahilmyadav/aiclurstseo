@@ -13,11 +13,11 @@ export default function FinalCTA() {
   return (
     <section
       className="relative py-28 overflow-hidden
-        bg-gradient-to-b from-indigo-50 via-purple-50/40 to-indigo-50"
+       bg-[#f7f8fc]"
     >
       {/* Soft background glow */}
-      <div className="absolute -top-40 -left-40 w-[520px] h-[520px] bg-purple-300/30 rounded-full blur-3xl" />
-      <div className="absolute -bottom-40 -right-40 w-[520px] h-[520px] bg-indigo-300/30 rounded-full blur-3xl" />
+      {/* <div className="absolute -top-40 -left-40 w-[520px] h-[520px] bg-purple-300/30 rounded-full blur-3xl" />
+      <div className="absolute -bottom-40 -right-40 w-[520px] h-[520px] bg-indigo-300/30 rounded-full blur-3xl" /> */}
 
       <div className="container-tight relative z-10 px-4 sm:px-6 lg:px-8">
         <motion.div

@@ -46,12 +46,11 @@ export default function FAQ() {
   return (
     <section
       id="faq"
-      className="relative py-28 overflow-hidden
-        bg-gradient-to-b from-white via-indigo-50/40 to-white"
+      className="relative py-28 overflow-hidden bg-[#f7f8fc]"
     >
       {/* soft background glow */}
-      <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-purple-300/30 rounded-full blur-3xl" />
-      <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-indigo-300/30 rounded-full blur-3xl" />
+      {/* <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-purple-300/30 rounded-full blur-3xl" />
+      <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-indigo-300/30 rounded-full blur-3xl" /> */}
 
       <div className="container-tight relative z-10 px-4 sm:px-6 lg:px-8">
         {/* Header */}

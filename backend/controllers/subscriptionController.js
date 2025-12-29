@@ -8,7 +8,7 @@ import { sendSubscriptionConfirmation } from '../utilities/sendMail.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-// 🟩 Start 14-Day Trial (No Payment)
+
 const startTrial = async (req, res) => {
   try {
     const { userId } = req.body;
@@ -318,6 +318,8 @@ const verifyStripeWebhook = async (req, res) => {
   let event;
 
   console.log("WEbHook run",sig,  "EVENT  ",event)
+  
+  console.log("SECRET KEY", process.env.STRIPE_WEBHOOK_SECRET ? "Exist" : "Not Exist")
 
   try {
     event = stripe.webhooks.constructEvent(
