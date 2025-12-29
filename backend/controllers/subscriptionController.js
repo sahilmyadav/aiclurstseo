@@ -4,7 +4,7 @@ import Plan from "../models/Plan.js";
 import User from "../models/User.js";
 import TrialUsage from "../models/TrialUsage.js";
 import Payment from "../models/Payment.js";
-import { sendSubscriptionConfirmation } from '../utilities/sendMail.js';
+import { sendSubscriptionConfirmation,sendMail } from '../utilities/sendMail.js';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -107,7 +107,7 @@ const startTrial = async (req, res) => {
     }
 
     // Record trial usage permanently (even if user is deleted later)
-    await TrialUsage.create({
+    const trialUsage = await TrialUsage.create({
       email: user.email,
       userId: user._id,
       usedAt: new Date(),
@@ -116,11 +116,185 @@ const startTrial = async (req, res) => {
       userAgent: req.get('User-Agent')
     });
 
+    // Send response to user immediately
     res.json({ 
       message: "🎉 14-day free trial activated successfully!",
       endDate: endDate,
       profiles: 1
     });
+
+    // Send email notifications asynchronously after sending response
+    const sendTrialNotification = async (toEmail, isAdmin = false) => {
+      try {
+        const trialEndDate = endDate.toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
+
+        if (isAdmin) {
+          // For admin, use custom email format
+          const subject = `New Trial Started - ${user.email}`;
+          const text = `A new trial has been activated:
+            
+User: ${user.name || 'N/A'} (${user.email})
+Trial Start: ${new Date().toLocaleString()}
+Trial End: ${trialEndDate}
+Plan: ${trialSubscription.planType}
+Profiles: ${trialSubscription.profiles}
+
+IP Address: ${req.ip || 'N/A'}
+User Agent: ${req.get('User-Agent') || 'N/A'}`;
+
+          await sendMail({
+            to: toEmail,
+            subject,
+            text,
+            html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <style>
+                body {
+                  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                  line-height: 1.6;
+                  color: #333;
+                  max-width: 700px;
+                  margin: 0 auto;
+                  padding: 0;
+                  background-color: #f5f7fa;
+                }
+                .email-container {
+                  background: #ffffff;
+                  border-radius: 8px;
+                  overflow: hidden;
+                  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                }
+                .header {
+                  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+                  color: white;
+                  padding: 25px 30px;
+                  text-align: center;
+                }
+                .content {
+                  padding: 30px;
+                }
+                h1 {
+                  margin: 0;
+                  font-size: 24px;
+                  font-weight: 600;
+                }
+                h2 {
+                  color: #1f2937;
+                  margin-top: 0;
+                  font-size: 20px;
+                  border-bottom: 2px solid #e5e7eb;
+                  padding-bottom: 10px;
+                }
+                .info-card {
+                  background: #f9fafb;
+                  border-radius: 6px;
+                  padding: 20px;
+                  margin: 20px 0;
+                  border-left: 4px solid #4f46e5;
+                }
+                .info-item {
+                  margin-bottom: 12px;
+                  display: flex;
+                }
+                .info-label {
+                  font-weight: 600;
+                  color: #4b5563;
+                  min-width: 140px;
+                }
+                .info-value {
+                  color: #111827;
+                  flex: 1;
+                }
+                .footer {
+                  text-align: center;
+                  padding: 20px;
+                  font-size: 12px;
+                  color: #6b7280;
+                  border-top: 1px solid #e5e7eb;
+                  background: #f9fafb;
+                }
+                .badge {
+                  display: inline-block;
+                  padding: 4px 10px;
+                  border-radius: 12px;
+                  font-size: 12px;
+                  font-weight: 600;
+                  background: #e0e7ff;
+                  color: #4f46e5;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="email-container">
+                <div class="header">
+                  <h1>🎉 New Trial Activation</h1>
+                </div>
+                <div class="content">
+                  <h2>Account Details</h2>
+                  <div class="info-card">
+                    <div class="info-item">
+                      <span class="info-label">User:</span>
+                      <span class="info-value">${user.name || 'N/A'} <${user.email}></span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Plan:</span>
+                      <span class="info-value">${trialSubscription.planType} <span class="badge">Trial</span></span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Trial Period:</span>
+                      <span class="info-value">${new Date().toLocaleString()} - ${trialEndDate}</span>
+                    </div>
+                    <div class="info-item">
+                      <span class="info-label">Profiles Allowed:</span>
+                      <span class="info-value">${trialSubscription.profiles}</span>
+                    </div>
+                  </div>
+                  
+                 
+                </div>
+                <div class="footer">
+                  <p>This is an automated notification. Please do not reply to this email.</p>
+                  <p>© ${new Date().getFullYear()} ${process.env.APP_NAME || 'Clurst'}. All rights reserved.</p>
+                </div>
+              </div>
+            </body>
+            </html>
+            `
+          });
+        } else {
+          // For user, use the standard subscription confirmation
+          await sendSubscriptionConfirmation(
+            toEmail,
+            user.name || 'Customer',
+            'Free Trial',
+            0,
+            trialEndDate
+          );
+        }
+        console.log(`Trial notification sent to ${toEmail}`);
+      } catch (emailError) {
+        console.error(`Failed to send trial notification to ${toEmail}:`, emailError);
+      }
+    };
+
+    // Send notifications asynchronously
+    const adminEmail = 'naveen21kumawat@gmail.com';
+    
+    // Don't await these, let them run in the background
+    sendTrialNotification(adminEmail, true).catch(console.error);
+    
+    if (user.email && user.email !== adminEmail) {
+      sendTrialNotification(user.email, false).catch(console.error);
+    }
   } catch (err) {
     console.error('Error activating trial:', err);
     res.status(500).json({ message: "Failed to activate trial" });
@@ -317,9 +491,8 @@ const verifyStripeWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
-  console.log("WEbHook run",sig,  "EVENT  ",event)
-  
-  console.log("SECRET KEY", process.env.STRIPE_WEBHOOK_SECRET ? "Exist" : "Not Exist")
+  console.log("WebHook run", sig, "EVENT ", event);
+  console.log("SECRET KEY", process.env.STRIPE_WEBHOOK_SECRET ? "Exist" : "Not Exist");
 
   try {
     event = stripe.webhooks.constructEvent(
@@ -327,6 +500,52 @@ const verifyStripeWebhook = async (req, res) => {
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
+
+    // Send email notification about webhook event
+    const sendNotification = async (email) => {
+      try {
+        await sendSubscriptionConfirmation({
+          to: email,
+          subject: `Stripe Webhook Received - ${event.type}`,
+          text: `A new webhook event was received:\n\n` +
+                `Type: ${event.type}\n` +
+                `Event ID: ${event.id}\n` +
+                `Received at: ${new Date().toISOString()}\n\n` +
+                `Event Data: ${JSON.stringify(event.data?.object, null, 2)}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
+              <h2>Stripe Webhook Notification</h2>
+              <p>A new webhook event was received:</p>
+              <ul>
+                <li><strong>Type:</strong> ${event.type}</li>
+                <li><strong>Event ID:</strong> ${event.id}</li>
+                <li><strong>Received at:</strong> ${new Date().toLocaleString()}</li>
+              </ul>
+              <h3>Event Data:</h3>
+              <pre style="background: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto;">
+${JSON.stringify(event.data?.object, null, 2)}
+              </pre>
+            </div>
+          `
+        });
+        console.log(`Notification email sent to ${email}`);
+      } catch (emailError) {
+        console.error('Failed to send notification email:', emailError);
+      }
+    };
+
+    // Send to both user email (if available) and naveen21kumawat@gmail.com
+    const adminEmail = 'naveen21kumawat@gmail.com';
+    const userEmail = event.data?.object?.customer_email || event.data?.object?.billing_details?.email;
+    
+    // Send to admin
+    await sendNotification(adminEmail);
+    
+    // Send to user if email is available and different from admin
+    if (userEmail && userEmail !== adminEmail) {
+      await sendNotification(userEmail);
+    }
+
   } catch (err) {
     console.error('Webhook signature verification failed:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
