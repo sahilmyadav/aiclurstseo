@@ -18,6 +18,7 @@ import {
   CheckCircle2,
   XCircle
 } from 'lucide-react';
+import Report from './Report';
 
 const BusinessDetails = () => {
   const { theme } = useTheme();
@@ -150,16 +151,19 @@ const BusinessDetails = () => {
     <div className={`min-h-screen py-8 px-4 ${theme === 'dark' ? 'bg-[#0f1020] text-white' : 'bg-gray-50 text-gray-900'}`}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-6">
-          <button
-            onClick={() => navigate('/dashboard/integrations')}
-            className={`flex items-center mb-4 transition ${theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`}
-          >
-            <ArrowLeft className="w-5 h-5 mr-2" />
-            Back to Integrations
-          </button>
-          <h1 className={`text-3xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{businessTitle}</h1>
-          <p className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Complete business information and settings</p>
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <button
+              onClick={() => navigate('/dashboard/integrations')}
+              className={`flex items-center mb-2 transition ${theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`}
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back to Integrations
+            </button>
+            <h1 className={`text-3xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{businessTitle}</h1>
+            <p className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Complete business information and settings</p>
+          </div>
+          <Report buttonText="Download Report" className="mt-2" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
