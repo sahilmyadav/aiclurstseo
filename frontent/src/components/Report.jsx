@@ -379,11 +379,80 @@ const Report = ({ buttonText = "Download Audit Report", className = "" }) => {
 
     y += 35;
 
-    // --- 4. REVIEWS & RESPONSES ---
+    // --- 4. RATING DISTRIBUTION ---
+    if (reviews && reviews.length > 0) {
+      y = drawSectionHeader(doc, "Rating Quality Analysis", y);
+      
+      // Calculate rating distribution
+      const ratingMap = { 'FIVE': 5, 'FOUR': 4, 'THREE': 3, 'TWO': 2, 'ONE': 1 };
+      const ratingDistribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+      
+      reviews.forEach(review => {
+        const rating = ratingMap[review.starRating] || 0;
+        if (rating >= 1 && rating <= 5) {
+          ratingDistribution[rating]++;
+        }
+      });
+      
+      const totalRatings = reviews.length || 1; // Avoid division by zero
+      const maxCount = Math.max(...Object.values(ratingDistribution), 1);
+      
+      // Draw rating bars
+      [5, 4, 3, 2, 1].forEach((rating, index) => {
+        const count = ratingDistribution[rating];
+        const percentage = Math.round((count / totalRatings) * 100) || 0;
+        const barWidth = (count / maxCount) * 100; // Scale to 100% of available width
+        
+        // Position and dimensions
+        const startX = 20;
+        const startY = y + (index * 12);
+        const barHeight = 8;
+        const barMaxWidth = w - 100; // Leave space for labels
+        
+        // Draw star rating
+        doc.setFontSize(10);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(60, 60, 60);
+        doc.text(`${rating}★`, startX, startY + 5);
+        
+        // Draw bar background
+        doc.setFillColor(230, 230, 230);
+        doc.rect(startX + 30, startY, barMaxWidth, barHeight, 'F');
+        
+        // Draw filled bar with gradient effect
+        const fillColor = 
+          rating === 5 ? [76, 175, 80] :  // Green for 5 stars
+          rating === 4 ? [139, 195, 74] : // Light green for 4 stars
+          rating === 3 ? [255, 193, 7] :  // Yellow for 3 stars
+          rating === 2 ? [255, 152, 0] :  // Orange for 2 stars
+          [244, 67, 54];                  // Red for 1 star
+        
+        doc.setFillColor(fillColor[0], fillColor[1], fillColor[2]);
+        doc.rect(startX + 30, startY, (barWidth / 100) * barMaxWidth, barHeight, 'F');
+        
+        // Add highlight at the top of the bar
+        doc.setFillColor(
+          Math.min(255, fillColor[0] + 30),
+          Math.min(255, fillColor[1] + 30),
+          Math.min(255, fillColor[2] + 30)
+        );
+        doc.rect(startX + 30, startY, (barWidth / 100) * barMaxWidth, 2, 'F');
+        
+        // Draw percentage and count
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(100, 100, 100);
+        doc.text(`${percentage}% (${count})`, startX + 40 + barMaxWidth, startY + 5);
+      });
+      
+      y += 70; // Adjust spacing after the chart
+    }
+
+    // --- 5. REVIEWS & RESPONSES ---
     y = drawSectionHeader(doc, "Customer Reviews & Business Responses", y);
 
     const ratingMap = { 'FIVE': 5, 'FOUR': 4, 'THREE': 3, 'TWO': 2, 'ONE': 1 };
-
+    
     reviews.forEach((rev, index) => {
       y = safeY(doc, y, 50); // High margin for review blocks
 

@@ -58,8 +58,18 @@ const GetReviews = () => {
           <div className="h-full">
             <Suspense fallback={<LoadingSpinner />}>
               {activeTab === 'sms' && (
-                <div className="h-full">
-                  <SMSComponent />
+                <div className="h-full flex flex-col items-center justify-center py-12 px-4 text-center">
+                  <div className="bg-gradient-to-br from-purple-600 to-blue-500 p-1 rounded-full mb-6">
+                    <div className="bg-[#1a1433] p-3 rounded-full">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 3v.01M16 3v.01M12 12h.01M12 21c3.5-2.5 6-4.5 6-7.5 0-3.5-3-4-6-4s-6 .5-6 4c0 3 2.5 5 6 7.5z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2">SMS Reviews Coming Soon</h2>
+                  <p className="text-gray-300 max-w-md mx-auto">
+                    We're working on an amazing SMS review collection feature that will help you gather more customer feedback effortlessly.
+                  </p>
                 </div>
               )}
               {activeTab === 'email' && (

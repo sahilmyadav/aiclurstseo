@@ -11,7 +11,7 @@ const ReviewCard = ({ review }) => {
   const rating = ratingMap[review.starRating] || 5;
   
   return (
-    <div className={`p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-800'}`}>
+    <div className={`p-4 rounded-lg shadow ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}>
       <div className="flex items-center mb-2">
         {[...Array(5)].map((_, i) => (
           <Star 
@@ -21,10 +21,10 @@ const ReviewCard = ({ review }) => {
         ))}
         <span className="ml-2 text-sm font-medium">{rating}.0</span>
       </div>
-      <p className={`text-sm mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+      <p className={`text-sm mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
         {review.comment || "No comment provided"}
       </p>
-      <div className={`flex justify-between text-xs ${theme === 'dark' ? 'text-gray-500' : 'text-gray-400'}`}>
+      <div className={`flex justify-between text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
         <span>{review.reviewer.displayName}</span>
         <span>{new Date(review.createTime).toLocaleDateString()}</span>
       </div>
@@ -39,9 +39,9 @@ const ReviewCarousel = ({ reviews }) => {
 
   if (!reviews || reviews.length === 0) {
     return (
-      <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-purple-800'}`}>
+      <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>
         <Star className={`w-10 h-10 mx-auto mb-4 text-yellow-400`} />
-        <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No reviews available yet</p>
+        <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900 font-medium'}`}>No reviews available yet</p>
       </div>
     );
   }
@@ -99,21 +99,21 @@ const AllReviewsWidget = ({ reviews, filters, businessName }) => {
 
   if (!reviews || reviews.length === 0) {
     return (
-      <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-purple-800'}`}>
+      <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>
         <Star className={`w-10 h-10 mx-auto mb-4 text-yellow-400`} />
-        <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No reviews available yet</p>
+        <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900 font-medium'}`}>No reviews available yet</p>
       </div>
     );
   }
 
   if (filteredReviews.length === 0) {
     return (
-      <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-purple-800'}`}>
+      <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>
         <Star className={`w-10 h-10 mx-auto mb-4 text-yellow-400`} />
         <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No reviews match your filters</p>
         <button 
           onClick={() => window.location.reload()}
-          className={`px-6 py-2 rounded-lg transition flex items-center gap-2 mx-auto ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-[#1e1e3a] hover:bg-purple-700'}`}
+          className={`px-6 py-2 rounded-lg transition flex items-center gap-2 mx-auto ${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600' : 'bg-[#1e1e3a] hover:bg-blue-700'}`}
         >
           <RefreshCw className="w-4 h-4" /> Reload
         </button>
@@ -127,7 +127,7 @@ const AllReviewsWidget = ({ reviews, filters, businessName }) => {
         {businessName && (
           <div className="flex items-center gap-2 mb-1">
             <span className={`text-sm font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>Business:</span>
-            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-purple-300' : 'text-purple-600'}`}>{businessName}</span>
+            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`}>{businessName}</span>
           </div>
         )}
         <div className="flex justify-between items-center">
@@ -342,7 +342,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
     }, [reviews.length]);
 
     return (
-      <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-purple-900/30 to-indigo-900/30 p-6">
+      <div className={`relative overflow-hidden rounded-xl p-6 ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-50'} border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
         <style>{`
           @keyframes scroll {
             0% { transform: translateX(0); }
@@ -360,24 +360,25 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
             min-width: 350px;
             width: 350px;
             margin: 0 10px;
-            background: rgba(30, 30, 58, 0.7);
+            background: ${theme === 'dark' ? 'rgba(31, 41, 55, 0.8)' : 'rgba(255, 255, 255, 0.9)'};
             border-radius: 12px;
             padding: 20px;
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 6px ${theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(0, 0, 0, 0.05)'};
             backdrop-filter: blur(10px);
-            border: 1px solid rgba(139, 92, 246, 0.3);
+            border: 1px solid ${theme === 'dark' ? 'rgba(75, 85, 99, 0.5)' : 'rgba(229, 231, 235, 0.8)'};
             transition: all 0.3s ease;
           }
           .improved-carousel-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 12px 24px rgba(139, 92, 246, 0.4);
-            border-color: rgba(139, 92, 246, 0.6);
+            box-shadow: 0 8px 16px ${theme === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)'};
+            border-color: ${theme === 'dark' ? 'rgba(99, 102, 241, 0.6)' : 'rgba(59, 130, 246, 0.6)'};
           }
           .improved-star {
             color: #fbbf24;
           }
           .improved-reviewer {
-            color: #c084fc;
+            color: ${theme === 'dark' ? '#93c5fd' : '#3b82f6'};
+            font-weight: 500;
           }
           @media (max-width: 768px) {
             .improved-carousel-card {
@@ -408,18 +409,18 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                       className={`w-5 h-5 ${i < rating ? 'improved-star fill-current' : 'text-gray-600'}`} 
                     />
                   ))}
-                  <span className="ml-2 text-lg font-bold text-white">
+                  <span className={`ml-2 text-lg font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                     {rating}.0
                   </span>
                 </div>
-                <p className="text-gray-200 mb-4 text-sm leading-relaxed">
+                <p className={`mb-4 text-sm leading-relaxed ${theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
                   {review.comment || "No comment provided"}
                 </p>
                 <div className="flex justify-between items-center text-xs">
                   <span className="improved-reviewer font-medium">
                     {review.reviewer?.displayName || "Anonymous"}
                   </span>
-                  <span className="text-gray-400">
+                  <span className={`${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
                     {review.createTime ? new Date(review.createTime).toLocaleDateString() : ""}
                   </span>
                 </div>
@@ -436,8 +437,8 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
               onClick={() => setCurrentIndex(index)}
               className={`w-2.5 h-2.5 rounded-full transition-all ${
                 index === (currentIndex % reviews.length) 
-                  ? 'bg-purple-500 w-6' 
-                  : 'bg-gray-600'
+                  ? `${theme === 'dark' ? 'bg-blue-400' : 'bg-blue-500'} w-6`
+                  : `${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'}`
               }`}
             />
           ))}
@@ -459,8 +460,8 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                 onClick={() => setActiveTab(tab)}
                 className={`px-4 py-1.5 sm:px-5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap ${
                   activeTab === tab 
-                    ? "bg-purple-700" 
-                    : `${theme === 'dark' ? 'bg-[#1e1e3a] hover:bg-[#2a2a4a] text-white' : 'bg-white hover:bg-gray-100 text-gray-900'} transition-colors`
+                    ? `${theme === 'dark' ? 'bg-blue-700' : 'bg-blue-600 text-white'}`
+                    : `${theme === 'dark' ? 'bg-gray-800 hover:bg-gray-700 text-white' : 'bg-white hover:bg-gray-100 text-gray-900 border border-gray-200'} transition-colors`
                 }`}
               >
                 {tab}
@@ -471,36 +472,36 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
           {activeTab === "Carousel" ? (
             <div>
               {loading ? (
-                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                <div className={`border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} rounded-lg p-10 text-center`}>
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500 mx-auto mb-4"></div>
                   <p>Loading reviews...</p>
                 </div>
               ) : !selectedBusiness ? (
-                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                <div className={`border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} rounded-lg p-10 text-center`}>
                   <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
-                  <p className="mb-4">No business selected</p>
+                  <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No business selected</p>
                 </div>
               ) : reviews && reviews.length > 0 ? (
                 // Show the improved carousel in Carousel tab
                 <ImprovedCarousel />
               ) : (
-                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                <div className={`border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} rounded-lg p-10 text-center`}>
                   <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
-                  <p className="mb-4">No reviews available for {selectedBusiness?.locationName || 'this business'}</p>
+                  <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No reviews available for {selectedBusiness?.locationName || 'this business'}</p>
                 </div>
               )}
             </div>
           ) : activeTab === "Video" ? (
             <div>
               {loading ? (
-                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                <div className={`border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} rounded-lg p-10 text-center`}>
                   <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-purple-500 mx-auto mb-4"></div>
                   <p>Loading reviews...</p>
                 </div>
               ) : !selectedBusiness ? (
-                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                <div className={`border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} rounded-lg p-10 text-center`}>
                   <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
-                  <p className="mb-4">No business selected</p>
+                  <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No business selected</p>
                 </div>
 ) : reviews && reviews.length > 0 ? (
                 <div className={`relative h-[600px] overflow-hidden rounded-xl p-1 ${theme === 'dark' ? 'bg-gradient-to-br from-[#1e1e3a] to-[#2a2a4a]' : 'bg-white'}`}>
@@ -609,9 +610,9 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
                   </div>
                 </div>
               ) : (
-                <div className="border border-purple-800 rounded-lg p-10 text-center">
+                <div className={`border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'} rounded-lg p-10 text-center`}>
                   <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
-                  <p className="mb-4">No reviews available for {selectedBusiness?.locationName || 'this business'}</p>
+                  <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No reviews available for {selectedBusiness?.locationName || 'this business'}</p>
                 </div>
               )}
             </div>
@@ -810,7 +811,7 @@ ${toggles.removePoweredBy ? '' : '.widget-footer { text-align: center; font-size
               )}
             </div>
           ) : (
-            <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-purple-800'}`}>
+            <div className={`border rounded-lg p-10 text-center ${theme === 'dark' ? 'border-gray-600' : 'border-gray-300'}`}>
               <Star className="w-10 h-10 text-yellow-400 mx-auto mb-4" />
               <p className={`mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>No Review Are Currently Available</p>
             </div>
