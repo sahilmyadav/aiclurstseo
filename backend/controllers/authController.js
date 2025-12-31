@@ -282,6 +282,7 @@ export const getCurrentUser = async (req, res) => {
       phone: user.phone,
       role: user.role,
       isActive: user.isActive,
+      autoReply : user.autoReply,
       lastLogin: user.lastLogin,
       loginCount: user.loginCount,
       createdAt: user.createdAt,
@@ -347,5 +348,35 @@ export const login = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Add this function to authController.js
+export const toggleAutoReply = async (req, res) => {
+  try {
+    const userId = req.user.id; // Get user ID from authenticated request
+    
+    // Find the user and toggle the autoReply field
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // Toggle the autoReply value
+    user.autoReply = !user.autoReply;
+    await user.save();
+
+    res.status(200).json({ 
+      success: true, 
+      message: `Auto-reply ${user.autoReply ? 'enabled' : 'disabled'} successfully`,
+      autoReply: user.autoReply
+    });
+  } catch (error) {
+    console.error('Toggle auto-reply error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Error toggling auto-reply',
+      error: error.message 
+    });
   }
 };

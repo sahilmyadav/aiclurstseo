@@ -15,7 +15,7 @@ export default function Hero() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(99,102,241,0.18)_0%,_rgba(247,248,252,0.9)_55%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_rgba(139,92,246,0.16)_0%,_transparent_60%)]" />
 
-      <div className="container-tight relative z-10">
+      <div className="container-tight relative z-10 px-4 sm:px-6">
         <div className="max-w-4xl mx-auto text-center">
           {/* TRUST BADGE */}
           <motion.div

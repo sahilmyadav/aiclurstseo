@@ -28,25 +28,78 @@ const Reviews = () => {
     const [isEditMode, setIsEditMode] = useState(false);
     const [isGeneratingAI, setIsGeneratingAI] = useState(false);
     const [aiSuggestion, setAiSuggestion] = useState('');
-    const [isAutoReplyMode, setIsAutoReplyMode] = useState(false);
-    const [autoReplyDelay, setAutoReplyDelay] = useState(2); // in minutes
-    const [isAutoReplying, setIsAutoReplying] = useState(false);
+    const [autoReplyDelay, setAutoReplyDelay] = useState(2);
     const [isProcessingReply, setIsProcessingReply] = useState(false);
     const [currentReplyIndex, setCurrentReplyIndex] = useState(0);
     const [activeFilter, setActiveFilter] = useState('all');
     const { reviews, selectedBusiness, businesses, loading, selectBusiness, tokenDetails } = useGoogleBusiness();
-    const { user: authUser } = useAuth();
+    const { user: authUser, toggleAutoReply } = useAuth();
+console.log("AUTHUSER",authUser)
+ const BACKEND_URL = (import.meta.env.VITE_API_BASE ).replace(/\/$/, '');
+    // State for auto-reply processing
+    const [isAutoReplying, setIsAutoReplying] = useState(false);
+
+    // Get auto-reply mode directly from authUser
+    const isAutoReplyMode = authUser?.autoReply || false;
+
+    // Sync auto-replying state with authUser.autoReply
+    useEffect(() => {
+        if (authUser?.autoReply !== undefined) {
+            setIsAutoReplying(authUser.autoReply);
+
+            // If auto-reply is enabled, start processing
+            if (authUser.autoReply) {
+                const timer = setTimeout(() => {
+                    processNextReview();
+                }, 100);
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [authUser?.autoReply]);
+
+    // Handle auto-reply toggle
+    const handleAutoReplyToggle = async () => {
+        const newAutoReplyState = !isAutoReplyMode;
+
+        try {
+            // Update the local state immediately for better UX
+            setIsAutoReplying(newAutoReplyState);
+
+            // Call the API to toggle auto-reply
+            const result = await toggleAutoReply();
+
+            if (!result.success) {
+                // Revert UI state if the API call fails
+                setIsAutoReplying(!newAutoReplyState);
+                toast.error(result.error || 'Failed to update auto-reply setting');
+            } else if (result.autoReply) {
+                // If auto-reply was successfully enabled, start processing
+                const timer = setTimeout(() => {
+                    processNextReview();
+                }, 100);
+                return () => clearTimeout(timer);
+            }
+        } catch (error) {
+            // Revert UI state on error
+            setIsAutoReplying(!newAutoReplyState);
+            console.error('Error toggling auto-reply:', error);
+            toast.error('Failed to update auto-reply setting');
+        }
+    };
+
     const AutoReplyControls = ({
         isAutoReplyMode,
-        setIsAutoReplyMode,
+        onToggleAutoReplyMode,
         autoReplyDelay,
         setAutoReplyDelay,
         isAutoReplying,
-        toggleAutoReply,
+        toggleAutoReply: handleAutoReplyAll,
         repliedReviews,
         totalReviews
     }) => (
-        <div className={`mr-8 ml-8 mb-1 mt-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm border ${theme === 'dark' ? 'border-gray-700/50' : 'border-purple-100'
+        <div className={`mr-8 ml-8 mb-1 mt-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm border ${theme === 'dark'
+            ? 'border-gray-700/50'
+            : 'border-purple-100'
             } overflow-hidden transition-all duration-300 hover:shadow-md`}>
             <div className="px-2 py-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
@@ -61,11 +114,12 @@ const Reviews = () => {
                                                 type="checkbox"
                                                 className="sr-only"
                                                 checked={isAutoReplyMode}
-                                                onChange={() => setIsAutoReplyMode(!isAutoReplyMode)}
+                                                onChange={handleAutoReplyToggle}
+                                                disabled={!authUser}
                                             />
                                             <div className={`block w-14 h-8 rounded-full transition-colors duration-300 ${isAutoReplyMode
-                                                    ? 'bg-purple-500'
-                                                    : 'bg-gray-300 dark:bg-gray-600'
+                                                ? 'bg-blue-500'
+                                                : 'bg-gray-300 dark:bg-gray-600'
                                                 }`}></div>
                                             <div className={`absolute left-1 top-1 bg-white dark:bg-gray-700 w-6 h-6 rounded-full shadow-md transform transition-transform duration-300 ${isAutoReplyMode ? 'translate-x-6' : 'translate-x-0'
                                                 }`}></div>
@@ -75,11 +129,11 @@ const Reviews = () => {
                                             <div className={`text-sm font-medium   ${theme === 'dark' ? 'text-white' : 'text-gray-900'}  `}>
                                                 {isAutoReplyMode ? 'Auto Reply Mode' : 'Manual Reply Mode'}
                                             </div>
-                                            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-purple-700/80'
+                                            <p className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-blue-700/80'
                                                 }`}>
                                                 {isAutoReplyMode
-                                                    ? 'Automatically respond to new reviews'
-                                                    : 'Manually respond to each review'}
+                                                ? 'Automatically respond to new reviews'
+                                                : 'Manually respond to each review'}
                                             </p>
                                         </div>
                                     </label>
@@ -88,11 +142,11 @@ const Reviews = () => {
 
                             {/* Delay Selector */}
                             {isAutoReplyMode && (
-                                <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${theme === 'dark' ? 'bg-purple-900/20' : 'bg-purple-50'
+                                <div className={`flex items-center space-x-2 px-3 py-2 rounded-lg ${theme === 'dark' ? 'bg-blue-900/20' : 'bg-blue-50'
                                     }`}>
-                                    <Clock className={`h-4 w-4 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-500'
+                                    <Clock className={`h-4 w-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-500'
                                         }`} />
-                                    <span className={`text-sm ${theme === 'dark' ? 'text-purple-300' : 'text-purple-800'
+                                    <span className={`text-sm ${theme === 'dark' ? 'text-blue-300' : 'text-blue-800'
                                         }`}>
                                         Check every
                                     </span>
@@ -100,9 +154,9 @@ const Reviews = () => {
                                         value={autoReplyDelay}
                                         onChange={(e) => setAutoReplyDelay(Number(e.target.value))}
                                         className={`block w-16 pl-2 pr-6 py-1 text-sm border rounded-md ${theme === 'dark'
-                                                ? 'bg-gray-700 border-purple-800 text-gray-100'
-                                                : 'bg-white border-purple-200 text-gray-900'
-                                            } focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500`}
+                                                ? 'bg-gray-700 border-blue-500 text-gray-100'
+                                                : 'bg-white border-blue-200 text-gray-900'
+                                            } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
                                         disabled={isAutoReplying}
                                     >
                                         <option value={2}>2 min</option>
@@ -119,12 +173,12 @@ const Reviews = () => {
                     {/* Right side - Action Button */}
                     <div className="w-full sm:w-auto">
                         <button
-                            onClick={toggleAutoReply}
+                            onClick={handleAutoReplyAll}
                             disabled={!isAutoReplyMode}
                             className={`w-full sm:w-auto flex items-center justify-center px-5 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${isAutoReplying
                                     ? 'bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20'
                                     : isAutoReplyMode
-                                        ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-lg shadow-purple-500/20'
+                                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20'
                                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 cursor-not-allowed'
                                 } ${!isAutoReplyMode ? 'opacity-70' : ''}`}
                         >
@@ -144,7 +198,7 @@ const Reviews = () => {
                 </div>
 
                 {/* Status Bar */}
-                <div className={`mt-4 pt-4 border-t ${theme === 'dark' ? 'border-gray-700/50' : 'border-purple-100'
+                <div className={`mt-4 pt-4 border-t ${theme === 'dark' ? 'border-gray-700/50' : 'border-blue-100'
                     } transition-all duration-300 ${isAutoReplying ? 'opacity-100' : 'opacity-90'}`}>
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-2">
                         <div className="flex items-center text-sm">
@@ -161,10 +215,10 @@ const Reviews = () => {
                             ) : (
                                 <div className="flex items-center">
                                     <CheckCircle className="w-4 h-4 mr-2 text-green-500" />
-                                    <span className={`${theme === 'dark' ? 'text-gray-300' : 'text-purple-800'
+                                    <span className={`${theme === 'dark' ? 'text-gray-300' : 'text-blue-800'
                                         }`}>
                                         {repliedReviews} of {totalReviews} reviews replied
-                                        <span className={`font-medium ml-1 ${theme === 'dark' ? 'text-white' : 'text-purple-900'
+                                        <span className={`font-medium ml-1 ${theme === 'dark' ? 'text-white' : 'text-blue-900'
                                             }`}>
                                             ({Math.round((repliedReviews / totalReviews) * 100 || 0)}%)
                                         </span>
@@ -175,8 +229,8 @@ const Reviews = () => {
 
                         {!isAutoReplying && isAutoReplyMode && (
                             <div className={`flex items-center text-xs px-3 py-1 rounded-full ${theme === 'dark'
-                                    ? 'text-purple-400 bg-purple-900/30'
-                                    : 'text-purple-700 bg-purple-50'
+                                    ? 'text-blue-400 bg-blue-900/20'
+                                    : 'text-blue-700 bg-blue-50'
                                 }`}>
                                 <Info className="w-3.5 h-3.5 mr-1.5" />
                                 <span>Will reply to all reviews</span>
@@ -188,7 +242,7 @@ const Reviews = () => {
                         <div className={`mt-3 w-full rounded-full h-2 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'
                             }`}>
                             <div
-                                className={`h-2 rounded-full transition-all duration-500 ease-in-out ${theme === 'dark' ? 'bg-purple-500' : 'bg-purple-500'
+                                className={`h-2 rounded-full transition-all duration-500 ease-in-out ${theme === 'dark' ? 'bg-blue-500' : 'bg-blue-500'
                                     }`}
                                 style={{ width: `${(repliedReviews / totalReviews) * 100 || 0}%` }}
                             ></div>
@@ -332,7 +386,7 @@ const Reviews = () => {
 
             // Create axios instance with base URL and default headers
             const api = axios.create({
-                baseURL: 'http://localhost:8000', // Replace with your actual backend URL
+                baseURL: `${BACKEND_URL}`, // Replace with your actual backend URL
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${tokenDetails?.accessToken}`
@@ -448,7 +502,7 @@ const Reviews = () => {
             // All reviews processed
             setIsAutoReplying(false);
             setCurrentReplyIndex(0);
-            toast.success('Auto-reply completed!');
+            // toast.success('Auto-reply completed!');
             await selectBusiness(selectedBusiness);
             return;
         }
@@ -576,9 +630,6 @@ const Reviews = () => {
         }
     }, [displayReviews, isAutoReplying, autoReplyDelay, processNextReview]);
 
-    // Toggle auto-reply mode - now handled by handleAutoReplyAll
-    const toggleAutoReply = handleAutoReplyAll;
-
     const renderReviewRow = (review) => {
         const hasReply = !!review.reply || (review.reviewData?.reviewReply?.comment);
         const reply = review.reply || review.reviewData?.reviewReply?.comment;
@@ -651,9 +702,10 @@ const Reviews = () => {
                             {hasReply && (
                                 <div className={`mt-4 ml-4 pl-4 border-l-2 ${theme === 'dark' ? 'border-blue-900/40' : 'border-blue-200'
                                     }`}>
-                                    <div className={`bg-gradient-to-r p-4 rounded-xl shadow-sm ${theme === 'dark'
-                                        ? 'from-blue-900/30 to-blue-900/10 border-blue-900/30'
-                                        : 'from-blue-50 to-blue-50/70 border-blue-100'
+                                    <div
+                                        className={`bg-gradient-to-r p-4 rounded-xl shadow-sm ${theme === 'dark'
+                                            ? 'from-blue-900/30 to-blue-900/10 border-blue-900/30'
+                                            : 'from-blue-50 to-blue-50/70 border-blue-100'
                                         } border`}>
                                         <div className="flex">
                                             <div className={`flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center ${theme === 'dark' ? 'bg-blue-500/20' : 'bg-blue-100'
@@ -735,11 +787,11 @@ const Reviews = () => {
             {selectedBusiness && (
                 <AutoReplyControls
                     isAutoReplyMode={isAutoReplyMode}
-                    setIsAutoReplyMode={setIsAutoReplyMode}
+                    onToggleAutoReplyMode={handleAutoReplyToggle}
                     autoReplyDelay={autoReplyDelay}
                     setAutoReplyDelay={setAutoReplyDelay}
                     isAutoReplying={isAutoReplying}
-                    toggleAutoReply={toggleAutoReply}
+                    toggleAutoReply={handleAutoReplyAll}
                     repliedReviews={repliedReviews}
                     totalReviews={totalReviews}
                 />
@@ -791,241 +843,241 @@ const Reviews = () => {
             </div>
 
             {/* Stats Cards */}
-      <div className="mx-4 sm:mx-6 lg:mx-8 mb-6 sm:mb-8">
-  <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-5 lg:gap-6 sm:grid-cols-2 lg:grid-cols-4">
-    {/* Total Reviews */}
-    <div className={`rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
-      theme === 'dark' ? 'bg-gray-800 border-gray-700/50' : 'bg-white border-gray-100'
-    } border`}>
-      <div className="p-3 sm:p-4">
-        <div className="flex flex-col">
-          <div className="flex justify-between items-start w-full gap-2">
-            <div className="flex items-center min-w-0">
-              <div className={`p-2 rounded-lg flex-shrink-0 ${
-                theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-50'
-              }`}>
-                <MessageSquareText className={`h-5 w-5 ${
-                  theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-                }`} />
-              </div>
-              <div className="ml-3 min-w-0">
-                <p className={`text-xs sm:text-sm font-medium truncate ${
-                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  Total Reviews
-                </p>
-                <p className={`text-xl font-bold truncate ${
-                  theme === 'dark' ? 'text-white' : 'text-gray-900'
-                }`}>
-                  {totalReviews}
-                </p>
-              </div>
-            </div>
-            <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
-              theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
-            }`}>
-              All Time
-            </span>
-          </div>
-          {totalReviews > 0 && (
-            <div className={`mt-3 pt-3 border-t ${
-              theme === 'dark' ? 'border-gray-700/50' : 'border-gray-100'
-            }`}>
-              <div className="flex items-center text-xs text-green-500 whitespace-nowrap overflow-hidden">
-                <TrendingUp className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
-                <span className="truncate">+{Math.floor(totalReviews * 0.15)}% this month</span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+            <div className="mx-4 sm:mx-6 lg:mx-8 mb-6 sm:mb-8">
+                <div className="grid grid-cols-1 gap-3 sm:gap-4 md:gap-5 lg:gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                    {/* Total Reviews */}
+                    <div className={`rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
+                        theme === 'dark' ? 'bg-gray-800 border-gray-700/50' : 'bg-white border-blue-100'
+                        } border`}>
+                        <div className="p-3 sm:p-4">
+                            <div className="flex flex-col">
+                                <div className="flex justify-between items-start w-full gap-2">
+                                    <div className="flex items-center min-w-0">
+                                        <div className={`p-2 rounded-lg flex-shrink-0 ${
+                                            theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-50'
+                                            }`}>
+                                            <MessageSquareText className={`h-5 w-5 ${
+                                                theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                                                }`} />
+                                        </div>
+                                        <div className="ml-3 min-w-0">
+                                            <p className={`text-xs sm:text-sm font-medium truncate ${
+                                                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>
+                                                Total Reviews
+                                            </p>
+                                            <p className={`text-xl font-bold truncate ${
+                                                theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                                }`}>
+                                                {totalReviews}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
+                                        theme === 'dark' ? 'text-blue-400' : 'text-blue-600'
+                                        }`}>
+                                        All Time
+                                    </span>
+                                </div>
+                                {totalReviews > 0 && (
+                                    <div className={`mt-3 pt-3 border-t ${
+                                        theme === 'dark' ? 'border-gray-700/50' : 'border-blue-100'
+                                        }`}>
+                                        <div className="flex items-center text-xs text-green-500 whitespace-nowrap overflow-hidden">
+                                            <TrendingUp className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                                            <span className="truncate">+{Math.floor(totalReviews * 0.15)}% this month</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
-    {/* Average Rating */}
-    <div className={`rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
-      theme === 'dark' ? 'bg-gray-800 border-gray-700/50' : 'bg-white border-gray-100'
-    } border`}>
-      <div className="p-3 sm:p-4">
-        <div className="flex flex-col">
-          <div className="flex justify-between items-start w-full gap-2">
-            <div className="flex items-center min-w-0">
-              <div className={`p-2 rounded-lg flex-shrink-0 ${
-                theme === 'dark' ? 'bg-amber-900/20' : 'bg-amber-50'
-              }`}>
-                <StarIcon className={`h-5 w-5 ${
-                  theme === 'dark' ? 'text-amber-400' : 'text-amber-500'
-                }`} />
-              </div>
-              <div className="ml-3 min-w-0">
-                <p className={`text-xs sm:text-sm font-medium truncate ${
-                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  Average Rating
-                </p>
-                <div className="flex items-center space-x-1.5">
-                  <p className={`text-xl font-bold ${
-                    theme === 'dark' ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    {averageRating}
-                  </p>
-                  <div className="flex -space-x-0.5">
-                    {renderStars(averageRating)}
-                  </div>
-                </div>
-              </div>
-            </div>
-            <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
-              theme === 'dark' ? 'text-amber-400' : 'text-amber-600'
-            }`}>
-              {/* {averageRating >= 4 ? 'Excellent' : averageRating >= 3 ? 'Good' : 'Needs Work'} */}
-            </span>
-          </div>
-          {totalReviews > 0 && (
-            <div className={`mt-3 pt-3 border-t ${
-              theme === 'dark' ? 'border-gray-700/50' : 'border-gray-100'
-            }`}>
-              <div className="flex items-center justify-between text-xs">
-                <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
-                  Based on {totalReviews} reviews
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+                    {/* Average Rating */}
+                    <div className={`rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
+                        theme === 'dark' ? 'bg-gray-800 border-gray-700/50' : 'bg-white border-blue-100'
+                        } border`}>
+                        <div className="p-3 sm:p-4">
+                            <div className="flex flex-col">
+                                <div className="flex justify-between items-start w-full gap-2">
+                                    <div className="flex items-center min-w-0">
+                                        <div className={`p-2 rounded-lg flex-shrink-0 ${
+                                            theme === 'dark' ? 'bg-amber-900/20' : 'bg-amber-50'
+                                            }`}>
+                                            <StarIcon className={`h-5 w-5 ${
+                                                theme === 'dark' ? 'text-amber-400' : 'text-amber-500'
+                                                }`} />
+                                        </div>
+                                        <div className="ml-3 min-w-0">
+                                            <p className={`text-xs sm:text-sm font-medium truncate ${
+                                                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>
+                                                Average Rating
+                                            </p>
+                                            <div className="flex items-center space-x-1.5">
+                                                <p className={`text-xl font-bold ${
+                                                    theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                                    }`}>
+                                                    {averageRating}
+                                                </p>
+                                                <div className="flex -space-x-0.5">
+                                                    {renderStars(averageRating)}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
+                                        theme === 'dark' ? 'text-amber-400' : 'text-amber-600'
+                                        }`}>
+                                        {/* {averageRating >= 4 ? 'Excellent' : averageRating >= 3 ? 'Good' : 'Needs Work'} */}
+                                    </span>
+                                </div>
+                                {totalReviews > 0 && (
+                                    <div className={`mt-3 pt-3 border-t ${
+                                        theme === 'dark' ? 'border-gray-700/50' : 'border-blue-100'
+                                        }`}>
+                                        <div className="flex items-center justify-between text-xs">
+                                            <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
+                                                Based on {totalReviews} reviews
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
-    {/* Replied Reviews */}
-    <div className={`rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
-      theme === 'dark' ? 'bg-gray-800 border-gray-700/50' : 'bg-white border-gray-100'
-    } border`}>
-      <div className="p-3 sm:p-4">
-        <div className="flex flex-col">
-          <div className="flex justify-between items-start w-full gap-2">
-            <div className="flex items-center min-w-0">
-              <div className={`p-2 rounded-lg flex-shrink-0 ${
-                theme === 'dark' ? 'bg-green-900/20' : 'bg-green-50'
-              }`}>
-                <CheckCircle2 className={`h-5 w-5 ${
-                  theme === 'dark' ? 'text-green-400' : 'text-green-600'
-                }`} />
-              </div>
-              <div className="ml-3 min-w-0">
-                <p className={`text-xs sm:text-sm font-medium truncate ${
-                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  Replied
-                </p>
-                <div className="flex items-baseline">
-                  <p className={`text-xl font-bold ${
-                    theme === 'dark' ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    {repliedReviews}
-                  </p>
-                  <span className={`ml-1.5 text-xs font-medium ${
-                    theme === 'dark' ? 'text-green-400' : 'text-green-600'
-                  }`}>
-                    {totalReviews > 0 ? `(${Math.round((repliedReviews / totalReviews) * 100)}%)` : '(0%)'}
-                  </span>
-                </div>
-              </div>
-            </div>
-            <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
-              theme === 'dark' ? 'text-green-400' : 'text-green-600'
-            }`}>
-              {/* {repliedReviews > 0 ? 'Good Job!' : 'No Replies'} */}
-            </span>
-          </div>
-          <div className={`mt-3 pt-3 border-t ${
-            theme === 'dark' ? 'border-gray-700/50' : 'border-gray-100'
-          }`}>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-              <div
-                className="bg-green-500 h-1.5 rounded-full"
-                style={{ width: `${totalReviews > 0 ? (repliedReviews / totalReviews) * 100 : 0}%` }}
-              ></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+                    {/* Replied Reviews */}
+                    <div className={`rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
+                        theme === 'dark' ? 'bg-gray-800 border-gray-700/50' : 'bg-white border-blue-100'
+                        } border`}>
+                        <div className="p-3 sm:p-4">
+                            <div className="flex flex-col">
+                                <div className="flex justify-between items-start w-full gap-2">
+                                    <div className="flex items-center min-w-0">
+                                        <div className={`p-2 rounded-lg flex-shrink-0 ${
+                                            theme === 'dark' ? 'bg-green-900/20' : 'bg-green-50'
+                                            }`}>
+                                            <CheckCircle2 className={`h-5 w-5 ${
+                                                theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                                                }`} />
+                                        </div>
+                                        <div className="ml-3 min-w-0">
+                                            <p className={`text-xs sm:text-sm font-medium truncate ${
+                                                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>
+                                                Replied
+                                            </p>
+                                            <div className="flex items-baseline">
+                                                <p className={`text-xl font-bold ${
+                                                    theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                                    }`}>
+                                                    {repliedReviews}
+                                                </p>
+                                                <span className={`ml-1.5 text-xs font-medium ${
+                                                    theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                                                    }`}>
+                                                    {totalReviews > 0 ? `(${Math.round((repliedReviews / totalReviews) * 100)}%)` : '(0%)'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
+                                        theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                                        }`}>
+                                        {/* {repliedReviews > 0 ? 'Good Job!' : 'No Replies'} */}
+                                    </span>
+                                </div>
+                                <div className={`mt-3 pt-3 border-t ${
+                                    theme === 'dark' ? 'border-gray-700/50' : 'border-blue-100'
+                                    }`}>
+                                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                                        <div
+                                            className="bg-green-500 h-1.5 rounded-full"
+                                            style={{ width: `${totalReviews > 0 ? (repliedReviews / totalReviews) * 100 : 0}%` }}
+                                        ></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-    {/* Pending Reviews */}
-    <div className={`rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
-      theme === 'dark' ? 'bg-gray-800 border-gray-700/50' : 'bg-white border-gray-100'
-    } border`}>
-      <div className="p-3 sm:p-4">
-        <div className="flex flex-col">
-          <div className="flex justify-between items-start w-full gap-2">
-            <div className="flex items-center min-w-0">
-              <div className={`p-2 rounded-lg flex-shrink-0 ${
-                theme === 'dark' ? 'bg-orange-900/20' : 'bg-orange-50'
-              }`}>
-                <Clock className={`h-5 w-5 ${
-                  theme === 'dark' ? 'text-orange-400' : 'text-orange-500'
-                }`} />
-              </div>
-              <div className="ml-3 min-w-0">
-                <p className={`text-xs sm:text-sm font-medium truncate ${
-                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`}>
-                  Pending Reply
-                </p>
-                <div className="flex items-baseline">
-                  <p className={`text-xl font-bold ${
-                    theme === 'dark' ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    {pendingReviews}
-                  </p>
-                  <span className={`ml-1.5 text-xs font-medium ${
-                    theme === 'dark' ? 'text-orange-400' : 'text-orange-600'
-                  }`}>
-                    {totalReviews > 0 ? `(${Math.round((pendingReviews / totalReviews) * 100)}%)` : '(0%)'}
-                  </span>
+                    {/* Pending Reviews */}
+                    <div className={`rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 ${
+                        theme === 'dark' ? 'bg-gray-800 border-gray-700/50' : 'bg-white border-blue-100'
+                        } border`}>
+                        <div className="p-3 sm:p-4">
+                            <div className="flex flex-col">
+                                <div className="flex justify-between items-start w-full gap-2">
+                                    <div className="flex items-center min-w-0">
+                                        <div className={`p-2 rounded-lg flex-shrink-0 ${
+                                            theme === 'dark' ? 'bg-orange-900/20' : 'bg-orange-50'
+                                            }`}>
+                                            <Clock className={`h-5 w-5 ${
+                                                theme === 'dark' ? 'text-orange-400' : 'text-orange-500'
+                                                }`} />
+                                        </div>
+                                        <div className="ml-3 min-w-0">
+                                            <p className={`text-xs sm:text-sm font-medium truncate ${
+                                                theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                                                }`}>
+                                                Pending Reply
+                                            </p>
+                                            <div className="flex items-baseline">
+                                                <p className={`text-xl font-bold ${
+                                                    theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                                    }`}>
+                                                    {pendingReviews}
+                                                </p>
+                                                <span className={`ml-1.5 text-xs font-medium ${
+                                                    theme === 'dark' ? 'text-orange-400' : 'text-orange-600'
+                                                    }`}>
+                                                    {totalReviews > 0 ? `(${Math.round((pendingReviews / totalReviews) * 100)}%)` : '(0%)'}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
+                                        theme === 'dark' ? 'text-orange-400' : 'text-orange-600'
+                                        }`}>
+                                        {/* {pendingReviews > 0 ? 'Needs Attention' : 'All Caught Up'} */}
+                                    </span>
+                                </div>
+                                <div className={`mt-3 pt-3 border-t ${
+                                    theme === 'dark' ? 'border-gray-700/50' : 'border-blue-100'
+                                    }`}>
+                                    <div className="flex items-center justify-between text-xs">
+                                        <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
+                                            Response Rate
+                                        </span>
+                                        <span className={`font-medium ${
+                                            theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                            }`}>
+                                            {totalReviews > 0 ? Math.round(((totalReviews - pendingReviews) / totalReviews) * 100) : 0}%
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
             </div>
-            <span className={`text-xs sm:text-sm font-medium whitespace-nowrap ${
-              theme === 'dark' ? 'text-orange-400' : 'text-orange-600'
-            }`}>
-              {/* {pendingReviews > 0 ? 'Needs Attention' : 'All Caught Up'} */}
-            </span>
-          </div>
-          <div className={`mt-3 pt-3 border-t ${
-            theme === 'dark' ? 'border-gray-700/50' : 'border-gray-100'
-          }`}>
-            <div className="flex items-center justify-between text-xs">
-              <span className={theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}>
-                Response Rate
-              </span>
-              <span className={`font-medium ${
-                theme === 'dark' ? 'text-white' : 'text-gray-900'
-              }`}>
-                {totalReviews > 0 ? Math.round(((totalReviews - pendingReviews) / totalReviews) * 100) : 0}%
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
             <div className={`bg-gradient-to-br rounded-xl shadow-sm overflow-hidden mx-4 sm:mx-6 lg:mx-8 transition-all duration-300 hover:shadow-md ${theme === 'dark'
                     ? 'from-blue-900/30 to-blue-900/10 border-blue-900/20'
-                    : 'from-purple-50 to-purple-100 border-purple-100'
+                    : 'from-blue-50 to-blue-100 border-blue-100'
                 } border`}>
                 <div className="overflow-x-auto">
                     <table className="min-w-full">
                         <thead className={`bg-gradient-to-r ${theme === 'dark'
                                 ? 'from-blue-900/40 to-blue-900/20'
-                                : 'from-purple-50 to-purple-100/80'
+                                : 'from-blue-50 to-blue-100/80'
                             }`}>
                             <tr>
-                                <th scope="col" className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-blue-200' : 'text-purple-800'
+                                <th scope="col" className={`px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-blue-200' : 'text-blue-800'
                                     }`}>
                                     Review & Response
                                 </th>
-                                <th scope="col" className={`px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-blue-200' : 'text-purple-800'
+                                <th scope="col" className={`px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider ${theme === 'dark' ? 'text-blue-200' : 'text-blue-800'
                                     }`}>
                                     Actions
                                 </th>
@@ -1033,15 +1085,15 @@ const Reviews = () => {
                         </thead>
                         <tbody className={`divide-y ${theme === 'dark'
                                 ? 'from-gray-800/30 to-blue-900/20 divide-blue-900/30'
-                                : 'from-white/50 to-purple-50/70 divide-purple-100/50'
+                                : 'from-white/50 to-blue-50/70 divide-blue-100/50'
                             } bg-gradient-to-br`}>
                             {loading ? (
                                 <tr>
                                     <td colSpan="5" className="px-6 py-8 text-center">
                                         <div className="flex flex-col items-center justify-center">
-                                            <Loader2 className={`w-8 h-8 animate-spin mb-2 ${theme === 'dark' ? 'text-blue-400' : 'text-purple-500'
+                                            <Loader2 className={`w-8 h-8 animate-spin mb-2 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-500'
                                                 }`} />
-                                            <p className={theme === 'dark' ? 'text-gray-400' : 'text-purple-700/70'}>
+                                            <p className={theme === 'dark' ? 'text-gray-400' : 'text-blue-700/70'}>
                                                 Loading reviews...
                                             </p>
                                         </div>
@@ -1057,60 +1109,60 @@ const Reviews = () => {
                 {/* Pagination */}
                 <div className={`px-6 py-4 flex items-center justify-between border-t ${theme === 'dark'
                         ? 'bg-gray-800/50 border-gray-700/30'
-                        : 'bg-white border-purple-100'
+                        : 'bg-white border-blue-100'
                     }`}>
                     <div className="flex-1 flex justify-between sm:hidden">
                         <button className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg transition-colors ${theme === 'dark'
                                 ? 'border-gray-600 text-gray-200 bg-gray-700 hover:bg-gray-600'
-                                : 'border-purple-200 text-purple-700 bg-white hover:bg-purple-50'
+                                : 'border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
                             }`}>
                             Previous
                         </button>
                         <button className={`ml-3 relative inline-flex items-center px-4 py-2 border text-sm font-medium rounded-lg transition-colors ${theme === 'dark'
                                 ? 'border-gray-600 text-gray-200 bg-gray-700 hover:bg-gray-600'
-                                : 'border-purple-200 text-purple-700 bg-white hover:bg-purple-50'
+                                : 'border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
                             }`}>
                             Next
                         </button>
                     </div>
                     <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
                         <div>
-                            <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-purple-700/80'
+                            <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-blue-700/80'
                                 }`}>
-                                Showing <span className="font-medium text-purple-900">{displayReviews.length}</span> of{' '}
-                                <span className="font-medium text-purple-900">{reviews.length}</span> reviews
+                                Showing <span className="font-medium text-blue-900">{displayReviews.length}</span> of{' '}
+                                <span className="font-medium text-blue-900">{reviews.length}</span> reviews
                             </p>
                         </div>
                         <div>
                             <nav className="relative z-0 inline-flex rounded-lg shadow-sm -space-x-px" aria-label="Pagination">
                                 <button className={`relative inline-flex items-center px-3 py-2 rounded-l-lg border text-sm font-medium ${theme === 'dark'
                                         ? 'border-gray-600 text-gray-300 bg-gray-700 hover:bg-gray-600'
-                                        : 'border-purple-200 text-purple-700 bg-white hover:bg-purple-50'
+                                        : 'border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
                                     }`}>
                                     <span className="sr-only">Previous</span>
                                     <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                                 </button>
                                 <button className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${theme === 'dark'
                                         ? 'border-blue-500 bg-blue-900/30 text-blue-300'
-                                        : 'border-purple-500 bg-purple-50 text-purple-600'
+                                        : 'border-blue-500 bg-blue-50 text-blue-600'
                                     }`}>
                                     1
                                 </button>
                                 <button className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${theme === 'dark'
                                         ? 'border-gray-600 text-gray-200 bg-gray-700 hover:bg-gray-600'
-                                        : 'border-purple-200 text-purple-700 bg-white hover:bg-purple-50'
+                                        : 'border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
                                     }`}>
                                     2
                                 </button>
                                 <button className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${theme === 'dark'
                                         ? 'border-gray-600 text-gray-200 bg-gray-700 hover:bg-gray-600'
-                                        : 'border-purple-200 text-purple-700 bg-white hover:bg-purple-50'
+                                        : 'border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
                                     }`}>
                                     3
                                 </button>
                                 <button className={`relative inline-flex items-center px-3 py-2 rounded-r-lg border text-sm font-medium ${theme === 'dark'
                                         ? 'border-gray-600 text-gray-300 bg-gray-700 hover:bg-gray-600'
-                                        : 'border-purple-200 text-purple-700 bg-white hover:bg-purple-50'
+                                        : 'border-blue-200 text-blue-700 bg-white hover:bg-blue-50'
                                     }`}>
                                     <span className="sr-only">Next</span>
                                     <ChevronRight className="h-5 w-5" aria-hidden="true" />
@@ -1124,16 +1176,16 @@ const Reviews = () => {
             {/* Reply Dialog */}
             {replyDialogOpen && (
                 <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden border border-purple-100 dark:border-gray-700">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden border border-blue-100 dark:border-gray-700">
                         {/* Left side - Reply Form */}
-                        <div className="flex-1 p-6 border-r border-purple-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+                        <div className="flex-1 p-6 border-r border-blue-100 dark:border-gray-700 bg-white dark:bg-gray-800">
                             <div className="flex justify-between items-center mb-6">
                                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                     {isEditMode ? 'Edit Reply' : 'Reply to Review'}
                                 </h3>
                                 <button
                                     type="button"
-                                    className="text-gray-400 hover:text-purple-600 dark:hover:text-gray-300"
+                                    className="text-gray-400 hover:text-blue-600 dark:hover:text-gray-300"
                                     onClick={() => setReplyDialogOpen(false)}
                                 >
                                     <X className="h-5 w-5" />
@@ -1150,7 +1202,7 @@ const Reviews = () => {
                                             type="button"
                                             onClick={() => generateAIReview()}
                                             disabled={isGeneratingAI || !currentReview}
-                                            className="inline-flex items-center text-sm px-3 py-1.5 rounded-md bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:hover:bg-purple-800/50 dark:text-purple-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-purple-100 dark:border-purple-900/50"
+                                            className="inline-flex items-center text-sm px-3 py-1.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-800/50 dark:text-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-blue-100 dark:border-blue-900/50"
                                         >
                                             {isGeneratingAI ? (
                                                 <>
@@ -1170,7 +1222,7 @@ const Reviews = () => {
                                         value={replyText}
                                         onChange={(e) => setReplyText(e.target.value)}
                                         rows={8}
-                                        className="w-full px-4 py-3 border border-purple-200 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 resize-none"
+                                        className="w-full px-4 py-3 border border-blue-200 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 resize-none"
                                         placeholder="Type your response or generate one with AI..."
                                     />
                                 </div>
@@ -1179,7 +1231,7 @@ const Reviews = () => {
                                     <button
                                         type="button"
                                         onClick={() => setReplyDialogOpen(false)}
-                                        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-purple-200 dark:border-gray-600 rounded-lg hover:bg-purple-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-colors"
+                                        className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-blue-200 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                                     >
                                         Cancel
                                     </button>
@@ -1187,7 +1239,7 @@ const Reviews = () => {
                                         type="button"
                                         onClick={submitReply}
                                         disabled={replyLoading || !replyText.trim()}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                                     >
                                         {replyLoading ? (
                                             <span className="flex items-center">
@@ -1203,15 +1255,15 @@ const Reviews = () => {
                         </div>
 
                         {/* Right side - AI Suggestions */}
-                        <div className="w-full md:w-80 bg-purple-50/50 dark:bg-gray-800/80 border-t md:border-t-0 md:border-l border-purple-100 dark:border-gray-700 p-6 overflow-y-auto max-h-[80vh]">
+                        <div className="w-full md:w-80 bg-blue-50/50 dark:bg-gray-800/80 border-t md:border-t-0 md:border-l border-blue-100 dark:border-gray-700 p-6 overflow-y-auto max-h-[80vh]">
                             <div className="flex items-center justify-between mb-4">
-                                <h4 className="text-sm font-semibold text-purple-700 dark:text-purple-300 uppercase tracking-wider">
+                                <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">
                                     AI Assistant
                                 </h4>
                                 <div className="flex items-center space-x-2">
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${isGeneratingAI
                                             ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                            : 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400'
+                                            : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
                                         }`}>
                                         {isGeneratingAI ? 'Generating...' : 'Ready'}
                                     </span>

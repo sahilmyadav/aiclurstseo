@@ -165,9 +165,9 @@ const Integrations = () => {
               ? 'bg-gray-800 border-gray-700' 
               : 'bg-white border-gray-200'}`}>
               <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 ${theme === 'dark' 
-                ? 'bg-purple-900/30' 
-                : 'bg-purple-50'}`}>
-                <FaGoogle className={`w-8 h-8 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-500'}`} />
+                ? 'bg-blue-900/30' 
+                : 'bg-blue-50'}`}>
+                <FaGoogle className={`w-8 h-8 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
               </div>
               <h2 className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Connect Your Google Business Account</h2>
               <p className={`mb-8 max-w-md mx-auto ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -192,16 +192,15 @@ const Integrations = () => {
                 : 'bg-white border-gray-200'}`}>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                   <div className="flex items-center space-x-4">
-                    <div className={`p-2 rounded-full ${theme === 'dark' ? 'bg-purple-900/30' : 'bg-purple-100'}`}>
-                      <FaGoogle className={`w-6 h-6 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
-                    </div>
-                    <div>
-                      <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{user?.email || 'Google Account'}</h2>
-                      <p className={`text-sm font-medium flex items-center ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                        <FiCheckCircle className="w-4 h-4 mr-1" />
-                        Connected
-                      </p>
-                    </div>
+                    <div className={`w-3 h-3 rounded-full mr-2 ${theme === 'dark' ? 'bg-blue-400' : 'bg-blue-500'}`}></div>
+                    <FaGoogle className={`w-6 h-6 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                  </div>
+                  <div>
+                    <h2 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{user?.email || 'Google Account'}</h2>
+                    <p className={`text-sm font-medium flex items-center ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
+                      <FiCheckCircle className="w-4 h-4 mr-1" />
+                      Connected
+                    </p>
                   </div>
                 </div>
 
@@ -224,14 +223,14 @@ const Integrations = () => {
                     <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                       <div 
                         className={`border rounded-xl p-5 transition-all ${theme === 'dark' 
-                          ? 'border-purple-500 ring-purple-900/30 bg-purple-900/20' 
-                          : 'border-purple-400 ring-purple-100 bg-purple-50'}`}
+                          ? 'border-blue-500 ring-blue-900/30 bg-blue-900/20' 
+                          : 'border-blue-200 ring-blue-100 bg-blue-50'}`}
                       >
                         <div className="flex justify-between items-start mb-3">
                           <h4 className={`font-medium line-clamp-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{selectedBusiness.title}</h4>
                           <span className={`text-xs px-2.5 py-0.5 rounded-full ${theme === 'dark' 
-                            ? 'bg-purple-900/50 text-purple-200' 
-                            : 'bg-purple-100 text-purple-800'}`}>
+                            ? 'bg-blue-900/50 text-blue-200' 
+                            : 'bg-blue-100 text-blue-800'}`}>
                             {selectedBusiness.primaryCategory?.displayName || 'Business'}
                           </span>
                         </div>
@@ -248,8 +247,8 @@ const Integrations = () => {
                         <div className={`flex items-center justify-between pt-3 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                           <button 
                             className={`text-sm font-medium flex items-center transition-colors ${theme === 'dark' 
-                              ? 'text-purple-400 hover:text-purple-300' 
-                              : 'text-purple-600 hover:text-purple-800'}`}
+                              ? 'text-blue-400 hover:text-blue-300' 
+                              : 'text-blue-600 hover:text-blue-800'}`}
                             onClick={() => handleBusinessSelect(selectedBusiness)}
                           >
                             View Reviews
@@ -261,8 +260,8 @@ const Integrations = () => {
                               target="_blank" 
                               rel="noopener noreferrer"
                               className={`transition-colors ${theme === 'dark' 
-                                ? 'text-gray-400 hover:text-gray-300' 
-                                : 'text-gray-400 hover:text-gray-600'}`}
+                                ? 'text-blue-400' 
+                                : 'text-blue-600'}`}
                               onClick={(e) => e.stopPropagation()}
                             >
                               <FiExternalLink className="w-4 h-4" />
@@ -331,8 +330,8 @@ const Integrations = () => {
                               <div className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold text-lg ${
                                 review.reviewer?.profilePhotoUrl ? 'hidden' : 'flex'
                               } ${theme === 'dark' 
-                                ? 'bg-gradient-to-br from-purple-500 to-purple-700' 
-                                : 'bg-gradient-to-br from-purple-400 to-purple-600'}`}>
+                                ? 'bg-gradient-to-br from-blue-500 to-blue-700' 
+                                : 'bg-gradient-to-br from-blue-400 to-blue-600'}`}>
                                 {(review.reviewer?.displayName || 'U').charAt(0).toUpperCase()}
                               </div>
                             </div>
@@ -360,11 +359,11 @@ const Integrations = () => {
                               </p>
                               
                               {review.reviewReply && (
-                                <div className={`mt-4 pl-4 border-l-4 p-3 rounded-r-lg ${theme === 'dark' 
-                                  ? 'border-purple-700 bg-purple-900/20' 
-                                  : 'border-purple-200 bg-purple-50'}`}>
+                                <div className={`p-3 rounded-lg border-2 ${theme === 'dark' 
+                                  ? 'border-blue-500/30 bg-blue-900/20' 
+                                  : 'border-blue-200 bg-blue-50'}`}>
                                   <div className={`flex items-center text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-                                    <span className={theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}>Your Response</span>
+                                    <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}>Your Response</span>
                                     <span className="mx-2 text-gray-400">•</span>
                                     <span className={`text-xs ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
                                       {review.reviewReply.updateTime && formatDate(review.reviewReply.updateTime)}

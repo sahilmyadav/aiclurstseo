@@ -4,9 +4,11 @@ import axios from 'axios';
 import { toast } from 'sonner';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import { generateAIPost } from '../utils/suggestion';
+import { useTheme } from '../context/ThemeContext';
 
 const SocialSharing = () => {
   const { selectedBusiness, tokenDetails, googleOAuth } = useGoogleBusiness();
+  const { theme } = useTheme();
 
   // Function to get auto keywords from selected business
   const getAutoKeywords = () => {
@@ -297,8 +299,8 @@ const SocialSharing = () => {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-2">Schedule Post</h1>
-        <p className="text-gray-400">Create and schedule your social media posts</p>
+        <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Schedule Post</h1>
+        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Create and schedule your social media posts</p>
       </div>
       
       <div className="bg-[#1a1b2e] rounded-lg p-6">

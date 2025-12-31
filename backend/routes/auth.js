@@ -7,7 +7,8 @@ import {
   getUserById, 
   forgotPassword, 
   resetPassword,
-  validateResetToken 
+  validateResetToken, 
+  toggleAutoReply
 } from '../controllers/authController.js';
 import { firebaseGoogleSignup } from '../controllers/firebaseAuthController.js';
 import auth from '../middleware/auth.js';
@@ -24,6 +25,7 @@ router.post('/firebase/google-signup', firebaseGoogleSignup);
 // GET /api/auth/me - Get current user's profile
 router.get('/me', auth, getCurrentUser);
 
+
 // GET /api/auth/user/:userId - Get user by ID (admin or own user only)
 router.get('/user/:userId', auth, getUserById);
 
@@ -35,5 +37,6 @@ router.post('/reset-password', resetPassword);
 
 // POST /api/auth/validate-reset-token - Validate reset token
 router.post('/validate-reset-token', validateResetToken);
+router.patch('/toggle-auto-reply', auth, toggleAutoReply);
 
 export default router;

@@ -207,17 +207,27 @@ const SideNav = () => {
                   <Link
                     to={item.path}
                     onClick={(e) => handleNavClick(e, item)}
-                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-colors ${
+                    className={`flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
                       item.active
-                        ? 'bg-gradient-to-r from-[#5d3be6] via-[#7b5fff] to-[#9a7dff] text-white'
+                        ? `${theme === 'dark' ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-gray-900'} border-l-4 border-blue-500 shadow-lg shadow-blue-500/20`
                         : theme === 'dark' 
-                          ? 'text-gray-300 hover:bg-[#1a1b2e]' 
-                          : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                          ? 'text-gray-400 hover:bg-white/5 hover:text-white' 
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    } ${isCollapsed && !(mobileOpen && isMobileView()) ? 'justify-center' : ''}`}
                   >
-                    <item.icon className={`w-5 h-5 ${item.isLogout ? 'text-red-500' : ''}`} />
+                    <div className={`p-1.5 rounded-lg transition-colors ${item.active 
+                      ? 'bg-blue-500/20' 
+                      : 'bg-transparent'}`}>
+                      <item.icon className={`w-5 h-5 transition-colors ${item.active 
+                        ? 'text-blue-400'
+                        : item.isLogout 
+                          ? 'text-red-500' 
+                          : theme === 'dark' 
+                            ? 'text-gray-400' 
+                            : 'text-gray-500'}`} />
+                    </div>
                     {!isCollapsed || (mobileOpen && isMobileView()) ? (
-                      <span className={`ml-3 ${item.isLogout ? 'text-red-500' : ''}`}>
+                      <span className={`ml-3 ${item.isLogout ? 'text-red-500' : ''} ${item.active && theme !== 'dark' ? 'text-gray-900' : ''}`}>
                         {item.name}
                       </span>
                     ) : null}
