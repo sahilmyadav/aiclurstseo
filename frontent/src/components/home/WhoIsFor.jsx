@@ -28,7 +28,7 @@ export default function WhoIsFor() {
       {/* <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-purple-300/30 rounded-full blur-3xl" />
       <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-indigo-300/30 rounded-full blur-3xl" /> */}
 
-      <div className="container-tight relative z-10">
+      <div className="container-tight relative z-10 px-4 sm:px-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}

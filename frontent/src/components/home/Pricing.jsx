@@ -47,7 +47,7 @@ export default function Pricing() {
       {/* <div className="absolute -top-40 -left-40 w-[500px] h-[500px] bg-purple-300/30 rounded-full blur-3xl" />
       <div className="absolute -bottom-40 -right-40 w-[500px] h-[500px] bg-indigo-300/30 rounded-full blur-3xl" /> */}
 
-      <div className="container-tight relative z-10">
+      <div className="container-tight relative z-10 px-4 sm:px-6">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -73,7 +73,7 @@ export default function Pricing() {
         </motion.div>
 
         {/* Cards */}
-        <div className="grid md:grid-cols-2 gap-10 max-w-4xl mx-auto">
+        <div className="grid md:grid-cols-2 gap-6 md:gap-10 max-w-4xl mx-auto px-4 sm:px-0">
           {plans.map((plan, index) => (
             <motion.div
               key={index}
@@ -81,10 +81,10 @@ export default function Pricing() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className={`relative rounded-3xl p-8 backdrop-blur-xl transition-all duration-300
+              className={`relative rounded-3xl p-6 sm:p-8 backdrop-blur-xl transition-all duration-300
                 ${
                   plan.popular
-                    ? "bg-white/80 border-2 border-purple-500 shadow-[0_30px_80px_-20px_rgba(124,58,237,0.45)] scale-[1.03]"
+                    ? "bg-white/80 border-2 border-purple-500 shadow-[0_30px_80px_-20px_rgba(124,58,237,0.45)] md:scale-[1.03]"
                     : "bg-white/70 border border-gray-200 shadow-[0_20px_60px_-25px_rgba(0,0,0,0.2)] hover:shadow-[0_30px_80px_-25px_rgba(0,0,0,0.25)]"
                 }`}
             >
