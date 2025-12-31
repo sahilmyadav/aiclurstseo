@@ -155,7 +155,7 @@ const BusinessDetails = () => {
           <div>
             <button
               onClick={() => navigate('/dashboard/integrations')}
-              className={`flex items-center mb-2 transition ${theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`}
+              className={`flex items-center mb-2 transition ${theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-gray-700 hover:text-gray-900'}`}
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
               Back to Integrations
@@ -172,9 +172,9 @@ const BusinessDetails = () => {
             {/* Basic Information */}
             <div className={`rounded-xl p-6 ${theme === 'dark' 
               ? 'bg-[#1a1b2e]/90 border border-white/10' 
-              : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
+              : 'bg-white border border-gray-200 shadow-sm'}`}>
               <div className="flex items-center mb-4">
-                <Building2 className="w-6 h-6 text-purple-400 mr-2" />
+                <Building2 className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-gray-700'}`} />
                 <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Basic Information</h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -204,9 +204,9 @@ const BusinessDetails = () => {
             {/* Contact Information */}
             <div className={`rounded-xl p-6 ${theme === 'dark' 
               ? 'bg-[#1a1b2e]/90 border border-white/10' 
-              : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
+              : 'bg-white border border-gray-200 shadow-sm'}`}>
               <div className="flex items-center mb-4">
-                <Phone className="w-6 h-6 text-purple-400 mr-2" />
+                <Phone className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-gray-700'}`} />
                 <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Contact Information</h2>
               </div>
               <div className="space-y-4">
@@ -216,7 +216,7 @@ const BusinessDetails = () => {
                     <div>
                       <label className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Primary Phone</label>
                       <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                        <a href={`tel:${primaryPhone}`} className={theme === 'dark' ? 'hover:text-purple-400' : 'text-purple-600 hover:text-purple-700'}>
+                        <a href={`tel:${primaryPhone}`} className={theme === 'dark' ? 'hover:text-blue-400' : 'text-blue-600 hover:text-blue-700'}>
                           {primaryPhone}
                         </a>
                       </p>
@@ -232,7 +232,7 @@ const BusinessDetails = () => {
                         return (
                           <div key={idx} className="flex items-center">
                             <Phone className={`w-4 h-4 mr-2 ${theme === 'dark' ? 'text-white/60' : 'text-gray-500'}`} />
-                            <a href={`tel:${phoneNumber}`} className={theme === 'dark' ? 'text-white hover:text-purple-400' : 'text-gray-900 hover:text-purple-600'}>
+                            <a href={`tel:${phoneNumber}`} className={theme === 'dark' ? 'text-white hover:text-blue-400' : 'text-gray-900 hover:text-blue-600'}>
                               {phoneNumber}
                             </a>
                           </div>
@@ -251,7 +251,7 @@ const BusinessDetails = () => {
                           href={websiteUri} 
                           target="_blank" 
                           rel="noopener noreferrer"
-                          className={`flex items-center ${theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`}
+                          className={`flex items-center ${theme === 'dark' ? 'text-blue-400 hover:text-blue-300' : 'text-blue-600 hover:text-blue-700'}`}
                         >
                           {websiteUri}
                           <ExternalLink className="w-4 h-4 ml-1" />
@@ -267,9 +267,9 @@ const BusinessDetails = () => {
             {(selectedBusiness.latlng?.latitude || selectedBusiness.latlng?.longitude) && (
               <div className={`rounded-xl p-6 ${theme === 'dark' 
                 ? 'bg-[#1a1b2e]/90 border border-white/10' 
-                : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
+                : 'bg-white border border-gray-200 shadow-sm'}`}>
                 <div className="flex items-center mb-4">
-                  <MapPin className="w-6 h-6 text-purple-400 mr-2" />
+                  <MapPin className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-gray-700'}`} />
                   <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Location</h2>
                 </div>
                 <div className="space-y-4">
@@ -288,7 +288,7 @@ const BusinessDetails = () => {
                       href={extractValue(selectedBusiness.metadata?.mapsUri, 'url', 'uri')}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className={theme === 'dark' ? 'inline-flex items-center text-purple-400 hover:text-purple-300' : 'inline-flex items-center text-purple-600 hover:text-purple-700'}
+                      className={theme === 'dark' ? 'inline-flex items-center text-blue-400 hover:text-blue-300' : 'inline-flex items-center text-blue-600 hover:text-blue-700'}
                     >
                       <Navigation className="w-4 h-4 mr-2" />
                       View on Google Maps
@@ -316,9 +316,9 @@ const BusinessDetails = () => {
             {selectedBusiness.regularHours?.periods && selectedBusiness.regularHours.periods.length > 0 && (
               <div className={`rounded-xl p-6 ${theme === 'dark' 
                 ? 'bg-[#1a1b2e]/90 border border-white/10' 
-                : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
+                : 'bg-white border border-gray-200 shadow-sm'}`}>
                 <div className="flex items-center mb-4">
-                  <Clock className="w-6 h-6 text-purple-400 mr-2" />
+                  <Clock className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-gray-700'}`} />
                   <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Business Hours</h2>
                 </div>
                 <div className="space-y-2">
@@ -346,9 +346,9 @@ const BusinessDetails = () => {
             {selectedBusiness.categories && (
               <div className={`rounded-xl p-6 ${theme === 'dark' 
                 ? 'bg-[#1a1b2e]/90 border border-white/10' 
-                : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
+                : 'bg-white border border-gray-200 shadow-sm'}`}>
                 <div className="flex items-center mb-4">
-                  <Tag className="w-6 h-6 text-purple-400 mr-2" />
+                  <Tag className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-gray-700'}`} />
                   <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Categories</h2>
                 </div>
                 <div className="space-y-4">
@@ -356,13 +356,13 @@ const BusinessDetails = () => {
                     <div>
                       <label className={`text-sm font-medium mb-2 block ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Primary Category</label>
                       <div className={`rounded-lg p-3 ${theme === 'dark' 
-                        ? 'bg-purple-500/10 border border-purple-500/20' 
-                        : 'bg-purple-100 border border-purple-200'}`}>
+                        ? 'bg-blue-500/10 border border-blue-500/20' 
+                        : 'bg-blue-100 border border-blue-200'}`}>
                         <p className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                           {extractValue(selectedBusiness.categories.primaryCategory, 'displayName', 'name')}
                         </p>
                         {selectedBusiness.categories.primaryCategory.name && (
-                          <p className={`text-sm mt-1 font-mono ${theme === 'dark' ? 'text-purple-300' : 'text-purple-700'}`}>
+                          <p className={`text-sm mt-1 font-mono ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
                             {extractValue(selectedBusiness.categories.primaryCategory.name)}
                           </p>
                         )}
@@ -373,8 +373,8 @@ const BusinessDetails = () => {
                           <div className="flex flex-wrap gap-2">
                             {selectedBusiness.categories.primaryCategory.serviceTypes.map((type, idx) => (
                               <span key={idx} className={`rounded-full text-sm ${theme === 'dark' 
-                                ? 'px-3 py-1 bg-white/10 text-white' 
-                                : 'px-3 py-1 bg-purple-100 text-purple-900'}`}>
+                                ? 'px-3 py-1 bg-blue-500/20 text-white' 
+                                : 'px-3 py-1 bg-blue-100 text-blue-900'}`}>
                                 {extractValue(type, 'displayName', 'serviceTypeId', 'name')}
                               </span>
                             ))}
@@ -389,8 +389,8 @@ const BusinessDetails = () => {
                       <div className="flex flex-wrap gap-2">
                         {selectedBusiness.categories.additionalCategories.map((cat, idx) => (
                           <span key={idx} className={`rounded-full text-sm ${theme === 'dark' 
-                            ? 'px-3 py-1 bg-white/10 text-white' 
-                            : 'px-3 py-1 bg-purple-100 text-purple-900'}`}>
+                            ? 'px-3 py-1 bg-blue-500/20 text-white' 
+                            : 'px-3 py-1 bg-blue-100 text-blue-900'}`}>
                             {extractValue(cat, 'displayName', 'name')}
                           </span>
                         ))}
@@ -407,7 +407,7 @@ const BusinessDetails = () => {
             {/* Quick Actions */}
             <div className={`rounded-xl p-6 mb-6 ${theme === 'dark' 
               ? 'bg-[#1a1b2e]/90 border border-white/10' 
-              : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
+              : 'bg-white border border-gray-200 shadow-sm'}`}>
               <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Quick Actions</h2>
               <div className="space-y-3">
                 {selectedBusiness.metadata?.newReviewUri && (
@@ -416,11 +416,11 @@ const BusinessDetails = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`w-full flex items-center justify-between p-3 rounded-lg transition ${theme === 'dark' 
-                      ? 'bg-purple-500/10 hover:bg-purple-500/20' 
-                      : 'bg-purple-100 hover:bg-purple-200'}`}
+                      ? 'bg-blue-500/10 hover:bg-blue-500/20' 
+                      : 'bg-blue-100 hover:bg-blue-200'}`}
                   >
-                    <span className={theme === 'dark' ? 'text-purple-300 font-medium' : 'text-purple-700 font-medium'}>Get Reviews</span>
-                    <ExternalLink className={`w-4 h-4 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
+                    <span className={theme === 'dark' ? 'text-blue-300 font-medium' : 'text-blue-700 font-medium'}>Get Reviews</span>
+                    <ExternalLink className={`w-4 h-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
                   </a>
                 )}
                 {selectedBusiness.metadata?.mapsUri && (
@@ -456,9 +456,9 @@ const BusinessDetails = () => {
             {selectedBusiness.metadata && (
               <div className={`rounded-xl p-6 ${theme === 'dark' 
                 ? 'bg-[#1a1b2e]/90 border border-white/10' 
-                : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
+                : 'bg-white border border-gray-200 shadow-sm'}`}>
                 <div className="flex items-center mb-4">
-                  <Info className="w-6 h-6 text-purple-400 mr-2" />
+                  <Info className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-gray-700'}`} />
                   <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Status & Permissions</h2>
                 </div>
                 <div className="space-y-3">
@@ -509,7 +509,7 @@ const BusinessDetails = () => {
             {/* Additional Information */}
             <div className={`rounded-xl p-6 ${theme === 'dark' 
               ? 'bg-[#1a1b2e]/90 border border-white/10' 
-              : 'bg-purple-50/90 border border-purple-100 shadow-sm'}`}>
+              : 'bg-white border border-gray-200 shadow-sm'}`}>
               <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Additional Info</h2>
               <div className="space-y-3 text-sm">
                 {selectedBusiness.storefrontAddress && (
@@ -536,8 +536,8 @@ const BusinessDetails = () => {
                     <div className="flex flex-wrap gap-2 mt-1">
                       {selectedBusiness.labels.map((label, idx) => (
                         <span key={idx} className={`rounded text-xs ${theme === 'dark' 
-                          ? 'px-2 py-1 bg-purple-500/20 text-purple-300' 
-                          : 'px-2 py-1 bg-purple-100 text-purple-700'}`}>
+                          ? 'px-2 py-1 bg-blue-500/20 text-blue-300' 
+                          : 'px-2 py-1 bg-blue-100 text-blue-700'}`}>
                           {extractValue(label, 'displayName', 'name')}
                         </span>
                       ))}
