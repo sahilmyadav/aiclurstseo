@@ -5,6 +5,34 @@ import { useTheme } from '../context/ThemeContext';
 
 const Dashboard = () => {
   const { theme } = useTheme();
+  
+  // Apply font family and styles to the entire dashboard
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+      body {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #6e8efb 0%, #a777e3 100%);
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const [monthlyChartData, setMonthlyChartData] = useState([]);
 
   // Get real data from GoogleBusinessContext
@@ -43,7 +71,6 @@ const Dashboard = () => {
     }
   }, [reviews]);
 
-
   // Handle business selection
   const handleBusinessSelect = (businessOrBusinesses) => {
     if (Array.isArray(businessOrBusinesses)) {
@@ -78,11 +105,11 @@ const Dashboard = () => {
   const performanceScore = calculatePerformanceScore();
 
   return (
-    <div className={`min-h-screen w-full font-sans ${
+    <div className={`min-h-screen w-full transition-colors duration-300 ${
       theme === 'dark' 
-        ? 'bg-gray-900 text-white' 
-        : 'bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] text-black bg-gray-50'
-    }`} style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif" }}>
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white' 
+        : 'bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'
+    }`}>
       <div className={`flex-1 p-3 sm:p-6 transition-all duration-300 ease-in-out w-full`}>
         <div className="h-screen overflow-hidden">
           <div className="pb-0">
@@ -126,20 +153,20 @@ const Dashboard = () => {
                   { title: "RECENT REVIEWS (30d)", value: reviewStats?.recentReviews?.length?.toString() ?? '0' },
                   { title: "GOOGLE BUSINESS", value: isConnected ? 'Connected' : 'Not Connected' },
                 ].map((stat, i) => (
-                  <div key={i} className={`rounded-lg border p-2 sm:p-3 h-16 sm:h-20 flex flex-col justify-between min-w-0 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-md ${
+                  <div key={i} className={`rounded-xl p-4 flex flex-col justify-between min-w-0 transition-all duration-300 transform hover:scale-[1.02] ${
                     theme === 'dark' 
-                      ? 'bg-gray-800/90 border-gray-700 hover:bg-gray-800' 
-                      : 'bg-white border-gray-200 shadow-sm hover:shadow-lg hover:border-purple-100'
+                      ? 'glass-card hover:bg-gray-800/70' 
+                      : 'bg-white shadow-lg hover:shadow-xl border border-gray-100 hover:border-gray-200'
                   }`}>
                     <div className="flex items-start justify-between">
-                      <div className={`text-xs sm:text-sm uppercase tracking-wider font-semibold ${
-                        theme === 'dark' ? 'text-white/70' : 'text-gray-600'
+                      <div className={`text-xs font-medium tracking-wide ${
+                        theme === 'dark' ? 'text-blue-400' : 'text-gray-600'
                       }`}>
                         {stat.title}
                       </div>
                     </div>
                     <div className="flex items-end justify-between">
-                      <div className={`text-xl sm:text-2xl font-bold ${
+                      <div className={`text-2xl font-bold ${
                         theme === 'dark' ? 'text-white' : 'text-gray-900'
                       }`}>
                         {loading ? '...' : stat.value}

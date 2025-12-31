@@ -139,13 +139,7 @@ const Navbar = () => {
         } transition-transform duration-300 ease-in-out z-50 overflow-y-auto`}
       >
         <div className="pt-5 pb-6 px-5">
-          <div className="flex items-center justify-between mb-8">
-            <img 
-              src={darkLogo} 
-              alt="Clurst Logo" 
-              className="h-12 w-auto"
-              style={{ maxWidth: '180px' }}
-            />
+          <div className="flex items-center justify-end mb-8">
             <button 
               onClick={toggleMenu} 
               className="text-gray-700 hover:text-indigo-600 focus:outline-none"
@@ -160,13 +154,17 @@ const Navbar = () => {
           <nav className="space-y-2">
             {[
               { name: 'Home', path: '/' },
-              ...(isAuthenticated ? [{ name: 'Dashboard', path: user?.role === 'admin' ? '/ad-dashboard' : '/dashboard' }] : []),
-              { name: 'Reviews', path: '/reviews' },
-              { name: 'SEO', path: '/seo-dashboard' },
-              { name: 'Analytics', path: '/analytics-dashboard' },
-              ...(isAuthenticated ? [{ name: 'Settings', path: '/dashboard/settings' }] : []),
-            ].map((item) => (
+              { name: 'About', path: '/about' },
+              ...(isAuthenticated ? [
+                { name: 'Dashboard', path: user?.role === 'admin' ? '/ad-dashboard' : '/dashboard' },
+                { name: 'Reviews', path: '/reviews' },
+                { name: 'SEO', path: '/seo-dashboard' },
+                { name: 'Analytics', path: '/analytics-dashboard' },
+                { name: 'Settings', path: '/dashboard/settings' }
+              ] : [])
+            ].map((item, index) => (
               <Link
+                key={index}
                 to={item.path}
                 className="block px-4 py-3 text-base font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg transition-colors duration-200"
                 onClick={closeMobileMenu}
