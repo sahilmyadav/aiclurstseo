@@ -5,6 +5,34 @@ import { useTheme } from '../context/ThemeContext';
 
 const Dashboard = () => {
   const { theme } = useTheme();
+  
+  // Apply font family and styles to the entire dashboard
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+      body {
+        font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      .glass-card {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .gradient-bg {
+        background: linear-gradient(135deg, #6e8efb 0%, #a777e3 100%);
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
   const [monthlyChartData, setMonthlyChartData] = useState([]);
 
   // Get real data from GoogleBusinessContext
@@ -43,7 +71,6 @@ const Dashboard = () => {
     }
   }, [reviews]);
 
-
   // Handle business selection
   const handleBusinessSelect = (businessOrBusinesses) => {
     if (Array.isArray(businessOrBusinesses)) {
@@ -78,9 +105,10 @@ const Dashboard = () => {
   const performanceScore = calculatePerformanceScore();
 
   return (
-    <div className={`min-h-screen w-full bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] "
- flex ${
-      theme === 'dark' ? 'text-white bg-[#0f1020]' : 'text-gray-900 bg-gray-50'
+    <div className={`min-h-screen w-full transition-colors duration-300 ${
+      theme === 'dark' 
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white' 
+        : 'bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'
     }`}>
       <div className={`flex-1 p-3 sm:p-6 transition-all duration-300 ease-in-out w-full`}>
         <div className="h-screen overflow-hidden">
@@ -92,15 +120,15 @@ const Dashboard = () => {
                 }`}>DASHBOARD</h1> */}
                 {selectedBusiness && (
                   <p className={`text-sm ${
-                    theme === 'dark' ? 'text-white/60' : 'text-purple-800/90'
-                  }`}>
+                    theme === 'dark' ? 'text-white/80' : 'text-gray-800'
+                  } font-medium`}>
                     Showing data for: {selectedBusiness.title || selectedBusiness.locationName}
                   </p>
                 )}
                 {selectedBusinesses && selectedBusinesses.length > 1 && (
                   <p className={`text-sm ${
-                    theme === 'dark' ? 'text-white/60' : 'text-purple-800/90'
-                  }`}>
+                    theme === 'dark' ? 'text-white/80' : 'text-gray-800'
+                  } font-medium`}>
                     {selectedBusinesses.length} business profiles selected
                   </p>
                 )}
@@ -125,21 +153,21 @@ const Dashboard = () => {
                   { title: "RECENT REVIEWS (30d)", value: reviewStats?.recentReviews?.length?.toString() ?? '0' },
                   { title: "GOOGLE BUSINESS", value: isConnected ? 'Connected' : 'Not Connected' },
                 ].map((stat, i) => (
-                  <div key={i} className={`rounded-lg border p-2 sm:p-3 h-16 sm:h-20 flex flex-col justify-between min-w-0 transition-colors duration-300 ${
+                  <div key={i} className={`rounded-xl p-4 flex flex-col justify-between min-w-0 transition-all duration-300 transform hover:scale-[1.02] ${
                     theme === 'dark' 
-                      ? 'bg-[#1a1b2e]/90 border-white/10' 
-                      : 'bg-purple-50/90 border-purple-100 shadow-sm'
+                      ? 'glass-card hover:bg-gray-800/70' 
+                      : 'bg-white shadow-lg hover:shadow-xl border border-gray-100 hover:border-gray-200'
                   }`}>
                     <div className="flex items-start justify-between">
-                      <div className={`text-xs sm:text-md uppercase tracking-wider font-medium ${
-                        theme === 'dark' ? 'text-white/60' : 'text-purple-800'
+                      <div className={`text-xs font-medium tracking-wide ${
+                        theme === 'dark' ? 'text-blue-400' : 'text-gray-600'
                       }`}>
                         {stat.title}
                       </div>
                     </div>
                     <div className="flex items-end justify-between">
-                      <div className={`text-lg sm:text-2xl font-bold ${
-                        theme === 'dark' ? 'text-white' : 'text-purple-900'
+                      <div className={`text-2xl font-bold ${
+                        theme === 'dark' ? 'text-white' : 'text-gray-900'
                       }`}>
                         {loading ? '...' : stat.value}
                       </div>
@@ -148,13 +176,13 @@ const Dashboard = () => {
                 ))}
               </div>
               <div className="space-y-4 sm:space-y-6">
-                <div className={`rounded-2xl p-3 sm:p-6 ${
+                <div className={`rounded-2xl p-3 sm:p-6 transition-all duration-300 transform hover:scale-[1.01] ${
                   theme === 'dark' 
-                    ? 'bg-[#121324]/90 border-white/5' 
-                    : 'bg-purple-50/90 border border-purple-100 shadow-sm'
+                    ? 'bg-gray-800/90 border-gray-700 hover:bg-gray-800' 
+                    : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-purple-50'
                 }`}>
-                  <div className={`text-sm font-semibold mb-4 ${
-                    theme === 'dark' ? 'text-white' : 'text-purple-900'
+                  <div className={`text-base font-semibold mb-4 ${
+                    theme === 'dark' ? 'text-white' : 'text-gray-900'
                   }`}>
                     Monthly Reviews
                   </div>
@@ -170,8 +198,8 @@ const Dashboard = () => {
                           <div className="w-full flex flex-col items-center justify-end" style={{ height: '180px' }}>
                             {d.reviews > 0 && (
                               <div className="w-full flex flex-col items-center">
-                                <div className={`text-xs font-bold ${
-                                  theme === 'dark' ? 'text-purple-300' : 'text-purple-700'
+                                <div className={`text-xs font-semibold ${
+                                  theme === 'dark' ? 'text-white/90' : 'text-gray-700'
                                 } mb-1`}>
                                   {d.reviews}
                                 </div>
@@ -192,8 +220,8 @@ const Dashboard = () => {
                               } rounded self-end`} />
                             )}
                           </div>
-                          <div className={`text-[10px] mt-2 font-medium ${
-                            theme === 'dark' ? 'text-white/60' : 'text-purple-700'
+                          <div className={`text-[11px] mt-2 font-medium ${
+                            theme === 'dark' ? 'text-white/70' : 'text-gray-600'
                           }`}>
                             {d.month}
                           </div>
@@ -202,10 +230,10 @@ const Dashboard = () => {
                     })}
                   </div>
                 </div>
-                <div className={`rounded-2xl p-3 sm:p-6 ${
+                <div className={`rounded-2xl p-3 sm:p-6 transition-all duration-300 transform hover:scale-[1.01] ${
                   theme === 'dark' 
-                    ? 'bg-[#121324]/90 border-white/5' 
-                    : 'bg-purple-50/90 border border-purple-100 shadow-sm'
+                    ? 'bg-gray-800/90 border-gray-700 hover:bg-gray-800' 
+                    : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-purple-50'
                 }`}>
                   <div className={`text-sm font-semibold mb-4 ${
                     theme === 'dark' ? 'text-white' : 'text-purple-900'
@@ -256,10 +284,10 @@ const Dashboard = () => {
             </main>
             <aside className="w-full lg:w-[35vw] shrink-0 sticky hidden lg:block">
               {isConnected && (
-                <div className={`rounded-lg bg-gradient-to-br border p-4 mb-3 ${
+                <div className={`rounded-lg bg-gradient-to-br border p-4 mb-3 transition-all duration-300 transform hover:scale-[1.01] ${
                   theme === 'dark'
-                    ? 'from-purple-600/20 to-indigo-600/20 border-purple-500/30'
-                    : 'from-purple-100 to-indigo-100 border-purple-200/50'
+                    ? 'from-gray-800 to-gray-900 border-gray-700 hover:from-gray-800 hover:to-gray-900 hover:shadow-lg'
+                    : 'from-purple-50 to-indigo-50 border-purple-100 hover:shadow-md hover:border-purple-200 hover:from-purple-50 hover:to-indigo-50'
                 }`}>
                   <div className="flex items-center justify-between">
                     <div>
@@ -324,10 +352,10 @@ const Dashboard = () => {
                 }`}>
                   Recent Reviews
                 </div>
-                <div className={`rounded-lg border overflow-hidden ${
+                <div className={`rounded-lg border overflow-hidden transition-all duration-300 transform hover:scale-[1.005] ${
                   theme === 'dark' 
-                    ? 'bg-[#171624]/50 border-white/5' 
-                    : 'bg-white border-gray-200 shadow-sm'
+                    ? 'bg-gray-800/50 border-gray-700 hover:bg-gray-800/70' 
+                    : 'bg-white border-gray-200 shadow-sm hover:shadow-md hover:border-purple-50'
                 }`}>
                   <div className="h-[calc(100vh-350px)] overflow-y-auto" style={{
                     scrollbarWidth: 'thin',
@@ -349,11 +377,11 @@ const Dashboard = () => {
                       <div key={index} className={`p-3 sm:p-4 flex gap-3 border-b ${
                         theme === 'dark' ? 'border-white/5' : 'border-gray-100'
                       } last:border-b-0 hover:${
-                        theme === 'dark' ? 'bg-[#1e1e2d]' : 'bg-gray-50'
-                      } transition-colors`}>
+                        theme === 'dark' ? 'bg-[#1e1e2d]' : 'bg-purple-50/30'
+                      } transition-all duration-200 transform hover:translate-x-1`}>
                         <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-base ${
                           theme === 'dark' 
-                            ? 'bg-purple-600/90 text-white' 
+                            ? 'bg-gray-700 text-white' 
                             : 'bg-purple-100 text-purple-800'
                         }`}>
                           {(review.reviewer?.displayName || 'U').charAt(0).toUpperCase()}
@@ -361,12 +389,12 @@ const Dashboard = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <div className={`font-semibold text-sm sm:text-base truncate ${
-                              theme === 'dark' ? 'text-white' : 'text-purple-900'
+                              theme === 'dark' ? 'text-white' : 'text-black'
                             }`}>
                               {review.reviewer?.displayName || 'Anonymous'}
                             </div>
                             <div className={`text-xs flex-shrink-0 ${
-                              theme === 'dark' ? 'text-white/60' : 'text-purple-700/80'
+                              theme === 'dark' ? 'text-white/60' : 'text-gray-600'
                             }`}>
                               {formatDate(review.createTime)}
                             </div>
@@ -377,7 +405,7 @@ const Dashboard = () => {
                             ))}
                           </div>
                           <p className={`text-sm break-words mt-1 ${
-                            theme === 'dark' ? 'text-white/80' : 'text-purple-900/90'
+                            theme === 'dark' ? 'text-white' : 'text-black'
                           }`}>
                             {review.comment || 'No review text provided.'}
                           </p>

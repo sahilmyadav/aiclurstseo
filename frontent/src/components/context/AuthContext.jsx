@@ -40,7 +40,7 @@ export const AuthContextProvider = ({ children }) => {
   const api = axios.create({
     baseURL: API_BASE,
     headers: { 'Content-Type': 'application/json' },
-    withCredentials: false,
+    withCredentials: true,
   })
 
   // attach token if available
@@ -445,16 +445,42 @@ export const AuthContextProvider = ({ children }) => {
     }
   }
 
+  // Toggle auto-reply status
+  const toggleAutoReply = async () => {
+    try {
+      const response = await api.patch('/api/auth/toggle-auto-reply');
+      if (response.data.success) {
+        setUser(prev => ({
+          ...prev,
+          autoReply: response.data.autoReply
+        }));
+        return { success: true, autoReply: response.data.autoReply };
+      }
+      return { success: false };
+    } catch (error) {
+      console.error('Error toggling auto-reply:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  // Update user's auto-reply status
+  const updateAutoReplyStatus = (status) => {
+    setUser(prev => ({
+      ...prev,
+      autoReply: status
+    }));
+  };
+
   return (
-    <userContext.Provider value={{ 
-      user, 
-      token, 
-      isAuthenticated, 
+    <userContext.Provider value={{
+      user,
+      token,
+      isAuthenticated,
       isLoading: isLoading || !isInitialized, // Consider loading true until initialized
-      signup, 
-      login, 
-      logout, 
-      signupWithGoogle, 
+      signup,
+      login,
+      logout,
+      signupWithGoogle,
       fetchCurrentUser,
       setUser,
       isInitialized,
@@ -476,7 +502,10 @@ export const AuthContextProvider = ({ children }) => {
       // Plans (pricing)
       plans,
       plansLoading,
-      plansError
+      plansError,
+      toggleAutoReply,
+      updateAutoReplyStatus,
+      api
     }}>
       {children}
     </userContext.Provider>

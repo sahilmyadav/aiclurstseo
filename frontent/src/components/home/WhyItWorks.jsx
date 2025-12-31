@@ -27,7 +27,7 @@ const rankingFactors = [
 export default function WhyItWorks() {
   return (
     <section className="relative py-28 bg-[#f7f8fc] overflow-hidden">
-      <div className="container-tight px-4 md:px-8 relative z-10">
+      <div className="container-tight px-4 sm:px-6 relative z-10">
         <div className="grid lg:grid-cols-2 gap-16 items-center max-w-7xl mx-auto">
           {/* Left Content */}
           <motion.div

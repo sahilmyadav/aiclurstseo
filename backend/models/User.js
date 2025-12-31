@@ -7,9 +7,11 @@ const UserSchema = new mongoose.Schema(
     password: { type: String, minlength: 6 }, // Optional for Firebase users
     phone: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
+    autoReply: { type: Boolean, default: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+
     
     // Subscription information
     subscription: {

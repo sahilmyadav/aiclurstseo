@@ -261,10 +261,10 @@ const SubscriptionPage = () => {
   };
 
   return (
-    <div className={`min-h-screen py-8 px-4 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-black' : 'bg-gray-50'}`}>
-      <div className="max-w-6xl mx-auto">
+    <div className={`min-h-screen py-8 ${theme === 'dark' ? 'bg-gradient-to-br from-gray-900 via-gray-800 to-black' : 'bg-gray-50'}`}>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="text-center mb-6">
+        <div className="text-center mb-6 px-2 sm:px-0">
           <h1 className={`text-2xl md:text-3xl font-bold mb-2 ${theme === 'dark' ? 'bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent' : 'text-purple-600'}`}>
             Choose Your Plan
           </h1>
@@ -274,6 +274,7 @@ const SubscriptionPage = () => {
         </div>
 
         {/* Trial Status */}
+        <div className="px-2 sm:px-0">
         {(() => {
           // Case 1: User has an active trial
           if (subscriptionData?.status === 'active' && trialData && remainingDays > 0) {
@@ -376,38 +377,53 @@ const SubscriptionPage = () => {
           // Default case: No active subscription or trial
           return null;
         })()}
+        </div>
 
         {/* Profile Selector */}
-        <div className={`rounded-2xl shadow-lg p-6 mb-8 ${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-4 ${theme === 'dark' ? 'bg-gradient-to-r from-blue-500 to-purple-500' : 'bg-gradient-to-r from-purple-500 to-indigo-500'}`}>
-                <FiUsers className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Number of GMB Profiles</h3>
-                <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>Select how many Google Business profiles you want to manage</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setProfiles(Math.max(1, profiles - 1))}
-                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md ${theme === 'dark' ? 'bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}
-              >
-                <FiMinus className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
-              </button>
-              <div className={`w-16 h-10 rounded-xl flex items-center justify-center ${theme === 'dark' ? 'bg-gradient-to-r from-blue-900/50 to-purple-900/50' : 'bg-purple-100'}`}>
-                <span className={`text-xl font-bold ${theme === 'dark' ? 'bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent' : 'text-purple-600'}`}>{profiles}</span>
-              </div>
-              <button
-                onClick={() => setProfiles(profiles + 1)}
-                className={`w-10 h-10 rounded-xl text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl ${theme === 'dark' ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' : 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'}`}
-              >
-                <FiPlus className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+       <div className={`rounded-2xl shadow-lg p-6 mb-8 mx-2 sm:mx-0 ${theme === 'dark' ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
+  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex items-center mb-3 sm:mb-0">
+      {/* Hidden on mobile, visible on sm and up */}
+      <div className="hidden sm:block w-12 h-12 rounded-xl mr-4 flex-shrink-0">
+        <div className={`w-full h-full rounded-xl flex items-center justify-center ${theme === 'dark' ? 'bg-gradient-to-r from-blue-500 to-purple-500' : 'bg-gradient-to-r from-purple-500 to-indigo-500'}`}>
+          <FiUsers className="w-6 h-6 text-white" />
         </div>
+      </div>
+      <div>
+        <h3 className={`font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Number of GMB Profiles</h3>
+        <p className={`text-sm mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+          Select how many Google Business profiles you want to manage
+        </p>
+        {/* Profile count - shown below text on mobile, hidden on larger screens */}
+        <div className="sm:hidden w-16 h-10 rounded-xl flex items-center justify-center mt-2 ${theme === 'dark' ? 'bg-gradient-to-r from-blue-900/50 to-purple-900/50' : 'bg-purple-100'}">
+          <span className={`text-xl font-bold ${theme === 'dark' ? 'bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent' : 'text-purple-600'}`}>
+            {profiles}
+          </span>
+        </div>
+      </div>
+    </div>
+    <div className="flex items-center space-x-3 justify-end sm:justify-start">
+      <button
+        onClick={() => setProfiles(Math.max(1, profiles - 1))}
+        className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 shadow-sm hover:shadow-md ${theme === 'dark' ? 'bg-gradient-to-r from-gray-700 to-gray-600 hover:from-gray-600 hover:to-gray-500' : 'bg-gray-200 hover:bg-gray-300'}`}
+      >
+        <FiMinus className={`w-5 h-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`} />
+      </button>
+      {/* Hidden on mobile, shown on sm and up */}
+      <div className="hidden sm:block w-16 h-10 rounded-xl flex items-center justify-center ${theme === 'dark' ? 'bg-gradient-to-r from-blue-900/50 to-purple-900/50' : 'bg-purple-100'}">
+        <span className={`text-xl font-bold ${theme === 'dark' ? 'bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent' : 'text-purple-600'}`}>
+          {profiles}
+        </span>
+      </div>
+      <button
+        onClick={() => setProfiles(profiles + 1)}
+        className={`w-10 h-10 rounded-xl text-white flex items-center justify-center transition-all duration-200 shadow-lg hover:shadow-xl ${theme === 'dark' ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600' : 'bg-gradient-to-r from-purple-500 to-indigo-500 hover:from-purple-600 hover:to-indigo-600'}`}
+      >
+        <FiPlus className="w-5 h-5" />
+      </button>
+    </div>
+  </div>
+</div>
 
         {/* Plans loading / error */}
         {plansLoading && (
@@ -422,7 +438,7 @@ const SubscriptionPage = () => {
         )}
 
         {/* Subscription Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 px-2 sm:px-0">
           {/* Daily Plan */}
           {getPlanByType("daily") && (
             <div className={`rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 relative overflow-hidden ${theme === 'dark' ? `bg-gray-800 border ${getPlanByType("daily").isPopular ? 'border-blue-500 border-2' : 'border-gray-700'}` : `bg-white border ${getPlanByType("daily").isPopular ? 'border-purple-500 border-2' : 'border-gray-200'}`}`}>

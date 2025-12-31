@@ -75,10 +75,14 @@ const EmailComponent = () => {
 
     setIsSending(true);
     try {
-      // Generate the same link format as in QRCodeComponent
+      // Generate the same link format as in BulkUploadEmailComponent
       const locationId = selectedBusiness.name?.split('/').pop() || '';
-      const businessName = selectedBusiness.metadata?.newReviewUri || selectedBusiness.title || '';
-      const reviewLink = `${FRONTEND_URL}/review/${locationId}?reviewUri=${encodeURIComponent(businessName)}`;
+      const businessName = selectedBusiness.title ? 
+        encodeURIComponent(selectedBusiness.title.replace(/\s+/g, '-').toLowerCase()) : '';
+      const businessCategory = selectedBusiness.categories?.primaryCategory?.name ? 
+        encodeURIComponent(selectedBusiness.categories.primaryCategory.name.toLowerCase().replace(/\s+/g, '-')) : '';
+      const reviewUri = selectedBusiness.metadata?.newReviewUri || selectedBusiness.title || '';
+      const reviewLink = `${FRONTEND_URL}/review/${locationId}?businessName=${businessName}&category=${businessCategory}&reviewUri=${encodeURIComponent(reviewUri)}`;
 
       const res = await fetch(`${BACKEND_URL}/api/invitations/email`, {
         method: "POST",
