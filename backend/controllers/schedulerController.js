@@ -182,6 +182,61 @@ export const schedulePost = async (req, res) => {
 };
 
 // Get scheduled posts by location ID
+export const deleteScheduledPost = async (req, res) => {
+
+    console.log("Delete scheduled post",req.params);
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    
+    try {
+        const { postId } = req.params;
+        console.log("Delete scheduled post",postId);
+
+
+        
+        if (!mongoose.Types.ObjectId.isValid(postId)) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid post ID format'
+            });
+        }
+
+        // Find and delete the post
+        const deletedPost = await ScheduledPost.findByIdAndDelete(postId).session(session);
+        console.log("DELETE POST",deletedPost)
+        if (!deletedPost) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({
+                success: false,
+                message: 'Scheduled post not found'
+            });
+        }
+
+        await session.commitTransaction();
+        session.endSession();
+        
+        res.status(200).json({
+            success: true,
+            message: 'Scheduled post deleted successfully',
+            data: { id: deletedPost._id }
+        });
+        
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        
+        console.error('Error deleting scheduled post:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete scheduled post',
+            error: error.message
+        });
+    }
+};
+
 export const getScheduledPostsByUser = async (req, res) => {
     try {
         const { userId } = req.params; // This is actually locationId

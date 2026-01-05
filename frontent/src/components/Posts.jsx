@@ -22,6 +22,7 @@ import {
 } from "react-icons/fa";
 import { generateAIPost } from '../utils/suggestion';
 import { toast } from 'sonner';     
+import axios from 'axios';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 
@@ -188,7 +189,7 @@ const Posts = () => {
   });
 
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-
+  const [deletingPostId, setDeletingPostId] = useState(null);
   const [businessDetails, setBusinessDetails] = useState(null);
   
   const fetchPosts = async (accountId, locationId, loadMore = false) => {
@@ -638,9 +639,40 @@ const Posts = () => {
     }
   };
 
-  const handleDeletePost = (id) => {
-    if (window.confirm('Are you sure you want to delete this post?')) {
+  const handleDeletePost = async (id) => {
+    try {
+      setDeletingPostId(id);
+      const token = localStorage.getItem('token') || (JSON.parse(localStorage.getItem('auth')) || {}).token;
+      
+      if (!token) {
+        toast.error('Please log in to delete posts');
+        setDeletingPostId(null);
+        return;
+      }
+
+      // Make API call to delete the post
+      await axios.delete(
+        `${BACKEND_URL}/api/post/${id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }
+      );
+
+      // Update the UI by removing the deleted post from posts state
       setPosts(posts.filter(post => post.id !== id));
+      
+      // Refresh the page to update the UI with the latest data
+      window.location.reload();
+
+      toast.success('Post deleted successfully');
+    } catch (error) {
+      console.error('Error deleting post:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to delete post';
+      toast.error(errorMessage);
+    } finally {
+      setDeletingPostId(null);
     }
   };
 
@@ -850,6 +882,7 @@ const Posts = () => {
                 loadingScheduled={loadingScheduled}
                 onEdit={handleEditPost}
                 onDelete={handleDeletePost}
+                deletingPostId={deletingPostId}
               />
             ) : filteredPosts.length > 0 ? (
               <>
