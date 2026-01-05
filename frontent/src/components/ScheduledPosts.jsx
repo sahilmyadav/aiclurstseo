@@ -1,15 +1,40 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   FaCalendarAlt, 
   FaClock, 
   FaInfoCircle,
-  FaSync
+  FaSync,
+  FaTrash,
+  FaSpinner,
+  FaExclamationTriangle
 } from 'react-icons/fa';
 import { toast } from 'sonner';
 import { useTheme } from '../context/ThemeContext';
 
-const ScheduledPosts = ({ scheduledPosts, loadingScheduled }) => {
+const ScheduledPosts = ({ scheduledPosts, loadingScheduled, onDelete, deletingPostId }) => {
   const { theme } = useTheme();
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
+
+
+  console.log("scheduled posts",scheduledPosts)
+  const handleDeleteClick = (postId) => {
+    setPostToDelete(postId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDelete = () => {
+    if (postToDelete && onDelete) {
+      onDelete(postToDelete);
+    }
+    setShowDeleteModal(false);
+    setPostToDelete(null);
+  };
+
+  const cancelDelete = () => {
+    setShowDeleteModal(false);
+    setPostToDelete(null);
+  };
   
   const formatDate = (date) => {
     return new Date(date).toLocaleString('en-US', {
@@ -55,6 +80,61 @@ const ScheduledPosts = ({ scheduledPosts, loadingScheduled }) => {
   }
 
   return (
+    <>
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+        <div className={`w-full max-w-md rounded-xl p-6 shadow-2xl ${theme === 'dark' ? 'bg-[#1a1b2e] border border-white/10' : 'bg-white border border-gray-200'}`}>
+          <div className="flex items-start gap-4">
+            <div className={`flex-shrink-0 p-2 rounded-full ${theme === 'dark' ? 'bg-red-500/20' : 'bg-red-100'}`}>
+              <FaExclamationTriangle className={`w-5 h-5 ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`} />
+            </div>
+            <div className="flex-1">
+              <h3 className={`text-lg font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                Delete Scheduled Post
+              </h3>
+              <p className={`mt-1 text-sm ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
+                Are you sure you want to delete this scheduled post? This action cannot be undone.
+              </p>
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={cancelDelete}
+                  disabled={deletingPostId === postToDelete}
+                  className={`px-4 py-2 text-sm font-medium rounded-lg ${
+                    theme === 'dark'
+                      ? 'text-white/70 hover:bg-white/5 hover:text-white border border-white/10'
+                      : 'text-gray-700 hover:bg-gray-100 border border-gray-300'
+                  }`}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={confirmDelete}
+                  disabled={deletingPostId === postToDelete}
+                  className={`px-4 py-2 text-sm font-medium text-white rounded-lg flex items-center gap-2 ${
+                    deletingPostId === postToDelete
+                      ? 'bg-red-400 cursor-not-allowed'
+                      : 'bg-red-600 hover:bg-red-700'
+                  }`}
+                >
+                  {deletingPostId === postToDelete ? (
+                    <>
+                      <FaSpinner className="animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete Post'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {scheduledPosts.map((post) => (
         <div 
@@ -146,13 +226,41 @@ const ScheduledPosts = ({ scheduledPosts, loadingScheduled }) => {
                   <div className={theme === 'dark' ? 'text-white/70 capitalize' : 'text-gray-600 capitalize'}>
                     {post.status}
                   </div>
+                  
+                  {onDelete && (
+                    <div className="col-span-2 flex justify-end">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteClick(post._id || post.id);
+                        }}
+                        disabled={!onDelete || deletingPostId === (post._id || post.id)}
+                        className={`px-3 py-1.5 text-xs rounded-lg flex items-center gap-1.5 transition-colors ${
+                          theme === 'dark'
+                            ? 'text-red-400 hover:bg-red-500/20 hover:text-red-300 disabled:opacity-50 disabled:cursor-not-allowed'
+                            : 'text-red-500 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed'
+                        }`}
+                        title="Delete scheduled post"
+                      >
+                        {deletingPostId === (post._id || post.id) ? (
+                          <FaSpinner className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <>
+                            <FaTrash className="w-3 h-3" />
+                            <span>Delete</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
+              </div>
             </div>
           </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </>
   );
 };
 
