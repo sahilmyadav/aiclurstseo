@@ -475,6 +475,8 @@ console.log("AUTHUSER",authUser)
             );
 
             setAiSuggestion(aiReply);
+            // Automatically update the reply text with the AI suggestion
+            setReplyText(aiReply);
         } catch (error) {
             console.error('Error generating AI reply:', error);
             toast.error('Failed to generate AI reply. Please try again.');
