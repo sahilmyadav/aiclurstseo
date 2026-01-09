@@ -19,16 +19,22 @@ const GetReviews = () => {
   const { theme } = useTheme();
 
   return (
-    <div className="min-h-screen w-full text-white">
-      <div className="flex-1 transition-all duration-300 ease-in-out h-screen flex flex-col">
+    <div className={`min-h-screen w-full transition-colors duration-300 ${
+      theme === 'dark' 
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white' 
+        : 'text-gray-900 bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'
+    }`}>
+      <div className="flex-1 transition-all duration-300 ease-in-out min-h-screen flex flex-col">
         <div className="p-2 sm:p-6 pb-0 flex-shrink-0">
           <div className="flex justify-center gap-1 sm:gap-4 mb-2 sm:mb-6">
             <button 
               onClick={() => setActiveTab('sms')}
               className={`px-2 sm:px-6 py-1 sm:py-2 rounded-lg transition-colors text-xs sm:text-base ${
                 activeTab === 'sms' 
-                  ? 'bg-purple-600 hover:bg-purple-700' 
-                  : 'bg-[#1a1433] hover:bg-[#241b4d]'
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                  : theme === 'dark' 
+                    ? 'bg-[#1a1433] hover:bg-[#241b4d] text-white' 
+                    : 'bg-white hover:bg-gray-100 text-purple-900 border border-purple-200'
               }`}
             >
               SMS
@@ -37,8 +43,10 @@ const GetReviews = () => {
               onClick={() => setActiveTab('email')}
               className={`px-2 sm:px-6 py-1 sm:py-2 rounded-lg transition-colors text-xs sm:text-base ${
                 activeTab === 'email' 
-                  ? 'bg-purple-600 hover:bg-purple-700' 
-                  : 'bg-[#1a1433] hover:bg-[#241b4d]'
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                  : theme === 'dark' 
+                    ? 'bg-[#1a1433] hover:bg-[#241b4d] text-white' 
+                    : 'bg-white hover:bg-gray-100 text-purple-900 border border-purple-200'
               }`}
             >
               EMAIL
@@ -47,8 +55,10 @@ const GetReviews = () => {
               onClick={() => setActiveTab('qrcode')}
               className={`px-2 sm:px-6 py-1 sm:py-2 rounded-lg transition-colors text-xs sm:text-base ${
                 activeTab === 'qrcode' 
-                  ? 'bg-purple-600 hover:bg-purple-700' 
-                  : 'bg-[#1a1433] hover:bg-[#241b4d]'
+                  ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                  : theme === 'dark' 
+                    ? 'bg-[#1a1433] hover:bg-[#241b4d] text-white' 
+                    : 'bg-white hover:bg-gray-100 text-purple-900 border border-purple-200'
               }`}
             >
               QR CODE
@@ -56,11 +66,13 @@ const GetReviews = () => {
           </div>
         </div>
 
-        <main className="flex-1 px-2 sm:px-6 pb-2 sm:pb-6 overflow-y-auto">
+        <main className={`flex-1 px-2 sm:px-6 pb-2 sm:pb-6 overflow-y-auto ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
           <div className="h-full">
             <Suspense fallback={<LoadingSpinner />}>
               {activeTab === 'sms' && (
-                <div className="h-full flex flex-col items-center justify-center py-12 px-4 text-center">
+                <div className={`h-full flex flex-col items-center justify-center py-12 px-4 text-center ${
+                  theme === 'dark' ? 'bg-gray-800/90' : 'bg-white'
+                } rounded-2xl p-6 shadow-sm border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                   <div className="bg-gradient-to-br from-purple-600 to-blue-500 p-1 rounded-full mb-6">
                     <div className={`${theme === 'dark' ? 'bg-[#1a1433]' : 'bg-white'} p-3 rounded-full`}>
                       <svg xmlns="http://www.w3.org/2000/svg" className={`h-12 w-12 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -75,12 +87,18 @@ const GetReviews = () => {
                 </div>
               )}
               {activeTab === 'email' && (
-                <div className="h-full">
+                <div className={`h-full ${
+                  theme === 'dark' ? 'bg-gray-800/90' : 'bg-white'
+                } rounded-2xl p-6 shadow-sm border ${theme === 'dark' ? 'border-gray-700' : 'border-gray-200'}`}>
                   <EmailComponent />
                 </div>
               )}
             </Suspense>
-            {activeTab === 'qrcode' && <QRCodeComponent />}
+            {activeTab === 'qrcode' && (
+              <div className={theme === 'dark' ? 'bg-gray-800/90' : 'bg-white'}>
+                <QRCodeComponent />
+              </div>
+            )}
           </div>
         </main>
       </div>

@@ -152,9 +152,6 @@ const SideNav = () => {
         >
           {mobileOpen ? <ChevronLeft size={20} /> : <ChevronRight size={20} />}
         </button>
-        <div className="ml-2">
-          <ThemeToggle />
-        </div>
       </div>
 
       <div
@@ -172,9 +169,6 @@ const SideNav = () => {
           }`}>
             <div className="flex items-center justify-between w-full">
               <div className="flex items-center">
-                <div className={`${!isCollapsed ? 'ml-2' : ''} hidden lg:block`}>
-                  <ThemeToggle />
-                </div>
                 {!isCollapsed && (
                   <Link to="/" className="flex items-center">
                              <div className="p-2">
