@@ -453,7 +453,12 @@ const Report = ({ buttonText = "Download Audit Report", className = "" }) => {
 
     const ratingMap = { 'FIVE': 5, 'FOUR': 4, 'THREE': 3, 'TWO': 2, 'ONE': 1 };
     
-    reviews.forEach((rev, index) => {
+    // Get last 5 reviews, sorted by date (newest first)
+    const last5Reviews = [...reviews]
+      .sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
+      .slice(0, 5);
+    
+    last5Reviews.forEach((rev, index) => {
       y = safeY(doc, y, 50); // High margin for review blocks
 
       // Reviewer Name & Date
