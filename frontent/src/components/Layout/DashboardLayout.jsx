@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom'
 import SideNav from '../SideNav'
 import { SidebarProvider, useSidebar } from '../context/SidebarContext'
 import { useTheme } from '../../context/ThemeContext'
+import ThemeToggle from '../ThemeToggle'
 
 const DashboardContent = () => {
   const { isCollapsed } = useSidebar()
@@ -32,6 +33,13 @@ const DashboardContent = () => {
 
     }`}>
       <SideNav />
+      {/* Theme Toggle in top right */}
+      <div className={`fixed top-4 right-4 z-50
+    
+       p-2 rounded-lg shadow-lg`}
+      >
+        <ThemeToggle />
+      </div>
       <main 
         className="transition-all duration-300 ease-in-out"
         style={{ marginLeft: getMarginLeft() }}

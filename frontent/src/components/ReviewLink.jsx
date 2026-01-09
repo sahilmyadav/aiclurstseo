@@ -7,10 +7,10 @@ import { useTheme } from '../context/ThemeContext';
 function Card({ children, className }) {
   const { theme } = useTheme();
   return (
-    <div className={`rounded-xl shadow-md ${
+    <div className={`rounded-xl transition-all duration-300 ${
       theme === 'dark' 
-        ? 'bg-[#1e1e3a] text-white' 
-        : 'bg-white text-gray-900'
+        ? 'bg-gray-800/90 text-white' 
+        : 'bg-white text-gray-900 border border-gray-100 hover:border-gray-200'
     } ${className}`}>
       {children}
     </div>
@@ -22,7 +22,7 @@ function CardContent({ children, className }) {
   return (
     <div className={`p-4 ${
       theme === 'dark' 
-        ? 'bg-[#1e1e3a] text-white' 
+        ? 'bg-gray-800/90 text-white' 
         : 'bg-white text-gray-900'
     } ${className}`}>
       {children}
@@ -34,10 +34,10 @@ function Button({ children, className, ...props }) {
   const { theme } = useTheme();
   return (
     <button
-      className={`px-4 py-2 rounded-lg font-medium transition ${
+      className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
         theme === 'dark' 
           ? 'bg-purple-600 hover:bg-purple-700 text-white' 
-          : 'bg-purple-600 hover:bg-purple-700 text-white'
+          : 'bg-purple-600 hover:bg-purple-700 text-white shadow-sm hover:shadow-md'
       } ${className}`}
       {...props}
     >
@@ -125,8 +125,12 @@ export default function ReviewPage() {
   };
 
   return (
-    <div className={`min-h-screen w-full ${theme === 'dark' ? 'text-white bg-[#0f1020]' : 'text-gray-900 bg-gray-50'}`}>
-      <div className="w-full px-2 sm:px-4 md:px-6 mx-auto transition-all duration-300">
+    <div className={`min-h-screen w-full transition-colors duration-300 ${
+      theme === 'dark' 
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white' 
+        : 'text-gray-900 bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'
+    }`}>
+      <div className="w-full px-2 sm:px-4 md:px-6 mx-auto transition-all duration-300 py-6">
         <div className="w-full">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-4 sm:space-y-6">
@@ -137,7 +141,7 @@ export default function ReviewPage() {
                   your review, and subscribe to receive updates, tips, and special offers.
                 </p>
                 <div className={`flex flex-col sm:flex-row items-center mt-4 rounded-lg p-2 gap-2 ${
-                  theme === 'dark' ? 'bg-[#111]' : 'bg-gray-100'
+                  theme === 'dark' ? 'bg-gray-800/50' : 'bg-white border border-gray-200 shadow-sm'
                 }`}>
                   <input
                     type="text"
@@ -145,8 +149,8 @@ export default function ReviewPage() {
                     readOnly
                     className={`flex-1 text-xs sm:text-sm px-2 outline-none w-full ${
                       theme === 'dark' 
-                        ? 'bg-[#111] text-white' 
-                        : 'bg-gray-100 text-gray-900'
+                        ? 'bg-gray-800/50 text-white' 
+                        : 'bg-white text-gray-900'
                     }`}
                   />
                   <Button 
@@ -162,7 +166,9 @@ export default function ReviewPage() {
                 <h2 className={`text-xl sm:text-2xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Recent Feedback</h2>
                 <div className="space-y-3 sm:space-y-4 h-[calc(100vh-300px)] overflow-y-auto pr-1" style={{scrollbarWidth:"none"}}>
                   {reviews.map((review) => (
-                    <Card key={review.id} className="border-none">
+                    <Card key={review.id} className={`border ${
+                      theme === 'dark' ? 'border-gray-700/50' : 'border-gray-100 hover:border-gray-200'
+                    } shadow-sm hover:shadow-md transition-shadow`}>
                       <CardContent className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4">
                         <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gray-500 flex-shrink-0"></div>
                         <div className="flex-1 min-w-0">
@@ -186,7 +192,9 @@ export default function ReviewPage() {
             </div>
 
             <div className="space-y-4 sm:space-y-6">
-              <Card className="border-none h-full">
+              <Card className={`border ${
+                theme === 'dark' ? 'border-gray-700/50' : 'border-gray-100 hover:border-gray-200'
+              } shadow-sm hover:shadow-md transition-shadow h-full`}>
                 <CardContent className="h-[calc(100vh-180px)] sm:h-[calc(100vh-200px)]">
                   <h2 className={`text-lg sm:text-xl font-bold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Ratings Summary</h2>
                   <ResponsiveContainer width="100%" height="90%">
