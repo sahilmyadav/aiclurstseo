@@ -135,7 +135,11 @@ const Integrations = () => {
   const connected = !!googleOAuth?.access_token;
 
   return (
-    <div className={`flex min-h-screen w-full ${theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gray-50 text-gray-800'} transition-colors duration-200`}>
+    <div className={`flex min-h-screen w-full transition-colors duration-300 ${
+      theme === 'dark' 
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-gray-100' 
+        : 'text-gray-900 bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'
+    }`}>
       <div className="flex-1 p-4 md:p-8 transition-all duration-200">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -222,10 +226,9 @@ const Integrations = () => {
                   ) : businesses.length > 0 && selectedBusiness ? (
                     <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                       <div 
-                        className={`border rounded-xl p-5 transition-all ${theme === 'dark' 
-                          ? 'border-blue-500 ring-blue-900/30 bg-blue-900/20' 
-                          : 'border-blue-200 ring-blue-100 bg-blue-50'}`}
-                      >
+                        className={`border rounded-xl p-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${theme === 'dark' 
+                          ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-800/70 hover:shadow-gray-800/20' 
+                          : 'border-gray-100 bg-white hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white] shadow-sm'}`}>
                         <div className="flex justify-between items-start mb-3">
                           <h4 className={`font-medium line-clamp-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{selectedBusiness.title}</h4>
                           <span className={`text-xs px-2.5 py-0.5 rounded-full ${theme === 'dark' 
@@ -310,9 +313,9 @@ const Integrations = () => {
                   ) : reviews.length > 0 ? (
                     <div className="space-y-6">
                       {reviews.map((review, i) => (
-                        <div key={i} className={`border rounded-lg p-5 hover:shadow-sm transition-all ${theme === 'dark' 
+                        <div key={i} className={`border rounded-lg p-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${theme === 'dark' 
                           ? 'border-gray-700 bg-gray-800/50 hover:bg-gray-800/70 hover:shadow-gray-800/20' 
-                          : 'border-gray-100 bg-white hover:bg-gray-50'}`}>
+                          : 'border-gray-100 bg-white hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white] shadow-sm'}`}>
                           <div className="flex items-start space-x-4">
                             <div className="flex-shrink-0">
                               {review.reviewer?.profilePhotoUrl ? (
@@ -359,9 +362,9 @@ const Integrations = () => {
                               </p>
                               
                               {review.reviewReply && (
-                                <div className={`p-3 rounded-lg border-2 ${theme === 'dark' 
+                                <div className={`p-3 rounded-lg border-2 transition-all ${theme === 'dark' 
                                   ? 'border-blue-500/30 bg-blue-900/20' 
-                                  : 'border-blue-200 bg-blue-50'}`}>
+                                  : 'border-blue-100 bg-blue-50 hover:bg-blue-100/50'}`}>
                                   <div className={`flex items-center text-sm font-medium mb-1 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
                                     <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}>Your Response</span>
                                     <span className="mx-2 text-gray-400">•</span>

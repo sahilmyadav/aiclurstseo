@@ -308,7 +308,11 @@ const Audit = () => {
   };
 
   return (
-    <div className={`min-h-screen w-full ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+    <div className={`min-h-screen w-full transition-colors duration-300 ${
+      theme === 'dark' 
+        ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white' 
+        : 'text-gray-900 bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'
+    }`}>
       <div className="p-3 sm:p-6">
         <div className="min-h-screen overflow-hidden">
           {/* Header */}
@@ -321,9 +325,9 @@ const Audit = () => {
 
             {/* Selected Business Info - Mobile Optimized */}
             {selectedBusiness && (
-              <div className={`rounded-lg p-3 ${theme === 'dark' 
-                ? 'bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/30' 
-                : 'bg-green-50 border border-green-200'}`}>
+              <div className={`rounded-lg p-3 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                ? 'bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/30 hover:from-green-500/20 hover:to-green-600/20' 
+                : 'bg-green-50 border border-green-200 hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                 <div className="flex items-center justify-center sm:justify-start space-x-2">
                   <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
                   <span className={`text-sm text-center sm:text-left ${theme === 'dark' ? 'text-white/70' : 'text-green-800'}`}>
@@ -400,9 +404,9 @@ const Audit = () => {
                     {activeTab === 'overview' && (
                       <div className="space-y-6 pb-8">
                         {/* Date Range Picker for Overview */}
-                        <div className={`rounded-lg p-4 ${theme === 'dark' 
-                          ? 'bg-[#1a1b2e]/90 border border-white/10' 
-                          : 'bg-white border border-gray-200 shadow-sm'}`}>
+                        <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                          ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                          : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                             <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Performance Metrics Filter</h3>
                             <div className="flex items-center gap-2">
@@ -439,9 +443,9 @@ const Audit = () => {
                         ) : (
                           <>
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                              <div className={`rounded-lg p-4 ${theme === 'dark' 
-                                ? 'bg-[#1a1b2e]/90 border border-white/10' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <div className="flex items-center justify-between mb-2">
                                   <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Average Rating</span>
                                   <Star className="w-4 h-4 text-yellow-400" />
@@ -452,9 +456,9 @@ const Audit = () => {
                                 <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>out of 5.0</div>
                               </div>
 
-                              <div className={`rounded-lg p-4 ${theme === 'dark' 
-                                ? 'bg-[#1a1b2e]/90 border border-white/10' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <div className="flex items-center justify-between mb-2">
                                   <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Total Reviews</span>
                                   <BarChart3 className="w-4 h-4 text-blue-400" />
@@ -465,9 +469,9 @@ const Audit = () => {
                                 <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>all time</div>
                               </div>
 
-                              <div className={`rounded-lg p-4 ${theme === 'dark' 
-                                ? 'bg-[#1a1b2e]/90 border border-white/10' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <div className="flex items-center justify-between mb-2">
                                   <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Recent Reviews</span>
                                   <TrendingUp className="w-4 h-4 text-green-400" />
@@ -485,9 +489,9 @@ const Audit = () => {
                                 </div>
                               </div>
 
-                              <div className={`rounded-lg p-4 ${theme === 'dark' 
-                                ? 'bg-[#1a1b2e]/90 border border-white/10' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <div className="flex items-center justify-between mb-2">
                                   <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Rating Trend</span>
                                   <Sparkles className="w-4 h-4 text-purple-400" />
@@ -508,47 +512,45 @@ const Audit = () => {
 
                             {/* Performance Metrics in Overview */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div className={`rounded-lg p-5 ${theme === 'dark' 
-                                ? 'bg-gradient-to-br from-blue-500/20 to-blue-600/20 border border-blue-500/30' 
-                                : 'bg-blue-50 border border-blue-200'}`}>
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-blue-800'}`}>Website Clicks</p>
-                                    <p className="text-3xl font-bold text-blue-400 mt-1">
-                                      {performanceLoading ? (
-                                        <span className="text-sm">Loading...</span>
-                                      ) : (
-                                        performanceData?.websiteClicks || 0
-                                      )}
-                                    </p>
-                                  </div>
-                                  <Globe className="w-10 h-10 text-blue-400" />
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Website Clicks</span>
+                                  <Globe className="w-4 h-4 text-blue-400" />
                                 </div>
+                                <div className="text-3xl font-bold text-blue-400">
+                                  {performanceLoading ? (
+                                    <span className="text-sm">Loading...</span>
+                                  ) : (
+                                    performanceData?.websiteClicks || 0
+                                  )}
+                                </div>
+                                <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>all time</div>
                               </div>
 
-                              <div className={`rounded-lg p-5 ${theme === 'dark' 
-                                ? 'bg-gradient-to-br from-green-500/20 to-green-600/20 border border-green-500/30' 
-                                : 'bg-green-50 border border-green-200'}`}>
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-green-800'}`}>Call Clicks</p>
-                                    <p className="text-3xl font-bold text-green-400 mt-1">
-                                      {performanceLoading ? (
-                                        <span className="text-sm">Loading...</span>
-                                      ) : (
-                                        performanceData?.callClicks || 0
-                                      )}
-                                    </p>
-                                  </div>
-                                  <Phone className="w-10 h-10 text-green-400" />
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Call Clicks</span>
+                                  <Phone className="w-4 h-4 text-green-400" />
                                 </div>
+                                <div className="text-3xl font-bold text-green-400">
+                                  {performanceLoading ? (
+                                    <span className="text-sm">Loading...</span>
+                                  ) : (
+                                    performanceData?.callClicks || 0
+                                  )}
+                                </div>
+                                <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>all time</div>
                               </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                              <div className={`rounded-2xl p-6 ${theme === 'dark' 
-                                ? 'bg-[#121324]/90 border border-white/5' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-2xl p-6 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#121324]/90 border border-white/5 hover:bg-[#121324]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Monthly Review Trend ({new Date().getFullYear()})</h3>
                                 {monthlyData.length > 0 && monthlyData.some(d => d.reviews > 0) ? (
                                   <ResponsiveContainer width="100%" height={200}>
@@ -577,9 +579,9 @@ const Audit = () => {
                                 )}
                               </div>
 
-                              <div className={`rounded-2xl p-6 ${theme === 'dark' 
-                                ? 'bg-[#121324]/90 border border-white/5' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-2xl p-6 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#121324]/90 border border-white/5 hover:bg-[#121324]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Rating Distribution</h3>
                                 {ratingDistribution.length > 0 && ratingDistribution.some(d => d.value > 0) ? (
                                   <ResponsiveContainer width="100%" height={200}>
@@ -619,9 +621,9 @@ const Audit = () => {
                               </div>
                             </div>
 
-                            <div className={`rounded-lg p-4 ${theme === 'dark' 
-                              ? 'bg-gradient-to-r from-green-500/10 to-green-600/10 border border-green-500/30' 
-                              : 'bg-green-50 border border-green-200'}`}>
+                            <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                              ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                              : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                               <div className="flex items-center justify-between">
                                 <div className="flex items-center space-x-3">
                                   <div className="w-2 h-2 rounded-full bg-green-400"></div>
@@ -647,41 +649,41 @@ const Audit = () => {
                         {reviews && reviews.length > 0 ? (
                           <>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                              <div className={`rounded-lg p-4 ${theme === 'dark' 
-                                ? 'bg-[#121324]/90 border border-white/5' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#121324]/90 border border-white/5 hover:bg-[#121324]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <div className={`text-sm mb-2 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Current Period</div>
                                 <div className="text-2xl font-bold text-green-400">{reviewTrend.current}</div>
                                 <div className={`text-xs ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>Last 30 days</div>
                               </div>
-                              <div className={`rounded-lg p-4 ${theme === 'dark' 
-                                ? 'bg-[#121324]/90 border border-white/5' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#121324]/90 border border-white/5 hover:bg-[#121324]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <div className={`text-sm mb-2 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Previous Period</div>
                                 <div className="text-2xl font-bold text-blue-400">{reviewTrend.previous}</div>
                                 <div className={`text-xs ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>30-60 days ago</div>
                               </div>
-                              <div className={`rounded-lg p-4 ${theme === 'dark' 
-                                ? 'bg-[#121324]/90 border border-white/5' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#121324]/90 border border-white/5 hover:bg-[#121324]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <div className={`text-sm mb-2 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Change</div>
                                 <div className={`text-2xl font-bold ${reviewTrend.change >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                                   {reviewTrend.change >= 0 ? '+' : ''}{reviewTrend.change}%
                                 </div>
                                 <div className={`text-xs ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>Growth rate</div>
                               </div>
-                              <div className={`rounded-lg p-4 ${theme === 'dark' 
-                                ? 'bg-[#121324]/90 border border-white/5' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#121324]/90 border border-white/5 hover:bg-[#121324]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <div className={`text-sm mb-2 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Avg Rating</div>
                                 <div className="text-2xl font-bold text-yellow-400">{ratingTrend.current}</div>
                                 <div className={`text-xs ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>Last 30 days</div>
                               </div>
                             </div>
 
-                            <div className={`rounded-2xl p-6 ${theme === 'dark' 
-                              ? 'bg-[#121324]/90 border border-white/5' 
-                              : 'bg-white border border-gray-200 shadow-sm'}`}>
+                            <div className={`rounded-2xl p-6 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                              ? 'bg-[#121324]/90 border border-white/5 hover:bg-[#121324]' 
+                              : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                               <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Rating Quality Analysis</h3>
                               <div className="space-y-3">
                                 {reviewStats?.ratings?.length > 0 ? reviewStats.ratings.sort((a, b) => b.rating - a.rating).map((item) => (
@@ -755,9 +757,9 @@ const Audit = () => {
                             </p>
 
                             {insightsError && (
-                              <div className={`mb-4 p-4 rounded-lg text-sm ${theme === 'dark' 
+                              <div className={`mb-4 p-4 rounded-lg text-sm transition-all duration-300 ${theme === 'dark' 
                                 ? 'bg-red-500/10 border border-red-500/30 text-red-400' 
-                                : 'bg-red-50 border border-red-200 text-red-600'}`}>
+                                : 'bg-red-50 border border-red-200 text-red-600 hover:shadow-sm'}`}>
                                 <AlertCircle className="w-4 h-4 inline mr-2" />
                                 {insightsError}
                               </div>
@@ -792,9 +794,9 @@ const Audit = () => {
                         ) : (
                           <div className="space-y-6">
                             {/* Header with regenerate button */}
-                            <div className={`rounded-lg p-6 ${theme === 'dark' 
-                              ? 'bg-gradient-to-r from-purple-600/20 to-indigo-600/20 border border-purple-500/30' 
-                              : 'bg-purple-50 border border-purple-200'}`}>
+                            <div className={`rounded-lg p-6 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                              ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                              : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                               <div className="flex items-center justify-between mb-4">
                                 <h3 className={`text-xl font-bold flex items-center gap-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                                   <Brain className="w-6 h-6 text-purple-400" />
@@ -829,9 +831,9 @@ const Audit = () => {
 
                             {/* Overall Score */}
                             {aiInsights.overallScore !== undefined && (
-                              <div className={`rounded-lg p-6 ${theme === 'dark' 
-                                ? 'bg-[#121324]/90 border border-white/5' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <h4 className={`text-lg font-semibold mb-3 text-blue-400`}>📊 Overall Score</h4>
                                 <div className="flex items-center gap-4">
                                   <div className="text-4xl font-bold text-blue-400">{aiInsights.overallScore}/100</div>
@@ -847,9 +849,9 @@ const Audit = () => {
 
                             {/* Summary */}
                             {aiInsights.summary && (
-                              <div className={`rounded-lg p-6 ${theme === 'dark' 
-                                ? 'bg-[#121324]/90 border border-white/5' 
-                                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
                                 <h4 className={`text-lg font-semibold mb-3 text-indigo-400`}>📝 Summary</h4>
                                 <p className={`leading-relaxed ${theme === 'dark' ? 'text-white/80' : 'text-gray-800'}`}>{aiInsights.summary}</p>
                               </div>

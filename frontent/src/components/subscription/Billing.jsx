@@ -137,7 +137,7 @@ const Billing = () => {
   };
 
   return (
-    <div className={`min-h-screen p-3 sm:p-4 md:p-6 ${theme === 'dark' ? 'bg-gray-900' : 'bg-gradient-to-br from-purple-50 to-indigo-50'}`}>
+    <div className={`min-h-screen p-3 sm:p-4 md:p-6 ${theme === 'dark' ? 'bg-gray-900' : 'bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'}`}>
       <div className="max-w-7xl mx-auto space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div className="flex-1 min-w-0">

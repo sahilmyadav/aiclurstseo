@@ -35,9 +35,9 @@ const ThemeToggle = () => {
       onMouseLeave={() => setIsHovered(false)}
       className={`p-2 rounded-full transition-all duration-300 ${
         theme === 'dark' 
-          ? 'bg-gray-700 hover:bg-gray-600 text-yellow-300' 
-          : 'bg-gray-200 hover:bg-gray-300 text-gray-800'
-      } focus:outline-none focus:ring-2 focus:ring-blue-500`}
+          ? 'bg-transparent  text-yellow-300' 
+          : 'bg-transparent  text-gray-800'
+      }`}
       aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
       title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
     >
