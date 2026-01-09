@@ -719,7 +719,7 @@ const Posts = () => {
   };
 
   return (
-    <div className={`min-h-screen w-full flex ${theme === 'dark' ? 'text-white bg-transparent' : 'text-gray-900 bg-gray-50'}`}>
+    <div className={`min-h-screen w-full flex ${theme === 'dark' ? 'text-white bg-transparent' : 'bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'}`}>
       <SideNav />
       <div className="flex-1 transition-all duration-300 ease-in-out w-full overflow-x-hidden pl-0 md:pl-4">
         <div className="w-full max-w-full px-2 sm:px-4 md:px-6">

@@ -97,10 +97,9 @@ console.log("AUTHUSER",authUser)
         repliedReviews,
         totalReviews
     }) => (
-        <div className={`mr-8 ml-8 mb-1 mt-1 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm border ${theme === 'dark'
-            ? 'border-gray-700/50'
-            : 'border-purple-100'
-            } overflow-hidden transition-all duration-300 hover:shadow-md`}>
+        <div className={`mx-8 my-4 ${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm border ${
+            theme === 'dark' ? 'border-gray-700/50' : 'border-gray-100 hover:border-gray-200'
+        } overflow-hidden transition-all duration-300 hover:shadow-md`}>
             <div className="px-2 py-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
                     {/* Left side - Toggle and Mode */}
@@ -782,7 +781,11 @@ console.log("AUTHUSER",authUser)
     };
 
     return (
-        <div className="relative  min-h-screen">
+        <div className={`relative min-h-screen w-full transition-colors duration-300 ${
+            theme === 'dark' 
+                ? 'bg-gradient-to-br from-gray-900 to-gray-800' 
+                : 'bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'
+        }`}>
             {renderBusinessDropdown()}
 
             {/* Auto-reply Controls */}

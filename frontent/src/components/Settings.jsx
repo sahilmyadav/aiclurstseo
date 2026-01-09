@@ -57,7 +57,7 @@ const SettingsPage = () => {
 
   return (
     <div className={`min-h-screen w-full flex ${
-      theme === 'dark' ? 'text-white bg-[#0f1020]' : 'text-gray-900 bg-gray-50'
+      theme === 'dark' ? 'text-white bg-[#0f1020]' : 'text-gray-900 bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'
     }`}>
       <div className="flex-1 p-3 sm:p-6 transition-all duration-300 ease-in-out w-full">
         <div className="space-y-6">
@@ -72,7 +72,7 @@ const SettingsPage = () => {
           <div className={`rounded-2xl p-4 sm:p-6 ${
             theme === 'dark' 
               ? 'bg-[#121324]/90 border-white/5' 
-              : 'bg-white border border-gray-200 shadow-sm'
+              : 'bg-white hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] border border-gray-200 shadow-sm'
           }`}>
             <h3 className={`text-lg font-semibold mb-6 ${
               theme === 'dark' ? 'text-white' : 'text-purple-900'
