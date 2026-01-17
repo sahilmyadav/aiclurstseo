@@ -237,15 +237,48 @@ const Integrations = () => {
                             {selectedBusiness.primaryCategory?.displayName || 'Business'}
                           </span>
                         </div>
-                        <div className={`flex items-center text-sm mb-3 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
-                          <FiMapPin className="w-4 h-4 mr-1.5 flex-shrink-0" />
-                          <span className="truncate">
-                            {[
-                              selectedBusiness.location?.address?.addressLines?.[0], 
-                              selectedBusiness.location?.address?.locality, 
-                              selectedBusiness.location?.address?.postalCode
-                            ].filter(Boolean).join(', ')}
-                          </span>
+                        <div className="space-y-2 mb-3">
+                          <div className={`flex items-start text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {/* <FiMapPin className="w-4 h-4 mr-1.5 flex-shrink-0 mt-0.5" /> */}
+                            <div>
+                              {/* <div className="font-medium mb-1">Location Address:</div> */}
+                              <div className="space-y-1">
+                                {selectedBusiness.location?.address?.addressLines?.map((line, i) => (
+                                  <div key={i}>{line}</div>
+                                ))}
+                                <div>
+                                  {[
+                                    selectedBusiness.location?.address?.locality,
+                                    selectedBusiness.location?.address?.administrativeArea,
+                                    selectedBusiness.location?.address?.postalCode,
+                                    selectedBusiness.location?.address?.regionCode
+                                  ].filter(Boolean).join(', ')}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {selectedBusiness.storefrontAddress && (
+                            <div className={`flex items-start text-sm pt-2 border-t font-bold ${theme === 'dark' ? 'border-gray-700 text-gray-400' : 'border-gray-100 text-gray-500'}`}>
+                              <FiMapPin className="w-4 h-4 mr-1.5 flex-shrink-0 mt-0.5" />
+                              <div className="space-y-1">
+                                {selectedBusiness.storefrontAddress.addressLines?.map((line, i) => (
+                                  <div key={i}>{line}</div>
+                                ))}
+                                <div>
+                                  {[
+                                    selectedBusiness.storefrontAddress.locality,
+                                    selectedBusiness.storefrontAddress.administrativeArea,
+                                    selectedBusiness.storefrontAddress.postalCode,
+                                    selectedBusiness.storefrontAddress.regionCode
+                                  ].filter(Boolean).join(', ')}
+                                </div>
+                                <div className="text-xs opacity-75">
+                                  Language: {selectedBusiness.storefrontAddress.languageCode || 'en'}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
                         <div className={`flex items-center justify-between pt-3 border-t ${theme === 'dark' ? 'border-gray-700' : 'border-gray-100'}`}>
                           <button 
