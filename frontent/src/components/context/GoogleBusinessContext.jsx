@@ -132,7 +132,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   const setScheduledPosts = useCallback((v) => updateState({ scheduledPosts: v }), [updateState]);
   const setLoadingScheduled = useCallback((v) => updateState({ loadingScheduled: v }), [updateState]);
   const setReviewStats = useCallback((v) => updateState({ reviewStats: v }), [updateState]);
-
+    console.log("Seleted Business ",selectedBusiness)
   // ==============================
   // RESET ON USER CHANGE
   // ==============================
