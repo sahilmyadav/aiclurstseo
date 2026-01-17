@@ -168,7 +168,7 @@ const BusinessDetails = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content - Left Column (2/3) */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-6 overflow-hidden">
             {/* Basic Information */}
             <div className={`rounded-xl p-6 ${theme === 'dark' 
               ? 'bg-[#1a1b2e]/90 border border-white/10' 
@@ -513,9 +513,24 @@ const BusinessDetails = () => {
               <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Additional Info</h2>
               <div className="space-y-3 text-sm">
                 {selectedBusiness.storefrontAddress && (
-                  <div>
-                    <label className={`font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Address</label>
-                    <p className={`mt-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{JSON.stringify(selectedBusiness.storefrontAddress)}</p>
+                  <div className="mt-4">
+                    <h3 className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Storefront Address</h3>
+                    <div className={`p-4 rounded-lg space-y-2 ${theme === 'dark' ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
+                      {selectedBusiness.storefrontAddress.addressLines?.map((line, i) => (
+                        <div key={i} className="break-words">{line}</div>
+                      ))}
+                      <div className="break-words">
+                        {[
+                          selectedBusiness.storefrontAddress.locality,
+                          selectedBusiness.storefrontAddress.administrativeArea,
+                          selectedBusiness.storefrontAddress.postalCode,
+                          selectedBusiness.storefrontAddress.regionCode
+                        ].filter(Boolean).join(', ')}
+                      </div>
+                      <div className="text-sm opacity-75 mt-1">
+                        Language: {selectedBusiness.storefrontAddress.languageCode || 'en'}
+                      </div>
+                    </div>
                   </div>
                 )}
                 {selectedBusiness.serviceArea && (
