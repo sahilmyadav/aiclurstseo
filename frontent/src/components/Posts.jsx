@@ -1,37 +1,37 @@
-import React, { useState, useContext, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import SideNav from "./SideNav";
-import { useSidebar } from "./context/SidebarContext";
-import { useGoogleBusiness } from "./context/GoogleBusinessContext";
-import { useAuth } from "./context/AuthContext";
-import { useTheme } from "../context/ThemeContext";
-import ScheduledPosts from "./ScheduledPosts";
-import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
-import { 
-  FaGoogle, 
-  FaCalendarAlt, 
-  FaClock, 
-  FaPlus, 
-  FaTrash, 
-  FaEdit, 
-  FaSpinner, 
-  FaCheckCircle,
-  FaSync,
-  FaInfoCircle,
-  FaRobot
-} from "react-icons/fa";
-import { generateAIPost } from '../utils/suggestion';
-import { toast } from 'sonner';     
 import axios from 'axios';
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
+import { useEffect, useState } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import {
+  FaCalendarAlt,
+  FaCheckCircle,
+  FaClock,
+  FaEdit,
+  FaGoogle,
+  FaInfoCircle,
+  FaPlus,
+  FaRobot,
+  FaSpinner,
+  FaSync,
+} from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { getApiBaseUrl } from '../config/api';
+import { useTheme } from '../context/ThemeContext';
+import { generateAIPost } from '../utils/suggestion';
+import ScheduledPosts from './ScheduledPosts';
+import SideNav from './SideNav';
+import BusinessProfileDropdown from './common/BusinessProfileDropdown';
+import { useAuth } from './context/AuthContext';
+import { useGoogleBusiness } from './context/GoogleBusinessContext';
+import { useSidebar } from './context/SidebarContext';
 
-// Get BACKEND_URL from environment variables with fallback
-const BACKEND_URL = import.meta.env.VITE_API_BASE
+// Get BACKEND_URL dynamically (supports IP-based hosting)
+const BACKEND_URL = getApiBaseUrl();
 
 // Validate BACKEND_URL
 if (!BACKEND_URL) {
-  console.error('BACKEND_URL is not defined. Please set VITE_BACKEND_URL in your .env file.');
+  console.error('BACKEND_URL is not defined. Please check your configuration.');
   toast.error('Configuration error: BACKEND_URL is not defined');
 }
 
@@ -45,34 +45,47 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
-
-
   // Get business name from the selected business in the dropdown
-  const displayBusinessName = selectedBusiness?.title || 
-                            selectedBusiness?.locationName || 
-                            selectedBusiness?.name?.split('/').pop() || 
-                            'Business';
+  const displayBusinessName =
+    selectedBusiness?.title ||
+    selectedBusiness?.locationName ||
+    selectedBusiness?.name?.split('/').pop() ||
+    'Business';
 
   return (
-    <div className={`rounded-xl p-4 mb-4 shadow-lg hover:shadow-xl transition-all duration-300 ${theme === 'dark' 
-      ? 'bg-gradient-to-br from-[#1a1b2e] to-[#121324] border border-white/5 hover:border-blue-500/30' 
-      : 'bg-white border border-gray-200 hover:border-blue-500/30'}`}>
+    <div
+      className={`rounded-xl p-4 mb-4 shadow-lg hover:shadow-xl transition-all duration-300 ${
+        theme === 'dark'
+          ? 'bg-gradient-to-br from-[#1a1b2e] to-[#121324] border border-white/5 hover:border-blue-500/30'
+          : 'bg-white border border-gray-200 hover:border-blue-500/30'
+      }`}
+    >
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-3">
-          <div className={`p-2.5 rounded-xl shadow-inner ${theme === 'dark' 
-            ? 'bg-gradient-to-br from-blue-500/20 to-indigo-500/20' 
-            : 'bg-blue-100'}`}>
-            <FaGoogle className={`text-lg ${theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`} />
+          <div
+            className={`p-2.5 rounded-xl shadow-inner ${
+              theme === 'dark'
+                ? 'bg-gradient-to-br from-blue-500/20 to-indigo-500/20'
+                : 'bg-blue-100'
+            }`}
+          >
+            <FaGoogle
+              className={`text-lg ${theme === 'dark' ? 'text-blue-300' : 'text-blue-600'}`}
+            />
           </div>
           <div>
             <div className="flex items-center">
-              <span className={`text-xs font-medium px-2.5 py-1 rounded-full border ${theme === 'dark' 
-                ? 'text-blue-300 bg-blue-500/20 border-blue-400/20' 
-                : 'text-blue-700 bg-blue-100 border-blue-200'}`}>
+              <span
+                className={`text-xs font-medium px-2.5 py-1 rounded-full border ${
+                  theme === 'dark'
+                    ? 'text-blue-300 bg-blue-500/20 border-blue-400/20'
+                    : 'text-blue-700 bg-blue-100 border-blue-200'
+                }`}
+              >
                 {displayBusinessName}
               </span>
             </div>
@@ -80,28 +93,42 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
         </div>
       </div>
       <div className="pl-1">
-        <p className={`text-sm leading-relaxed mb-3 line-clamp-3 ${theme === 'dark' ? 'text-white/90' : 'text-gray-700'}`}>
+        <p
+          className={`text-sm leading-relaxed mb-3 line-clamp-3 ${theme === 'dark' ? 'text-white/90' : 'text-gray-700'}`}
+        >
           {post.content}
         </p>
         {post.media && (
-          <div className={`mt-2 w-full h-36 rounded-lg flex items-center justify-center overflow-hidden ${theme === 'dark' 
-            ? 'bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-white/5' 
-            : 'bg-blue-50 border border-gray-200'}`}>
+          <div
+            className={`mt-2 w-full h-36 rounded-lg flex items-center justify-center overflow-hidden ${
+              theme === 'dark'
+                ? 'bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border border-white/5'
+                : 'bg-blue-50 border border-gray-200'
+            }`}
+          >
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-            <span className={`text-xs px-3 py-1.5 rounded-full backdrop-blur-sm ${theme === 'dark' 
-              ? 'text-white/70 bg-black/40' 
-              : 'text-gray-600 bg-gray-200'}`}>
+            <span
+              className={`text-xs px-3 py-1.5 rounded-full backdrop-blur-sm ${
+                theme === 'dark' ? 'text-white/70 bg-black/40' : 'text-gray-600 bg-gray-200'
+              }`}
+            >
               View Media
             </span>
           </div>
         )}
-        <div className={`mt-3 pt-2 text-xs space-y-1.5 ${theme === 'dark' 
-          ? 'border-t border-white/5 text-white/50' 
-          : 'border-t border-gray-200 text-gray-500'}`}>
+        <div
+          className={`mt-3 pt-2 text-xs space-y-1.5 ${
+            theme === 'dark'
+              ? 'border-t border-white/5 text-white/50'
+              : 'border-t border-gray-200 text-gray-500'
+          }`}
+        >
           {post.status === 'scheduled' ? (
             <>
               <div className="flex items-center gap-1.5">
-                <FaCalendarAlt className={`flex-shrink-0 ${theme === 'dark' ? 'text-blue-400/80' : 'text-blue-500'}`} />
+                <FaCalendarAlt
+                  className={`flex-shrink-0 ${theme === 'dark' ? 'text-blue-400/80' : 'text-blue-500'}`}
+                />
                 <span>
                   {post.isRecurring ? 'Next run: ' : 'Scheduled for: '}
                   {formatDate(post.nextRun || post.scheduledFor)}
@@ -109,7 +136,9 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
               </div>
               {post.isRecurring && (
                 <div className="flex items-start gap-1.5">
-                  <FaSync className={`mt-0.5 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400/80' : 'text-blue-500'}`} />
+                  <FaSync
+                    className={`mt-0.5 flex-shrink-0 ${theme === 'dark' ? 'text-blue-400/80' : 'text-blue-500'}`}
+                  />
                   <div>
                     <div>Recurring: {post.repeatType}</div>
                     {post.lastRun && (
@@ -120,19 +149,25 @@ const PostCard = ({ post, onEdit, onDelete, selectedBusiness }) => {
                   </div>
                 </div>
               )}
-              <div className={`flex items-center gap-1.5 ${theme === 'dark' ? 'text-blue-300/80' : 'text-blue-600'}`}>
+              <div
+                className={`flex items-center gap-1.5 ${theme === 'dark' ? 'text-blue-300/80' : 'text-blue-600'}`}
+              >
                 <FaInfoCircle className="flex-shrink-0" />
                 <span>{post.statusFromApi === 'pending' ? 'Pending' : 'Scheduled'}</span>
               </div>
             </>
           ) : post.status === 'published' ? (
             <div className="flex items-center gap-1.5">
-              <FaCheckCircle className={`flex-shrink-0 ${theme === 'dark' ? 'text-green-400/80' : 'text-green-500'}`} />
+              <FaCheckCircle
+                className={`flex-shrink-0 ${theme === 'dark' ? 'text-green-400/80' : 'text-green-500'}`}
+              />
               <span>Posted on {formatDate(post.postedAt)}</span>
             </div>
           ) : (
             <div className="flex items-center gap-1.5">
-              <FaEdit className={`flex-shrink-0 ${theme === 'dark' ? 'text-amber-400/80' : 'text-amber-500'}`} />
+              <FaEdit
+                className={`flex-shrink-0 ${theme === 'dark' ? 'text-amber-400/80' : 'text-amber-500'}`}
+              />
               <span className={theme === 'dark' ? 'text-amber-400/80' : 'text-amber-500'}>
                 Draft - Not published
               </span>
@@ -148,31 +183,31 @@ const Posts = () => {
   const { isCollapsed } = useSidebar();
   const { user: authUser } = useAuth();
   const { theme } = useTheme();
-  const { 
-    isConnected: isGoogleConnected, 
-    businesses, 
-    selectedBusiness, 
-    selectedBusinesses, 
+  const {
+    isConnected: isGoogleConnected,
+    businesses,
+    selectedBusiness,
+    selectedBusinesses,
     selectBusiness,
-    selectMultipleBusinesses, 
+    selectMultipleBusinesses,
     scheduledPosts,
-    loadingScheduled
+    loadingScheduled,
   } = useGoogleBusiness();
-  
-  const [activeTab, setActiveTab] = useState('published'); 
+
+  const [activeTab, setActiveTab] = useState('published');
   const [showEditor, setShowEditor] = useState(false);
   const [posts, setPosts] = useState([]);
   const [pagination, setPagination] = useState({
     hasMore: false,
     nextPageToken: null,
     loadingMore: false,
-    pageSize: 20, 
+    pageSize: 20,
     totalItems: 0,
-    currentPage: 1
+    currentPage: 1,
   });
   const [isLoadingPosts, setIsLoadingPosts] = useState(false);
   const [isCreatingPost, setIsCreatingPost] = useState(false);
-  
+
   const navigate = useNavigate();
 
   const [currentPost, setCurrentPost] = useState({
@@ -180,59 +215,59 @@ const Posts = () => {
     content: '',
     scheduledFor: null,
     media: null,
-    isRecurring: false, 
+    isRecurring: false,
     frequency: 'daily',
     time: '09:00',
     days: [1, 2, 3, 4, 5],
     keywords: '',
-    keywordsArray: []
+    keywordsArray: [],
   });
 
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [deletingPostId, setDeletingPostId] = useState(null);
   const [businessDetails, setBusinessDetails] = useState(null);
-  
+
   const fetchPosts = async (accountId, locationId, loadMore = false) => {
     if (loadMore) {
-      setPagination(prev => ({ ...prev, loadingMore: true }));
+      setPagination((prev) => ({ ...prev, loadingMore: true }));
     } else {
       setIsLoadingPosts(true);
     }
-    
+
     try {
       // Ensure BACKEND_URL is defined and doesn't end with a slash
       if (!BACKEND_URL) {
         throw new Error('BACKEND_URL is not defined');
       }
-      
+
       const baseUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
-      
+
       // Get Google OAuth tokens from localStorage
       const oauthKey = `google_oauth_tokens_${authUser?.id || 'guest'}`;
       const oauthTokens = JSON.parse(localStorage.getItem(oauthKey) || '{}');
-      
+
       // Build URL with pagination and OAuth parameters
       const params = new URLSearchParams({
         pageSize: pagination.pageSize,
         ...(loadMore && pagination.nextPageToken && { pageToken: pagination.nextPageToken }),
         ...(oauthTokens.access_token && { access_token: oauthTokens.access_token }),
         ...(oauthTokens.refresh_token && { refresh_token: oauthTokens.refresh_token }),
-        ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date })
+        ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date }),
       });
-      
+
       const url = `${baseUrl}/auth/google/accounts/${accountId}/locations/${locationId}/localPosts?${params}`;
-      
+
       console.log(`🔄 Fetching posts from:`, url);
-      
+
       const postsResponse = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
-        credentials: 'include'
+        credentials: 'include',
       });
-      
+
       if (!postsResponse.ok) {
         let errorMessage = 'Failed to fetch posts';
         try {
@@ -243,70 +278,75 @@ const Posts = () => {
         }
         throw new Error(`${errorMessage} (Status: ${postsResponse.status})`);
       }
-      
+
       const responseData = await postsResponse.json();
       console.log('✅ Posts fetched successfully:', responseData);
-      
+
       // Get business details from the context
       const business = selectedBusiness || (businesses && businesses[0]);
       const businessName = business?.locationName || business?.name?.split('/').pop() || 'Business';
-      
+
       // Handle both response formats
       const postsList = responseData.localPosts || responseData.posts || [];
       const nextPageToken = responseData.nextPageToken || null;
       const totalItems = responseData.totalItems || 0;
-      
+
       // Update pagination state
-      setPagination(prev => ({
+      setPagination((prev) => ({
         ...prev,
         hasMore: !!nextPageToken,
         nextPageToken,
         loadingMore: false,
         totalItems,
-        currentPage: loadMore ? prev.currentPage + 1 : 1
+        currentPage: loadMore ? prev.currentPage + 1 : 1,
       }));
-      
+
       const formattedPosts = postsList.map((post) => {
         const statusFromApi = (post.state || post.status || 'published').toLowerCase();
-        
+
         let normalizedStatus = 'drafts';
-        if (statusFromApi === 'live' || statusFromApi === 'posted' || statusFromApi === 'processing') {
+        if (
+          statusFromApi === 'live' ||
+          statusFromApi === 'posted' ||
+          statusFromApi === 'processing'
+        ) {
           normalizedStatus = 'published';
         } else if (statusFromApi === 'scheduled') {
           normalizedStatus = 'scheduled';
         }
 
         // Get the business name from the selected business or use the one from the post
-        const postBusinessName = selectedBusiness?.locationName || 
-                               selectedBusiness?.name?.split('/').pop() || 
-                               businessName;
+        const postBusinessName =
+          selectedBusiness?.locationName ||
+          selectedBusiness?.name?.split('/').pop() ||
+          businessName;
 
         return {
           id: post.name || post.id,
           content: post.summary || post.content,
-          status: normalizedStatus, 
-          statusFromApi: statusFromApi, 
+          status: normalizedStatus,
+          statusFromApi: statusFromApi,
           scheduledFor: post.createTime || post.scheduledFor || new Date().toISOString(),
           postedAt: post.createTime || post.postedAt || new Date().toISOString(),
           platform: 'google',
           media: post.media?.[0]?.sourceUrl || post.mediaUrl || null,
           businessName: postBusinessName,
           businessId: selectedBusiness?.id || null,
-          locationId: locationId
+          locationId: locationId,
         };
       });
-      
+
       // Update posts state based on whether we're loading more or refreshing
       if (loadMore) {
-        setPosts(prevPosts => [...prevPosts, ...formattedPosts]);
+        setPosts((prevPosts) => [...prevPosts, ...formattedPosts]);
       } else {
         setPosts(formattedPosts);
       }
-      
+
       console.log(`📊 ${loadMore ? 'Added' : 'Loaded'} ${formattedPosts.length} posts`);
       return formattedPosts;
     } catch (error) {
-      console.error("❌ Error fetching posts:", error);
+      console.error('❌ Error fetching posts:', error);
       setPosts([]);
       return [];
     } finally {
@@ -330,11 +370,11 @@ const Posts = () => {
     if (selectedBusiness) {
       const autoKeywords = getAutoKeywords();
       console.log('Auto keywords for selected business:', autoKeywords);
-      
-      setCurrentPost(prev => ({
+
+      setCurrentPost((prev) => ({
         ...prev,
         keywordsArray: [...autoKeywords],
-        keywords: ''
+        keywords: '',
       }));
     }
   }, [selectedBusiness]);
@@ -342,30 +382,31 @@ const Posts = () => {
   // Function to get auto keywords from selected business
   const getAutoKeywords = () => {
     const autoKeywords = [];
-    
+
     if (!selectedBusiness) return autoKeywords;
 
     // Add business name as a keyword - handle different possible properties
     let businessName = '';
-    
+
     // Get business name (only the main name, not variations)
     if (selectedBusiness.locationName) {
       businessName = selectedBusiness.locationName;
     } else if (selectedBusiness.title) {
-      businessName = typeof selectedBusiness.title === 'string' 
-        ? selectedBusiness.title 
-        : selectedBusiness.title?.name || selectedBusiness.title?.displayName || '';
+      businessName =
+        typeof selectedBusiness.title === 'string'
+          ? selectedBusiness.title
+          : selectedBusiness.title?.name || selectedBusiness.title?.displayName || '';
     } else if (selectedBusiness.name) {
       businessName = selectedBusiness.name.split('/').pop() || '';
     }
-    
+
     // Clean up and add business name if found
     if (businessName) {
       const cleanName = businessName
         .replace(/[^\w\s-]/g, '') // Keep hyphens
         .replace(/\s+/g, ' ')
         .trim();
-      
+
       if (cleanName) {
         autoKeywords.push(cleanName);
       }
@@ -373,42 +414,44 @@ const Posts = () => {
 
     // Add primary category - only add the main category, not individual words
     let categoryName = '';
-    
+
     if (selectedBusiness.primaryCategory) {
-      categoryName = typeof selectedBusiness.primaryCategory === 'string'
-        ? selectedBusiness.primaryCategory
-        : selectedBusiness.primaryCategory.displayName || selectedBusiness.primaryCategory.name || '';
+      categoryName =
+        typeof selectedBusiness.primaryCategory === 'string'
+          ? selectedBusiness.primaryCategory
+          : selectedBusiness.primaryCategory.displayName ||
+            selectedBusiness.primaryCategory.name ||
+            '';
     } else if (selectedBusiness.categories?.primaryCategory) {
       const category = selectedBusiness.categories.primaryCategory;
-      categoryName = typeof category === 'string'
-        ? category
-        : category.displayName || category.name || '';
-      
+      categoryName =
+        typeof category === 'string' ? category : category.displayName || category.name || '';
+
       if (typeof categoryName === 'object' && categoryName !== null) {
         categoryName = categoryName.name || categoryName.displayName || '';
       }
     }
-    
+
     // Clean up and add category if found
     if (categoryName) {
       const cleanCategory = categoryName
         .replace(/[^\w\s-]/g, '') // Keep hyphens
         .replace(/\s+/g, ' ')
         .trim();
-      
+
       if (cleanCategory && !autoKeywords.includes(cleanCategory)) {
         autoKeywords.push(cleanCategory);
       }
     }
-    
+
     return autoKeywords;
   };
 
   const handleKeywordChange = (e) => {
     const value = e.target.value;
-    setCurrentPost(prev => ({
+    setCurrentPost((prev) => ({
       ...prev,
-      keywords: value
+      keywords: value,
     }));
   };
 
@@ -417,10 +460,10 @@ const Posts = () => {
       e.preventDefault();
       const keyword = currentPost.keywords.trim();
       if (keyword && !currentPost.keywordsArray.includes(keyword)) {
-        setCurrentPost(prev => ({
+        setCurrentPost((prev) => ({
           ...prev,
           keywordsArray: [...prev.keywordsArray, keyword],
-          keywords: ''
+          keywords: '',
         }));
       }
     }
@@ -433,10 +476,10 @@ const Posts = () => {
       toast.error('Cannot remove auto-generated keywords');
       return;
     }
-    
-    setCurrentPost(prev => ({
+
+    setCurrentPost((prev) => ({
       ...prev,
-      keywordsArray: prev.keywordsArray.filter(keyword => keyword !== keywordToRemove)
+      keywordsArray: prev.keywordsArray.filter((keyword) => keyword !== keywordToRemove),
     }));
   };
 
@@ -455,12 +498,12 @@ const Posts = () => {
     try {
       const postType = currentPost.scheduledFor ? 'promotional' : 'engagement';
       const aiContent = await generateAIPost(selectedBusiness, currentPost.keywordsArray, postType);
-      
-      setCurrentPost(prev => ({
+
+      setCurrentPost((prev) => ({
         ...prev,
-        content: aiContent
+        content: aiContent,
       }));
-      
+
       toast.success('AI post generated successfully!');
     } catch (error) {
       console.error('Error generating AI post:', error);
@@ -472,14 +515,14 @@ const Posts = () => {
 
   const handleSavePost = async (e) => {
     e.preventDefault();
-    
+
     if (!businessDetails) {
       toast.error('No business details available');
       return;
     }
 
     setIsCreatingPost(true);
-    
+
     try {
       const token = localStorage.getItem('token');
       if (!token) {
@@ -493,24 +536,26 @@ const Posts = () => {
       if (!locationId) {
         throw new Error('Invalid location ID');
       }
-      
+
       // Include keywords in the post data if present
-      const postKeywords = currentPost.keywordsArray.length > 0 
-        ? currentPost.keywordsArray.join(', ') 
-        : undefined;
+      const postKeywords =
+        currentPost.keywordsArray.length > 0 ? currentPost.keywordsArray.join(', ') : undefined;
 
       const postData = {
         languageCode: 'en-US',
         summary: currentPost.content,
         topicType: 'STANDARD',
         ...(postKeywords && { keywords: postKeywords }),
-        ...(currentPost.media && typeof currentPost.media === 'string' && {
-          media: [{
-            mediaFormat: 'PHOTO',
-            sourceUrl: currentPost.media,
-            thumbnail: currentPost.media
-          }]
-        })
+        ...(currentPost.media &&
+          typeof currentPost.media === 'string' && {
+            media: [
+              {
+                mediaFormat: 'PHOTO',
+                sourceUrl: currentPost.media,
+                thumbnail: currentPost.media,
+              },
+            ],
+          }),
       };
 
       // Set scheduled time if applicable
@@ -518,10 +563,10 @@ const Posts = () => {
         postData.createTime = currentPost.scheduledFor.toISOString();
       }
 
-      console.log('🔄 Creating new post...', { 
-        accountId: businessDetails.accountId, 
+      console.log('🔄 Creating new post...', {
+        accountId: businessDetails.accountId,
         locationId,
-        postData 
+        postData,
       });
 
       // Ensure BACKEND_URL is defined and doesn't end with a slash
@@ -529,56 +574,57 @@ const Posts = () => {
         throw new Error('BACKEND_URL is not defined');
       }
       const baseUrl = BACKEND_URL.endsWith('/') ? BACKEND_URL.slice(0, -1) : BACKEND_URL;
-      
+
       // Get Google OAuth tokens from localStorage
       const oauthKey = `google_oauth_tokens_${authUser?.id || 'guest'}`;
       const oauthTokens = JSON.parse(localStorage.getItem(oauthKey) || '{}');
-      
+
       // Build URL with OAuth parameters
       const params = new URLSearchParams({
         ...(oauthTokens.access_token && { access_token: oauthTokens.access_token }),
         ...(oauthTokens.refresh_token && { refresh_token: oauthTokens.refresh_token }),
-        ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date })
+        ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date }),
       });
-      
+
       const url = `${baseUrl}/auth/google/accounts/${businessDetails.accountId}/locations/${locationId}/localPosts?${params}`;
-      
+
       console.log(' Sending request to:', url);
 
       const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(postData)
+        body: JSON.stringify(postData),
       });
 
       const responseData = await response.json().catch(() => ({}));
-      
+
       if (!response.ok) {
         console.error(' Server error response:', {
           status: response.status,
           statusText: response.statusText,
-          response: responseData
+          response: responseData,
         });
-        
+
         let errorMessage = responseData.error?.message || 'Failed to create post';
         if (response.status === 401) {
           errorMessage = 'Session expired. Please log in again.';
         } else if (response.status === 403) {
           errorMessage = 'You do not have permission to create posts';
         } else if (response.status === 404) {
-          errorMessage = 'The requested resource was not found. Please check the business account and location.';
+          errorMessage =
+            'The requested resource was not found. Please check the business account and location.';
         } else if (response.status >= 500) {
           errorMessage = 'Server error. Please try again later.';
         }
-        
+
         throw new Error(errorMessage);
       }
 
       console.log(' Post created successfully:', responseData);
-      
+
       // Create the new post object from the response
       const newPost = {
         id: responseData.name || `post-${Date.now()}`, // Use server-generated ID or create a temporary one
@@ -589,40 +635,42 @@ const Posts = () => {
         searchUrl: responseData.searchUrl || '',
         topicType: responseData.topicType || 'STANDARD',
         ...(currentPost.media && {
-          media: [{
-            mediaFormat: 'PHOTO',
-            sourceUrl: currentPost.media,
-            thumbnail: currentPost.media
-          }]
+          media: [
+            {
+              mediaFormat: 'PHOTO',
+              sourceUrl: currentPost.media,
+              thumbnail: currentPost.media,
+            },
+          ],
         }),
         // Add any additional fields that your posts list expects
         status: currentPost.scheduledFor ? 'scheduled' : 'published',
         scheduledFor: currentPost.scheduledFor || new Date().toISOString(),
         postedAt: new Date().toISOString(),
-        media: currentPost.media || null
+        media: currentPost.media || null,
       };
 
       // Update the UI immediately with the new post
-      setPosts(prevPosts => [newPost, ...prevPosts]);
-      
+      setPosts((prevPosts) => [newPost, ...prevPosts]);
+
       // Close the dialog and reset the form
       setShowEditor(false);
       setCurrentPost({
-        id: null, 
-        content: '', 
-        scheduledFor: null, 
-        media: null, 
-        isRecurring: false, 
-        frequency: 'daily', 
-        time: '09:00', 
+        id: null,
+        content: '',
+        scheduledFor: null,
+        media: null,
+        isRecurring: false,
+        frequency: 'daily',
+        time: '09:00',
         days: [1, 2, 3, 4, 5],
         keywords: '',
-        keywordsArray: []
+        keywordsArray: [],
       });
-      
+
       // Show success message
       toast.success('Post created successfully!');
-      
+
       // Refresh posts from server in the background to ensure consistency
       try {
         await fetchPosts(businessDetails.accountId, locationId);
@@ -630,9 +678,8 @@ const Posts = () => {
         console.error('Background refresh failed:', err);
         // Keep the optimistic update even if refresh fails
       }
-      
     } catch (error) {
-      console.error(" Error creating post:", error);
+      console.error(' Error creating post:', error);
       toast.error(`Failed to create post: ${error.message}`);
     } finally {
       setIsCreatingPost(false);
@@ -642,8 +689,9 @@ const Posts = () => {
   const handleDeletePost = async (id) => {
     try {
       setDeletingPostId(id);
-      const token = localStorage.getItem('token') || (JSON.parse(localStorage.getItem('auth')) || {}).token;
-      
+      const token =
+        localStorage.getItem('token') || (JSON.parse(localStorage.getItem('auth')) || {}).token;
+
       if (!token) {
         toast.error('Please log in to delete posts');
         setDeletingPostId(null);
@@ -651,18 +699,15 @@ const Posts = () => {
       }
 
       // Make API call to delete the post
-      await axios.delete(
-        `${BACKEND_URL}/api/post/${id}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
+      await axios.delete(`${BACKEND_URL}/api/post/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       // Update the UI by removing the deleted post from posts state
-      setPosts(posts.filter(post => post.id !== id));
-      
+      setPosts(posts.filter((post) => post.id !== id));
+
       // Refresh the page to update the UI with the latest data
       window.location.reload();
 
@@ -682,18 +727,18 @@ const Posts = () => {
       content: post.content,
       scheduledFor: post.status === 'scheduled' ? new Date(post.scheduledFor) : null,
       media: post.media || null,
-      isRecurring: false, 
+      isRecurring: false,
       frequency: 'daily',
       time: '09:00',
       days: [1, 2, 3, 4, 5],
       keywords: '',
-      keywordsArray: []
+      keywordsArray: [],
     });
     setShowEditor(true);
   };
 
   // Format scheduled posts to match the PostCard component's expected format
-  const formattedScheduledPosts = (scheduledPosts || []).map(post => ({
+  const formattedScheduledPosts = (scheduledPosts || []).map((post) => ({
     id: post._id || post.id,
     content: post.content,
     status: 'scheduled',
@@ -705,37 +750,51 @@ const Posts = () => {
     repeatType: post.repeatType,
     repeatDays: post.repeatDays,
     lastRun: post.lastRun,
-    nextRun: post.nextRun
+    nextRun: post.nextRun,
   }));
 
   // Filter posts based on active tab (excluding scheduled posts which are handled separately)
-  const filteredPosts = posts.filter(post => post.status === activeTab);
+  const filteredPosts = posts.filter((post) => post.status === activeTab);
   // Handle loading more posts
   const handleLoadMore = () => {
-    if (selectedBusiness?.accountId && selectedBusiness?.name && pagination.hasMore && !pagination.loadingMore) {
+    if (
+      selectedBusiness?.accountId &&
+      selectedBusiness?.name &&
+      pagination.hasMore &&
+      !pagination.loadingMore
+    ) {
       const locationId = selectedBusiness.name.split('/')[1];
       fetchPosts(selectedBusiness.accountId, locationId, true);
     }
   };
 
   return (
-    <div className={`min-h-screen w-full flex ${theme === 'dark' ? 'text-white bg-transparent' : 'bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'}`}>
+    <div
+      className={`min-h-screen w-full flex ${theme === 'dark' ? 'text-white bg-transparent' : 'bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'}`}
+    >
       <SideNav />
       <div className="flex-1 transition-all duration-300 ease-in-out w-full overflow-x-hidden pl-0 md:pl-4">
         <div className="w-full max-w-full px-2 sm:px-4 md:px-6">
           <div className="mb-8">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2">
-                <h1 className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Google My Business Posts</h1>
+                <h1
+                  className={`text-2xl sm:text-3xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                >
+                  Google My Business Posts
+                </h1>
                 {selectedBusiness && (
                   <p className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-                    Business: {selectedBusiness.title || selectedBusiness.locationName || selectedBusiness.name?.split('/').pop()}
+                    Business:{' '}
+                    {selectedBusiness.title ||
+                      selectedBusiness.locationName ||
+                      selectedBusiness.name?.split('/').pop()}
                   </p>
                 )}
               </div>
               <div className="flex items-center gap-4">
                 {/* Business Profile Dropdown */}
-                <BusinessProfileDropdown 
+                <BusinessProfileDropdown
                   onSelect={(businessOrBusinesses) => {
                     // Fetch posts for the selected business
                     if (Array.isArray(businessOrBusinesses)) {
@@ -765,18 +824,18 @@ const Posts = () => {
                     onClick={() => {
                       // Get auto keywords if business is selected
                       const autoKeywords = selectedBusiness ? getAutoKeywords() : [];
-                      
+
                       setCurrentPost({
-                        id: null, 
-                        content: '', 
-                        scheduledFor: null, 
-                        media: null, 
-                        isRecurring: false, 
-                        frequency: 'daily', 
-                        time: '09:00', 
+                        id: null,
+                        content: '',
+                        scheduledFor: null,
+                        media: null,
+                        isRecurring: false,
+                        frequency: 'daily',
+                        time: '09:00',
                         days: [1, 2, 3, 4, 5],
                         keywords: '',
-                        keywordsArray: [...autoKeywords] // Initialize with auto-keywords
+                        keywordsArray: [...autoKeywords], // Initialize with auto-keywords
                       });
                       setShowEditor(true);
                     }}
@@ -796,13 +855,16 @@ const Posts = () => {
                   </button>
                 </div>
                 {!isGoogleConnected && (
-                  <p className={`text-xs mt-1 text-center sm:text-right ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
-                    <a 
-                      href="/dashboard/integrations" 
+                  <p
+                    className={`text-xs mt-1 text-center sm:text-right ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}
+                  >
+                    <a
+                      href="/dashboard/integrations"
                       className={`underline transition-colors ${theme === 'dark' ? 'hover:text-red-300' : 'hover:text-red-700'}`}
                     >
                       Connect to Google
-                    </a> to create posts.
+                    </a>{' '}
+                    to create posts.
                   </p>
                 )}
               </div>
@@ -810,9 +872,11 @@ const Posts = () => {
           </div>
 
           {/* Tabs */}
-          <div className={`border-b mb-6 backdrop-blur-sm rounded-t-lg ${theme === 'dark' 
-            ? 'border-white/10 bg-[#1a1b2e]/50' 
-            : 'border-gray-200 bg-white'}`}>
+          <div
+            className={`border-b mb-6 backdrop-blur-sm rounded-t-lg ${
+              theme === 'dark' ? 'border-white/10 bg-[#1a1b2e]/50' : 'border-gray-200 bg-white'
+            }`}
+          >
             <div className="flex overflow-x-auto scrollbar-hide px-2 py-2">
               {['published', 'scheduled', 'drafts'].map((tab) => (
                 <button
@@ -821,20 +885,24 @@ const Posts = () => {
                   className={`px-4 py-2 text-sm font-medium whitespace-nowrap flex-shrink-0 rounded-lg mx-1 transition-all duration-200 ${
                     activeTab === tab
                       ? 'text-white bg-blue-600 shadow-lg'
-                      : theme === 'dark' 
-                        ? 'text-white/70 hover:text-white hover:bg-white/10' 
+                      : theme === 'dark'
+                        ? 'text-white/70 hover:text-white hover:bg-white/10'
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                  <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-                    activeTab === tab 
-                      ? 'bg-white/20 text-white' 
-                      : theme === 'dark' 
-                        ? 'bg-white/10 text-white/60' 
-                        : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {tab === 'scheduled' ? formattedScheduledPosts.length : posts.filter(p => p.status === tab).length}
+                  <span
+                    className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
+                      activeTab === tab
+                        ? 'bg-white/20 text-white'
+                        : theme === 'dark'
+                          ? 'bg-white/10 text-white/60'
+                          : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {tab === 'scheduled'
+                      ? formattedScheduledPosts.length
+                      : posts.filter((p) => p.status === tab).length}
                   </span>
                 </button>
               ))}
@@ -844,41 +912,62 @@ const Posts = () => {
           <div>
             {!isGoogleConnected ? (
               <div className="text-center py-12">
-                <div className={`bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border rounded-xl p-8 ${
-                  theme === 'dark' ? 'border-blue-500/30' : 'border-blue-300'
-                }`}>
+                <div
+                  className={`bg-gradient-to-r from-blue-600/20 to-indigo-600/20 border rounded-xl p-8 ${
+                    theme === 'dark' ? 'border-blue-500/30' : 'border-blue-300'
+                  }`}
+                >
                   <FaGoogle className="mx-auto text-5xl mb-4 text-blue-400" />
-                  <h3 className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Connect Your Google Business</h3>
-                  <p className={`mb-6 max-w-md mx-auto ${
-                    theme === 'dark' ? 'text-white/60' : 'text-gray-600'
-                  }`}>
-                    Connect your Google My Business account to create, schedule, and manage posts directly from here.
+                  <h3
+                    className={`text-xl font-semibold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                  >
+                    Connect Your Google Business
+                  </h3>
+                  <p
+                    className={`mb-6 max-w-md mx-auto ${
+                      theme === 'dark' ? 'text-white/60' : 'text-gray-600'
+                    }`}
+                  >
+                    Connect your Google My Business account to create, schedule, and manage posts
+                    directly from here.
                   </p>
-                  <a 
+                  <a
                     href="/dashboard/integrations"
                     className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                   >
                     <FaGoogle /> Connect Google Business
                   </a>
                 </div>
-              </div>            ) : isLoadingPosts ? (
+              </div>
+            ) : isLoadingPosts ? (
               <div className="text-center py-12">
-                <div className={`border rounded-xl p-8 ${
-                  theme === 'dark' ? 'bg-[#121324]/90 border-white/5' : 'bg-white border-gray-200'
-                }`}>
+                <div
+                  className={`border rounded-xl p-8 ${
+                    theme === 'dark' ? 'bg-[#121324]/90 border-white/5' : 'bg-white border-gray-200'
+                  }`}
+                >
                   <div className="flex flex-col items-center gap-4">
                     <FaSpinner className="text-4xl text-blue-400 animate-spin" />
                     <div>
-                      <h3 className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Loading Posts...</h3>
-                      <p className={theme === 'dark' ? 'text-white/60 text-sm' : 'text-gray-600 text-sm'}>
+                      <h3
+                        className={`text-lg font-medium mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                      >
+                        Loading Posts...
+                      </h3>
+                      <p
+                        className={
+                          theme === 'dark' ? 'text-white/60 text-sm' : 'text-gray-600 text-sm'
+                        }
+                      >
                         Fetching your Google My Business posts
                       </p>
                     </div>
                   </div>
                 </div>
-              </div>            ) : activeTab === 'scheduled' ? (
-              <ScheduledPosts 
-                scheduledPosts={scheduledPosts} 
+              </div>
+            ) : activeTab === 'scheduled' ? (
+              <ScheduledPosts
+                scheduledPosts={scheduledPosts}
                 loadingScheduled={loadingScheduled}
                 onEdit={handleEditPost}
                 onDelete={handleDeletePost}
@@ -906,9 +995,25 @@ const Posts = () => {
                     >
                       {pagination.loadingMore ? (
                         <>
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          <svg
+                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
                           </svg>
                           Loading...
                         </>
@@ -921,22 +1026,31 @@ const Posts = () => {
               </>
             ) : (
               <div className="col-span-full text-center py-12">
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
-                  theme === 'dark' ? 'bg-indigo-500/10' : 'bg-indigo-100'
-                }`}>
-                  <FaEdit className={`text-2xl ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`} />
+                <div
+                  className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
+                    theme === 'dark' ? 'bg-indigo-500/10' : 'bg-indigo-100'
+                  }`}
+                >
+                  <FaEdit
+                    className={`text-2xl ${theme === 'dark' ? 'text-indigo-400' : 'text-indigo-600'}`}
+                  />
                 </div>
-                <h3 className={`text-lg font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                <h3
+                  className={`text-lg font-medium mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                >
                   {activeTab === 'published' ? 'No published posts' : 'No drafts'}
                 </h3>
-                <p className={`max-w-md mx-auto ${
-                  theme === 'dark' ? 'text-white/60' : 'text-gray-600'
-                }`}>
-                  {activeTab === 'published' 
-                    ? 'Create your first post to get started.' 
+                <p
+                  className={`max-w-md mx-auto ${
+                    theme === 'dark' ? 'text-white/60' : 'text-gray-600'
+                  }`}
+                >
+                  {activeTab === 'published'
+                    ? 'Create your first post to get started.'
                     : 'Create a draft to get started.'}
                 </p>
-              </div>            )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -945,13 +1059,17 @@ const Posts = () => {
             <div className="bg-[#121324] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  <h2
+                    className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                  >
                     {currentPost.id ? 'Edit Post' : 'Create New Post'}
                   </h2>
-                  <button 
+                  <button
                     onClick={() => setShowEditor(false)}
                     className={`${
-                      theme === 'dark' ? 'text-white/60 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+                      theme === 'dark'
+                        ? 'text-white/60 hover:text-white'
+                        : 'text-gray-500 hover:text-gray-900'
                     }`}
                   >
                     ✕
@@ -960,10 +1078,19 @@ const Posts = () => {
                 <form onSubmit={handleSavePost}>
                   <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
-                      <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Post Content</label>                      <button
+                      <label
+                        className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+                      >
+                        Post Content
+                      </label>{' '}
+                      <button
                         type="button"
                         onClick={generateAIPostContent}
-                        disabled={isGeneratingAI || !selectedBusiness || currentPost.keywordsArray.length === 0}
+                        disabled={
+                          isGeneratingAI ||
+                          !selectedBusiness ||
+                          currentPost.keywordsArray.length === 0
+                        }
                         className="text-xs flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <FaRobot className="text-xs" />
@@ -972,7 +1099,7 @@ const Posts = () => {
                     </div>
                     <textarea
                       value={currentPost.content}
-                      onChange={(e) => setCurrentPost({...currentPost, content: e.target.value})}
+                      onChange={(e) => setCurrentPost({ ...currentPost, content: e.target.value })}
                       className="w-full bg-[#1a1a2e] border border-white/10 rounded-lg p-3 text-white/90 h-40 resize-none"
                       placeholder="What would you like to post?"
                       required={currentPost.keywordsArray.length === 0}
@@ -980,25 +1107,27 @@ const Posts = () => {
                     <div className="text-xs text-white/50 mt-1">
                       {currentPost.content.length}/1500 characters
                     </div>
-                    
+
                     <div className="mt-3">
-                      <label className="block text-sm font-medium mb-2">Keywords for AI Generation</label>
+                      <label className="block text-sm font-medium mb-2">
+                        Keywords for AI Generation
+                      </label>
                       <div className="flex flex-wrap gap-2 mb-2">
                         {currentPost.keywordsArray.map((keyword, index) => {
                           const autoKeywords = getAutoKeywords();
                           const isAutoKeyword = autoKeywords.includes(keyword);
-                          
+
                           return (
-                            <div 
-                              key={index} 
+                            <div
+                              key={index}
                               className={`${isAutoKeyword ? 'bg-purple-600/30 text-purple-200' : 'bg-blue-600/20 text-blue-300'} text-xs px-2 py-1 rounded-full flex items-center gap-1`}
                             >
                               {keyword}
                               {isAutoKeyword ? (
                                 <span className="text-[10px] opacity-70 ml-0.5">(auto)</span>
                               ) : (
-                                <button 
-                                  type="button" 
+                                <button
+                                  type="button"
                                   onClick={() => removeKeyword(keyword)}
                                   className="text-white/60 hover:text-white"
                                 >
@@ -1033,13 +1162,13 @@ const Posts = () => {
                         <p className="text-sm">Click to upload or drag and drop</p>
                         <p className="text-xs text-white/50 mt-1">JPG, PNG up to 10MB</p>
                       </div>
-                      <input 
-                        type="file" 
-                        className="hidden" 
+                      <input
+                        type="file"
+                        className="hidden"
                         accept="image/*"
                         onChange={(e) => {
                           if (e.target.files && e.target.files[0]) {
-                            setCurrentPost({...currentPost, media: e.target.files[0]});
+                            setCurrentPost({ ...currentPost, media: e.target.files[0] });
                           }
                         }}
                       />
@@ -1058,7 +1187,9 @@ const Posts = () => {
                               </div>
                               <DatePicker
                                 selected={currentPost.scheduledFor}
-                                onChange={(date) => setCurrentPost({...currentPost, scheduledFor: date})}
+                                onChange={(date) =>
+                                  setCurrentPost({ ...currentPost, scheduledFor: date })
+                                }
                                 showTimeSelect
                                 timeFormat="HH:mm"
                                 timeIntervals={15}
@@ -1072,13 +1203,13 @@ const Posts = () => {
 
                         <div>
                           <label className="flex items-center gap-2 mb-2">
-                            <input 
-                              type="checkbox" 
+                            <input
+                              type="checkbox"
                               checked={currentPost.isRecurring}
                               onChange={(e) => {
                                 setCurrentPost({
-                                  ...currentPost, 
-                                  isRecurring: e.target.checked
+                                  ...currentPost,
+                                  isRecurring: e.target.checked,
                                 });
                               }}
                               className="rounded border-white/20"
@@ -1092,7 +1223,9 @@ const Posts = () => {
                                 <label className="block text-sm font-medium mb-1">Frequency</label>
                                 <select
                                   value={currentPost.frequency}
-                                  onChange={(e) => setCurrentPost({...currentPost, frequency: e.target.value})}
+                                  onChange={(e) =>
+                                    setCurrentPost({ ...currentPost, frequency: e.target.value })
+                                  }
                                   className="w-full bg-[#1a1a2e] border border-white/10 rounded-lg px-3 py-2 text-white/90"
                                 >
                                   <option value="daily">Daily</option>
@@ -1110,7 +1243,9 @@ const Posts = () => {
                                   <input
                                     type="time"
                                     value={currentPost.time}
-                                    onChange={(e) => setCurrentPost({...currentPost, time: e.target.value})}
+                                    onChange={(e) =>
+                                      setCurrentPost({ ...currentPost, time: e.target.value })
+                                    }
                                     className="w-full bg-[#1a1a2e] border border-white/10 rounded-lg pl-10 pr-3 py-2 text-white/90"
                                   />
                                 </div>
@@ -1118,36 +1253,40 @@ const Posts = () => {
 
                               {currentPost.frequency === 'weekly' && (
                                 <div>
-                                  <label className="block text-sm font-medium mb-1">Days of the week</label>
+                                  <label className="block text-sm font-medium mb-1">
+                                    Days of the week
+                                  </label>
                                   <div className="flex flex-wrap gap-2">
-                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
-                                      <button
-                                        key={day}
-                                        type="button"
-                                        onClick={() => {
-                                          const days = [...currentPost.days];
-                                          const dayIndex = days.indexOf(index);
-                                          
-                                          if (dayIndex === -1) {
-                                            days.push(index);
-                                          } else {
-                                            days.splice(dayIndex, 1);
-                                          }
-                                          
-                                          setCurrentPost({
-                                            ...currentPost,
-                                            days: days.sort((a, b) => a - b)
-                                          });
-                                        }}
-                                        className={`px-3 py-1 text-sm rounded-full ${
-                                          currentPost.days.includes(index)
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-white/5 text-white/60 hover:bg-white/10'
-                                        }`}
-                                      >
-                                        {day}
-                                      </button>
-                                    ))}
+                                    {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(
+                                      (day, index) => (
+                                        <button
+                                          key={day}
+                                          type="button"
+                                          onClick={() => {
+                                            const days = [...currentPost.days];
+                                            const dayIndex = days.indexOf(index);
+
+                                            if (dayIndex === -1) {
+                                              days.push(index);
+                                            } else {
+                                              days.splice(dayIndex, 1);
+                                            }
+
+                                            setCurrentPost({
+                                              ...currentPost,
+                                              days: days.sort((a, b) => a - b),
+                                            });
+                                          }}
+                                          className={`px-3 py-1 text-sm rounded-full ${
+                                            currentPost.days.includes(index)
+                                              ? 'bg-blue-600 text-white'
+                                              : 'bg-white/5 text-white/60 hover:bg-white/10'
+                                          }`}
+                                        >
+                                          {day}
+                                        </button>
+                                      )
+                                    )}
                                   </div>
                                 </div>
                               )}
@@ -1168,14 +1307,18 @@ const Posts = () => {
                     </button>
                     <button
                       type="submit"
-                      disabled={isCreatingPost || (currentPost.keywordsArray.length === 0 && !currentPost.content)}
+                      disabled={
+                        isCreatingPost ||
+                        (currentPost.keywordsArray.length === 0 && !currentPost.content)
+                      }
                       className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                     >
                       {isCreatingPost && <FaSpinner className="animate-spin" />}
-                      {isCreatingPost 
-                        ? 'Creating...' 
-                        : currentPost.id ? 'Update Post' : 'Schedule Post'
-                      }
+                      {isCreatingPost
+                        ? 'Creating...'
+                        : currentPost.id
+                          ? 'Update Post'
+                          : 'Schedule Post'}
                     </button>
                   </div>
                 </form>

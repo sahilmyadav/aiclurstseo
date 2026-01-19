@@ -1,13 +1,14 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
-import { useTheme } from "../../context/ThemeContext";
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
+import { getApiBaseUrl } from '../../config/api';
+import { useTheme } from '../../context/ThemeContext';
 
 const ResetPassword = () => {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState({ type: null, text: "" });
+  const [message, setMessage] = useState({ type: null, text: '' });
   const [isValidToken, setIsValidToken] = useState(false);
   const { theme } = useTheme();
   const [searchParams] = useSearchParams();
@@ -22,7 +23,7 @@ const ResetPassword = () => {
       }
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/validate-reset-token`, {
+        const response = await fetch(`${getApiBaseUrl()}/api/auth/validate-reset-token`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -31,7 +32,7 @@ const ResetPassword = () => {
         });
 
         const data = await response.json();
-        
+
         if (!response.ok) {
           throw new Error(data.message || 'Invalid or expired reset link');
         }
@@ -47,7 +48,7 @@ const ResetPassword = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       setMessage({ type: 'error', text: 'Passwords do not match' });
       return;
@@ -59,10 +60,10 @@ const ResetPassword = () => {
     }
 
     setIsLoading(true);
-    setMessage({ type: null, text: "" });
+    setMessage({ type: null, text: '' });
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_BASE}/api/auth/reset-password`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/auth/reset-password`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,11 +72,11 @@ const ResetPassword = () => {
       });
 
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || 'Failed to reset password');
       }
-      
+
       toast.success('Password reset successful! Please login with your new password');
       navigate('/login');
     } catch (error) {
@@ -87,21 +88,25 @@ const ResetPassword = () => {
 
   if (!isValidToken && message.type === 'error') {
     return (
-      <div className={`min-h-screen flex items-center justify-center p-4 ${
-        theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
-      }`}>
-        <div className={`w-full max-w-md p-8 rounded-2xl shadow-xl ${
-          theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-        }`}>
+      <div
+        className={`min-h-screen flex items-center justify-center p-4 ${
+          theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+        }`}
+      >
+        <div
+          className={`w-full max-w-md p-8 rounded-2xl shadow-xl ${
+            theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+          }`}
+        >
           <div className="text-center">
-            <h2 className={`text-2xl font-bold mb-4 ${
-              theme === 'dark' ? 'text-white' : 'text-gray-900'
-            }`}>
+            <h2
+              className={`text-2xl font-bold mb-4 ${
+                theme === 'dark' ? 'text-white' : 'text-gray-900'
+              }`}
+            >
               Invalid Reset Link
             </h2>
-            <p className={`mb-6 ${
-              theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-            }`}>
+            <p className={`mb-6 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
               The password reset link is invalid or has expired. Please request a new one.
             </p>
             <Link
@@ -121,31 +126,37 @@ const ResetPassword = () => {
   }
 
   return (
-    <div className={`min-h-screen flex items-center justify-center p-4 ${
-      theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
-    }`}>
-      <div className={`w-full max-w-md p-8 rounded-2xl shadow-xl ${
-        theme === 'dark' ? 'bg-gray-800' : 'bg-white'
-      }`}>
+    <div
+      className={`min-h-screen flex items-center justify-center p-4 ${
+        theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'
+      }`}
+    >
+      <div
+        className={`w-full max-w-md p-8 rounded-2xl shadow-xl ${
+          theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+        }`}
+      >
         <div className="text-center mb-8">
-          <h2 className={`text-2xl font-bold mb-2 ${
-            theme === 'dark' ? 'text-white' : 'text-gray-900'
-          }`}>
+          <h2
+            className={`text-2xl font-bold mb-2 ${
+              theme === 'dark' ? 'text-white' : 'text-gray-900'
+            }`}
+          >
             Reset Your Password
           </h2>
-          <p className={`text-sm ${
-            theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
-          }`}>
+          <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
             Create a new password for your account
           </p>
         </div>
 
         {message.text && (
-          <div className={`mb-6 p-3 rounded-md text-sm ${
-            message.type === 'error' 
-              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' 
-              : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-          }`}>
+          <div
+            className={`mb-6 p-3 rounded-md text-sm ${
+              message.type === 'error'
+                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+            }`}
+          >
             {message.text}
           </div>
         )}
@@ -217,14 +228,14 @@ const ResetPassword = () => {
         </form>
 
         <div className="mt-6 text-center">
-          <p className={`text-sm ${
-            theme === 'dark' ? 'text-gray-400' : 'text-gray-600'
-          }`}>
+          <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}`}>
             Remember your password?{' '}
             <Link
               to="/login"
               className={`font-medium ${
-                theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-500'
+                theme === 'dark'
+                  ? 'text-purple-400 hover:text-purple-300'
+                  : 'text-purple-600 hover:text-purple-500'
               }`}
             >
               Back to Login

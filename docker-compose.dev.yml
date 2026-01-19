@@ -1,0 +1,71 @@
+version: '3.8'
+
+# Development Docker Compose - Use this for local development
+# Run: docker-compose -f docker-compose.dev.yml up
+
+services:
+  # MongoDB Database (Development)
+  mongodb:
+    image: mongo:7.0
+    container_name: clurst-mongodb-dev
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_DATABASE: clurst
+    volumes:
+      - mongodb_data_dev:/data/db
+    ports:
+      - '27017:27017'
+    networks:
+      - clurst-network-dev
+
+  # Backend API (Development with hot reload)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: clurst-backend-dev
+    restart: unless-stopped
+    depends_on:
+      - mongodb
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://mongodb:27017/clurst
+      MONGODB_DB: clurst
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - '8000:8000'
+    networks:
+      - clurst-network-dev
+
+  # Frontend (Development with Vite hot reload)
+  frontend:
+    build:
+      context: ./frontent
+      dockerfile: Dockerfile.dev
+    container_name: clurst-frontend-dev
+    restart: unless-stopped
+    depends_on:
+      - backend
+    env_file:
+      - ./frontent/.env
+    environment:
+      VITE_API_BASE: http://localhost:8000
+    volumes:
+      - ./frontent:/app
+      - /app/node_modules
+    ports:
+      - '5173:5173'
+    networks:
+      - clurst-network-dev
+
+networks:
+  clurst-network-dev:
+    driver: bridge
+
+volumes:
+  mongodb_data_dev:
+    driver: local

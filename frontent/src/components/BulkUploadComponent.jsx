@@ -1,27 +1,20 @@
-import React, { useState, useEffect } from "react";
-import { toast } from "sonner";
-import {
-  FaUpload,
-  FaFileCsv,
-  FaSpinner,
-  FaCheckCircle,
-  FaTimesCircle,
-} from "react-icons/fa";
-import { useAuth } from "./context/AuthContext";
-import { useGoogleBusiness } from "./context/GoogleBusinessContext";
-import PropTypes from "prop-types";
+import PropTypes from 'prop-types';
+import { useEffect, useState } from 'react';
+import { FaCheckCircle, FaFileCsv, FaSpinner, FaUpload } from 'react-icons/fa';
+import { toast } from 'sonner';
+import { getApiBaseUrl } from '../config/api';
+import { useAuth } from './context/AuthContext';
+import { useGoogleBusiness } from './context/GoogleBusinessContext';
 
 const BulkUploadComponent = ({ onUploadComplete }) => {
   const { token } = useAuth();
   const { businesses, loading: businessesLoading } = useGoogleBusiness();
   const [isUploading, setIsUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
-  const [selectedBusinessId, setSelectedBusinessId] = useState("");
+  const [selectedBusinessId, setSelectedBusinessId] = useState('');
   const [uploadResult, setUploadResult] = useState(null);
   const [validationErrors, setValidationErrors] = useState([]);
-  const BACKEND_URL =
-    import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") ||
-    "http://localhost:8000";
+  const BACKEND_URL = getApiBaseUrl();
 
   useEffect(() => {
     if (businesses && businesses.length > 0 && !selectedBusinessId) {
@@ -40,19 +33,19 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
 
     // Validate file type
     const validTypes = [
-      "text/csv",
-      "application/vnd.ms-excel",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      'text/csv',
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     ];
-    if (!validTypes.some((type) => file.type.includes(type.split("/")[1]))) {
-      toast.error("Please upload a valid CSV or Excel file");
+    if (!validTypes.some((type) => file.type.includes(type.split('/')[1]))) {
+      toast.error('Please upload a valid CSV or Excel file');
       return;
     }
 
     // Validate file size (max 5MB)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      toast.error("File size should be less than 5MB");
+      toast.error('File size should be less than 5MB');
       return;
     }
 
@@ -64,19 +57,17 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
       const reader = new FileReader();
       reader.onload = (e) => {
         const content = e.target.result;
-        const lines = content.split("\n");
-        const headers = lines[0].split(",").map((h) => h.trim().toLowerCase());
+        const lines = content.split('\n');
+        const headers = lines[0].split(',').map((h) => h.trim().toLowerCase());
 
-        const requiredFields = ["phone"];
+        const requiredFields = ['phone'];
 
-        const missingFields = requiredFields.filter(
-          (field) => !headers.includes(field)
-        );
+        const missingFields = requiredFields.filter((field) => !headers.includes(field));
 
         if (missingFields.length > 0) {
           resolve({
             isValid: false,
-            error: `Missing required fields: ${missingFields.join(", ")}`,
+            error: `Missing required fields: ${missingFields.join(', ')}`,
           });
           return;
         }
@@ -88,19 +79,17 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
         dataRows.forEach((row, index) => {
           if (!row.trim()) return;
 
-          const values = row.split(",").map((v) => v.trim());
+          const values = row.split(',').map((v) => v.trim());
           const rowData = {};
           headers.forEach((header, i) => {
-            rowData[header] = values[i] || "";
+            rowData[header] = values[i] || '';
           });
 
           if (rowData.phone) {
             const phoneRegex = /^\+?[1-9]\d{9,14}$/;
-            const phoneNumber = rowData.phone.replace(/[^\d+]/g, "");
+            const phoneNumber = rowData.phone.replace(/[^\d+]/g, '');
             if (!phoneRegex.test(phoneNumber)) {
-              errors.push(
-                `Row ${index + 2}: Invalid phone number (${rowData.phone})`
-              );
+              errors.push(`Row ${index + 2}: Invalid phone number (${rowData.phone})`);
             }
           }
         });
@@ -116,12 +105,12 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      toast.error("Please select a file first");
+      toast.error('Please select a file first');
       return;
     }
 
     if (!selectedBusinessId) {
-      toast.error("Please select a business");
+      toast.error('Please select a business');
       return;
     }
 
@@ -131,43 +120,37 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
       if (validation.errors) {
         setValidationErrors(validation.errors);
       }
-      toast.error(validation.error || "Invalid file content");
+      toast.error(validation.error || 'Invalid file content');
       return;
     }
 
     const formData = new FormData();
-    formData.append("file", selectedFile);
+    formData.append('file', selectedFile);
     formData.append(
-      "businessName",
-      businesses.find((b) => b.id === selectedBusinessId)?.title ||
-        "Selected Business"
+      'businessName',
+      businesses.find((b) => b.id === selectedBusinessId)?.title || 'Selected Business'
     );
 
     setIsUploading(true);
     setValidationErrors([]);
 
     try {
-      const response = await fetch(
-        `${BACKEND_URL}/api/invitations/sms/upload`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          body: formData,
-        }
-      );
+      const response = await fetch(`${BACKEND_URL}/api/invitations/sms/upload`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        body: formData,
+      });
 
       const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to process bulk upload");
+        throw new Error(result.error || 'Failed to process bulk upload');
       }
 
       setUploadResult(result);
-      toast.success(
-        `Successfully sent ${result.successCount} SMS invitation(s)`
-      );
+      toast.success(`Successfully sent ${result.successCount} SMS invitation(s)`);
 
       if (onUploadComplete) {
         onUploadComplete(result);
@@ -177,8 +160,8 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
         toast.warning(`${result.failedCount} invitations failed to send`);
       }
     } catch (error) {
-      console.error("Error uploading file:", error);
-      toast.error(error.message || "Failed to upload file");
+      console.error('Error uploading file:', error);
+      toast.error(error.message || 'Failed to upload file');
 
       if (error.errors) {
         setValidationErrors(error.errors);
@@ -189,17 +172,15 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
   };
 
   const handleDownloadTemplate = () => {
-    const csvContent = [
-      "name,phone",
-      "John Doe,+1234567890",
-      "Jane Smith,+919876543210",
-    ].join("\n");
+    const csvContent = ['name,phone', 'John Doe,+1234567890', 'Jane Smith,+919876543210'].join(
+      '\n'
+    );
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "sms-template.csv");
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'sms-template.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -218,7 +199,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
       <div className="text-center p-8 bg-gray-800 rounded-lg border border-gray-700">
         <p className="text-gray-300 mb-4">No Google Business accounts found.</p>
         <button
-          onClick={() => window.open("/dashboard/integrations", "_blank")}
+          onClick={() => window.open('/dashboard/integrations', '_blank')}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
         >
           Connect Google Business
@@ -229,16 +210,11 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
 
   return (
     <div className="bg-gray-800 p-6 rounded-lg shadow mb-4 border border-gray-700">
-      <h3 className="text-lg font-medium text-white mb-4">
-        Bulk Upload SMS Contacts
-      </h3>
+      <h3 className="text-lg font-medium text-white mb-4">Bulk Upload SMS Contacts</h3>
 
       <div className="space-y-4">
         <div>
-          <label
-            htmlFor="business-select"
-            className="block text-sm font-medium text-gray-300 mb-1"
-          >
+          <label htmlFor="business-select" className="block text-sm font-medium text-gray-300 mb-1">
             Select Business
           </label>
           <select
@@ -251,7 +227,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
             <option value="">Select a business</option>
             {businesses.map((business) => (
               <option key={business.id} value={business.id}>
-                {business.title || business.locationName || "Business"}
+                {business.title || business.locationName || 'Business'}
               </option>
             ))}
           </select>
@@ -281,7 +257,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
             <p className="text-xs text-gray-500">
               {selectedFile
                 ? `Selected: ${selectedFile.name}`
-                : "CSV up to 5MB with columns: name,phone"}
+                : 'CSV up to 5MB with columns: name,phone'}
             </p>
             <p
               className="text-xs text-indigo-400 cursor-pointer hover:text-indigo-300 mt-2"
@@ -294,9 +270,7 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
 
         {validationErrors.length > 0 && (
           <div className="mt-4 p-4 bg-red-900/20 border border-red-700 rounded-md">
-            <p className="text-sm font-semibold text-red-400 mb-2">
-              Validation Errors:
-            </p>
+            <p className="text-sm font-semibold text-red-400 mb-2">Validation Errors:</p>
             <ul className="text-xs text-red-300 space-y-1">
               {validationErrors.map((error, idx) => (
                 <li key={idx}>• {error}</li>
@@ -310,10 +284,9 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
             <div className="flex items-center">
               <FaCheckCircle className="h-5 w-5 text-green-400 mr-2" />
               <p className="text-sm text-green-300">
-                Successfully sent {uploadResult.successCount} out of{" "}
-                {uploadResult.totalCount} SMS invitations.
-                {uploadResult.failedCount > 0 &&
-                  ` ${uploadResult.failedCount} failed.`}
+                Successfully sent {uploadResult.successCount} out of {uploadResult.totalCount} SMS
+                invitations.
+                {uploadResult.failedCount > 0 && ` ${uploadResult.failedCount} failed.`}
               </p>
             </div>
           </div>
@@ -334,8 +307,8 @@ const BulkUploadComponent = ({ onUploadComplete }) => {
             disabled={!selectedFile || !selectedBusinessId || isUploading}
             className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
               !selectedFile || !selectedBusinessId || isUploading
-                ? "bg-gray-600 cursor-not-allowed"
-                : "bg-indigo-600 hover:bg-indigo-700"
+                ? 'bg-gray-600 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700'
             } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500`}
           >
             {isUploading ? (

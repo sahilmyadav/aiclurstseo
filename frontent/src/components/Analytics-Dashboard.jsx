@@ -1,23 +1,32 @@
 // frontent/src/components/Analytics-Dashboard.jsx
-import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import axios from 'axios';
-import fetchWithAuth from '../utils/fetchWithAuth';
-import { format, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, subDays, differenceInDays } from 'date-fns';
-import { useAuth } from './context/AuthContext';
+import { format, isSameDay, startOfMonth, subDays } from 'date-fns';
+import React, { useEffect, useState } from 'react';
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import { getApiBaseUrl } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from './context/AuthContext';
 
 // UI Components
 const Card = ({ className, ...props }) => {
   const { theme } = useTheme();
   return (
-    <div 
+    <div
       className={`rounded-lg border shadow-sm ${
-        theme === 'dark' 
-          ? 'bg-[#1a1b2e] border-gray-700' 
-          : 'bg-white border-gray-200'
-      } ${className}`} 
-      {...props} 
+        theme === 'dark' ? 'bg-[#1a1b2e] border-gray-700' : 'bg-white border-gray-200'
+      } ${className}`}
+      {...props}
     />
   );
 };
@@ -38,46 +47,43 @@ const CardContent = ({ className, ...props }) => (
   <div className={`p-6 pt-0 ${className}`} {...props} />
 );
 
-const Button = ({ 
-  variant = 'default', 
-  size = 'default', 
-  className = '', 
-  children, 
-  ...props 
-}) => {
+const Button = ({ variant = 'default', size = 'default', className = '', children, ...props }) => {
   const { theme } = useTheme();
-  const baseStyles = 'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
-  
+  const baseStyles =
+    'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none';
+
   const variants = {
-    default: theme === 'dark' 
-      ? 'bg-blue-600 text-white hover:bg-blue-700' 
-      : 'bg-blue-600 text-white hover:bg-blue-700',
-    outline: theme === 'dark'
-      ? 'border border-gray-600 bg-transparent hover:bg-gray-800 text-white hover:text-white'
-      : 'border border-gray-300 bg-transparent hover:bg-gray-100 text-gray-700 hover:text-gray-900',
-    secondary: theme === 'dark'
-      ? 'bg-gray-700 text-white hover:bg-gray-600'
-      : 'bg-gray-100 text-gray-900 hover:bg-gray-200',
-    ghost: theme === 'dark'
-      ? 'hover:bg-gray-800 text-white hover:text-white'
-      : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900',
-    link: theme === 'dark'
-      ? 'text-blue-400 hover:text-blue-300 hover:underline'
-      : 'text-blue-600 hover:text-blue-800 hover:underline'
+    default:
+      theme === 'dark'
+        ? 'bg-blue-600 text-white hover:bg-blue-700'
+        : 'bg-blue-600 text-white hover:bg-blue-700',
+    outline:
+      theme === 'dark'
+        ? 'border border-gray-600 bg-transparent hover:bg-gray-800 text-white hover:text-white'
+        : 'border border-gray-300 bg-transparent hover:bg-gray-100 text-gray-700 hover:text-gray-900',
+    secondary:
+      theme === 'dark'
+        ? 'bg-gray-700 text-white hover:bg-gray-600'
+        : 'bg-gray-100 text-gray-900 hover:bg-gray-200',
+    ghost:
+      theme === 'dark'
+        ? 'hover:bg-gray-800 text-white hover:text-white'
+        : 'hover:bg-gray-100 text-gray-700 hover:text-gray-900',
+    link:
+      theme === 'dark'
+        ? 'text-blue-400 hover:text-blue-300 hover:underline'
+        : 'text-blue-600 hover:text-blue-800 hover:underline',
   };
 
   const sizes = {
     default: 'h-10 py-2 px-4',
     sm: 'h-9 px-3 rounded-md',
     lg: 'h-11 px-8 rounded-md',
-    icon: 'h-10 w-10'
+    icon: 'h-10 w-10',
   };
 
   return (
-    <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-      {...props}
-    >
+    <button className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
       {children}
     </button>
   );
@@ -87,7 +93,7 @@ const Popover = ({ children }) => {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
-      {React.Children.map(children, child => {
+      {React.Children.map(children, (child) => {
         if (child.type === PopoverTrigger) {
           return React.cloneElement(child, { open, setOpen });
         }
@@ -102,7 +108,7 @@ const Popover = ({ children }) => {
 
 const PopoverTrigger = ({ children, open, setOpen }) => {
   return React.cloneElement(children, {
-    onClick: () => setOpen(!open)
+    onClick: () => setOpen(!open),
   });
 };
 
@@ -136,7 +142,7 @@ const PopoverContent = ({ children, className = '', setOpen, ...props }) => {
 const Calendar = ({ selected, onSelect, numberOfMonths = 1, className = '' }) => {
   const today = new Date();
   const [month, setMonth] = useState(selected?.from || today);
-  
+
   const daysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
   };
@@ -145,21 +151,21 @@ const Calendar = ({ selected, onSelect, numberOfMonths = 1, className = '' }) =>
     const days = [];
     const daysCount = daysInMonth(date);
     const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-    
+
     // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(<div key={`empty-${i}`} className="h-10"></div>);
     }
-    
+
     // Add days of the month
     for (let i = 1; i <= daysCount; i++) {
       const day = new Date(date.getFullYear(), date.getMonth(), i);
-      const isSelected = selected?.from && isSameDay(day, selected.from) || 
-                        selected?.to && isSameDay(day, selected.to);
-      const isInRange = selected?.from && selected?.to && 
-                       day > selected.from && day < selected.to;
+      const isSelected =
+        (selected?.from && isSameDay(day, selected.from)) ||
+        (selected?.to && isSameDay(day, selected.to));
+      const isInRange = selected?.from && selected?.to && day > selected.from && day < selected.to;
       const isToday = isSameDay(day, today);
-      
+
       days.push(
         <button
           key={i}
@@ -175,14 +181,14 @@ const Calendar = ({ selected, onSelect, numberOfMonths = 1, className = '' }) =>
         </button>
       );
     }
-    
+
     return days;
   };
 
   return (
     <div className={`bg-white p-4 rounded-lg shadow-lg ${className}`}>
       <div className="flex justify-between items-center mb-4">
-        <button 
+        <button
           onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1))}
           className="p-2 hover:bg-gray-100 rounded"
         >
@@ -191,7 +197,7 @@ const Calendar = ({ selected, onSelect, numberOfMonths = 1, className = '' }) =>
         <div className="font-medium">
           {month.toLocaleString('default', { month: 'long', year: 'numeric' })}
         </div>
-        <button 
+        <button
           onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() + 1))}
           className="p-2 hover:bg-gray-100 rounded"
         >
@@ -199,7 +205,7 @@ const Calendar = ({ selected, onSelect, numberOfMonths = 1, className = '' }) =>
         </button>
       </div>
       <div className="grid grid-cols-7 gap-1">
-        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+        {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day) => (
           <div key={day} className="text-center text-sm font-medium text-gray-500">
             {day}
           </div>
@@ -324,15 +330,15 @@ const ArrowDown = (props) => (
 const AnalyticsDashboard = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
   const [loading, setLoading] = useState(true);
-  const {token} = useAuth() 
+  const { token } = useAuth();
   const [dateRange, setDateRange] = useState({
     from: startOfMonth(new Date()),
-    to: new Date()
+    to: new Date(),
   });
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [tempDateRange, setTempDateRange] = useState({
     from: startOfMonth(new Date()),
-    to: new Date()
+    to: new Date(),
   });
 
   useEffect(() => {
@@ -344,19 +350,19 @@ const AnalyticsDashboard = () => {
       setLoading(true);
       console.log('Fetching analytics data...', {
         startDate: dateRange.from?.toISOString(),
-        endDate: dateRange.to?.toISOString()
+        endDate: dateRange.to?.toISOString(),
       });
-      
-      const { data } = await axios.get(`${import.meta.env.VITE_API_BASE || ''}/api/analytics/transactions`, {
+
+      const { data } = await axios.get(`${getApiBaseUrl()}/api/analytics/transactions`, {
         params: {
           startDate: dateRange.from?.toISOString(),
-          endDate: dateRange.to?.toISOString()
+          endDate: dateRange.to?.toISOString(),
         },
         headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
-        withCredentials: true
+        withCredentials: true,
       });
       console.log('Analytics data received:', data);
       setAnalyticsData(data.data);
@@ -380,7 +386,7 @@ const AnalyticsDashboard = () => {
 
   const handleStartDateChange = (e) => {
     const newDate = new Date(e.target.value);
-    setTempDateRange(prev => {
+    setTempDateRange((prev) => {
       const updated = { ...prev, from: newDate };
       if (newDate > prev.to) {
         updated.to = new Date(newDate);
@@ -391,7 +397,7 @@ const AnalyticsDashboard = () => {
 
   const handleEndDateChange = (e) => {
     const newDate = new Date(e.target.value);
-    setTempDateRange(prev => ({ ...prev, to: newDate }));
+    setTempDateRange((prev) => ({ ...prev, to: newDate }));
   };
 
   useEffect(() => {
@@ -408,7 +414,7 @@ const AnalyticsDashboard = () => {
     const today = new Date();
     setDateRange({
       from: startOfMonth(today),
-      to: today
+      to: today,
     });
   };
 
@@ -416,7 +422,7 @@ const AnalyticsDashboard = () => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      maximumFractionDigits: 0
+      maximumFractionDigits: 0,
     }).format(amount);
   };
 
@@ -438,21 +444,29 @@ const AnalyticsDashboard = () => {
             Track your transaction metrics and performance
           </p>
         </div>
-        
+
         {/* Date Controls */}
         <div className="flex flex-col space-y-4">
           {/* Quick Date Buttons */}
           <div className="flex flex-wrap gap-2">
-            <Button 
-              variant={dateRange.from?.getTime() === startOfMonth(new Date()).getTime() ? "default" : "outline"}
+            <Button
+              variant={
+                dateRange.from?.getTime() === startOfMonth(new Date()).getTime()
+                  ? 'default'
+                  : 'outline'
+              }
               onClick={getThisMonth}
               size="sm"
               className="flex-1 sm:flex-none text-xs sm:text-sm"
             >
               This Month
             </Button>
-            <Button 
-              variant={dateRange.from?.getTime() === subDays(new Date(), 30).getTime() ? "default" : "outline"}
+            <Button
+              variant={
+                dateRange.from?.getTime() === subDays(new Date(), 30).getTime()
+                  ? 'default'
+                  : 'outline'
+              }
               onClick={getLast30Days}
               size="sm"
               className="flex-1 sm:flex-none text-xs sm:text-sm"
@@ -460,7 +474,7 @@ const AnalyticsDashboard = () => {
               Last 30 Days
             </Button>
           </div>
-          
+
           {/* Date Range Picker */}
           <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
             <div className="w-full">
@@ -471,10 +485,10 @@ const AnalyticsDashboard = () => {
                   value={format(dateRange.from, 'yyyy-MM-dd')}
                   onChange={(e) => {
                     const newDate = new Date(e.target.value);
-                    setDateRange(prev => ({
+                    setDateRange((prev) => ({
                       ...prev,
                       from: newDate,
-                      to: newDate > prev.to ? newDate : prev.to
+                      to: newDate > prev.to ? newDate : prev.to,
                     }));
                   }}
                   max={format(dateRange.to, 'yyyy-MM-dd')}
@@ -482,7 +496,7 @@ const AnalyticsDashboard = () => {
                 />
               </div>
             </div>
-            
+
             <div className="w-full">
               <label className="block text-xs text-gray-500 mb-1">End Date</label>
               <div className="relative">
@@ -493,10 +507,10 @@ const AnalyticsDashboard = () => {
                   max={format(new Date(), 'yyyy-MM-dd')}
                   onChange={(e) => {
                     const newDate = new Date(e.target.value);
-                    setDateRange(prev => ({
+                    setDateRange((prev) => ({
                       ...prev,
                       to: newDate,
-                      from: newDate < prev.from ? newDate : prev.from
+                      from: newDate < prev.from ? newDate : prev.from,
                     }));
                   }}
                   className="w-full p-2 border rounded text-sm bg-white text-gray-900 border-gray-300 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
@@ -519,7 +533,8 @@ const AnalyticsDashboard = () => {
               {formatCurrency(analyticsData?.totalAmountInINR || 0)}
             </div>
             <p className="text-xs text-gray-500">
-              ${(analyticsData?.totalAmountInUSD || 0)} • {analyticsData?.transactionCount || 0} transactions
+              ${analyticsData?.totalAmountInUSD || 0} • {analyticsData?.transactionCount || 0}{' '}
+              transactions
             </p>
           </CardContent>
         </Card>
@@ -536,9 +551,7 @@ const AnalyticsDashboard = () => {
                   : 0
               )}
             </div>
-            <p className="text-xs text-gray-500">
-              Per transaction
-            </p>
+            <p className="text-xs text-gray-500">Per transaction</p>
           </CardContent>
         </Card>
         <Card>
@@ -555,9 +568,7 @@ const AnalyticsDashboard = () => {
               )}
               {Math.abs(analyticsData?.inrTrend || 0)}%
             </div>
-            <p className="text-xs text-gray-500">
-              vs previous period
-            </p>
+            <p className="text-xs text-gray-500">vs previous period</p>
           </CardContent>
         </Card>
       </div>
@@ -581,27 +592,27 @@ const AnalyticsDashboard = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(date) => format(new Date(date), 'MMM dd')} 
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(date) => format(new Date(date), 'MMM dd')}
                   tick={{ fontSize: 12 }}
                 />
-                <YAxis 
-                  tickFormatter={(value) => `₹${value}`}
-                  tick={{ fontSize: 12 }}
-                />
-                <Tooltip 
-                  formatter={(value, name) => [name === 'amountInINR' ? `₹${value}` : value, name === 'amountInINR' ? 'Revenue' : 'Count']}
+                <YAxis tickFormatter={(value) => `₹${value}`} tick={{ fontSize: 12 }} />
+                <Tooltip
+                  formatter={(value, name) => [
+                    name === 'amountInINR' ? `₹${value}` : value,
+                    name === 'amountInINR' ? 'Revenue' : 'Count',
+                  ]}
                   labelFormatter={(label) => `Date: ${format(new Date(label), 'PPP')}`}
                 />
                 <Legend />
-                <Area 
-                  type="monotone" 
-                  dataKey="amountInINR" 
+                <Area
+                  type="monotone"
+                  dataKey="amountInINR"
                   name="Revenue"
-                  stroke="#8884d8" 
-                  fill="#8884d8" 
-                  fillOpacity={0.3} 
+                  stroke="#8884d8"
+                  fill="#8884d8"
+                  fillOpacity={0.3}
                   strokeWidth={2}
                 />
               </AreaChart>
@@ -626,25 +637,18 @@ const AnalyticsDashboard = () => {
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                <XAxis 
-                  dataKey="date" 
-                  tickFormatter={(date) => format(new Date(date), 'MMM dd')} 
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(date) => format(new Date(date), 'MMM dd')}
                   tick={{ fontSize: 12 }}
                 />
-                <YAxis 
-                  tick={{ fontSize: 12 }}
-                />
-                <Tooltip 
+                <YAxis tick={{ fontSize: 12 }} />
+                <Tooltip
                   formatter={(value, name) => [value, name === 'count' ? 'Transactions' : 'Amount']}
                   labelFormatter={(label) => `Date: ${format(new Date(label), 'PPP')}`}
                 />
                 <Legend />
-                <Bar 
-                  dataKey="count" 
-                  name="Transactions"
-                  fill="#82ca9d" 
-                  radius={[4, 4, 0, 0]}
-                />
+                <Bar dataKey="count" name="Transactions" fill="#82ca9d" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -684,21 +688,30 @@ const AnalyticsDashboard = () => {
                   analyticsData.recentTransactions.map((transaction) => (
                     <tr key={transaction._id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                        {format(new Date(transaction.createdAt || transaction.created), 'MMM dd, yyyy')}
+                        {format(
+                          new Date(transaction.createdAt || transaction.created),
+                          'MMM dd, yyyy'
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
                         {transaction._id ? `${transaction._id.substring(0, 8)}...` : 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-white">₹{transaction.amountInINR || 0}</div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">${(transaction.amountInUSD || 0).toFixed(2)}</div>
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          ₹{transaction.amountInINR || 0}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                          ${(transaction.amountInUSD || 0).toFixed(2)}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          transaction.paymentStatus === 'paid' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' 
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                        }`}>
+                        <span
+                          className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            transaction.paymentStatus === 'paid'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                          }`}
+                        >
                           {transaction.paymentStatus || 'pending'}
                         </span>
                       </td>
@@ -709,7 +722,10 @@ const AnalyticsDashboard = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                    <td
+                      colSpan="5"
+                      className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400"
+                    >
                       No transactions found
                     </td>
                   </tr>

@@ -1,12 +1,13 @@
 import { toast } from 'sonner';
+import { getApiBaseUrl } from '../config/api';
 
 const fetchWithAuth = async (url, options = {}) => {
-  // Get backend URL from environment variable
-  const BACKEND_URL = (import.meta.env.VITE_API_BASE || 'http://localhost:8000').replace(/\/$/, '');
-  
+  // Get backend URL dynamically (supports IP-based hosting)
+  const BACKEND_URL = getApiBaseUrl();
+
   // Get token from localStorage
   const token = localStorage.getItem('token');
-  
+
   // Set up headers
   const headers = {
     'Content-Type': 'application/json',

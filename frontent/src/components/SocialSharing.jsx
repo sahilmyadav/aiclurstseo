@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { FaCalendarAlt, FaClock, FaRedo, FaPaperPlane, FaTimes, FaRobot } from 'react-icons/fa';
 import axios from 'axios';
+import { useEffect, useState } from 'react';
+import { FaCalendarAlt, FaPaperPlane, FaRobot, FaTimes } from 'react-icons/fa';
 import { toast } from 'sonner';
-import { useGoogleBusiness } from './context/GoogleBusinessContext';
-import { generateAIPost } from '../utils/suggestion';
+import { getApiBaseUrl } from '../config/api';
 import { useTheme } from '../context/ThemeContext';
+import { generateAIPost } from '../utils/suggestion';
+import { useGoogleBusiness } from './context/GoogleBusinessContext';
 
 const SocialSharing = () => {
   const { selectedBusiness, tokenDetails, googleOAuth } = useGoogleBusiness();
@@ -13,7 +14,7 @@ const SocialSharing = () => {
   // Function to get auto keywords from selected business
   const getAutoKeywords = () => {
     const autoKeywords = [];
-    
+
     // Add business name as a keyword
     if (selectedBusiness && selectedBusiness.title) {
       let businessName = '';
@@ -26,9 +27,13 @@ const SocialSharing = () => {
         autoKeywords.push(businessName);
       }
     }
-    
+
     // Add category as a keyword
-    if (selectedBusiness && selectedBusiness.categories && selectedBusiness.categories.primaryCategory) {
+    if (
+      selectedBusiness &&
+      selectedBusiness.categories &&
+      selectedBusiness.categories.primaryCategory
+    ) {
       const category = selectedBusiness.categories.primaryCategory;
       let categoryName = '';
       if (typeof category === 'string') {
@@ -44,7 +49,7 @@ const SocialSharing = () => {
         autoKeywords.push(categoryName);
       }
     }
-    
+
     return autoKeywords;
   };
 
@@ -57,7 +62,7 @@ const SocialSharing = () => {
     scheduleTime: '',
     repeat: false,
     repeatType: 'daily', // 'daily', 'weekly', 'monthly'
-    repeatDays: []
+    repeatDays: [],
   });
 
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
@@ -66,18 +71,18 @@ const SocialSharing = () => {
   useEffect(() => {
     if (selectedBusiness) {
       const autoKeywords = getAutoKeywords();
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
-        keywordsArray: [...autoKeywords]
+        keywordsArray: [...autoKeywords],
       }));
     }
   }, [selectedBusiness]);
 
   const handleKeywordChange = (e) => {
     const value = e.target.value;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      keywords: value
+      keywords: value,
     }));
   };
 
@@ -86,10 +91,10 @@ const SocialSharing = () => {
       e.preventDefault();
       const keyword = formData.keywords.trim();
       if (keyword && !formData.keywordsArray.includes(keyword)) {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
           keywordsArray: [...prev.keywordsArray, keyword],
-          keywords: ''
+          keywords: '',
         }));
       }
     }
@@ -102,10 +107,10 @@ const SocialSharing = () => {
       toast.error('Cannot remove auto-generated keywords');
       return;
     }
-    
-    setFormData(prev => ({
+
+    setFormData((prev) => ({
       ...prev,
-      keywordsArray: prev.keywordsArray.filter(keyword => keyword !== keywordToRemove)
+      keywordsArray: prev.keywordsArray.filter((keyword) => keyword !== keywordToRemove),
     }));
   };
 
@@ -124,12 +129,12 @@ const SocialSharing = () => {
     try {
       const postType = formData.scheduleType === 'later' ? 'promotional' : 'engagement';
       const aiContent = await generateAIPost(selectedBusiness, formData.keywordsArray, postType);
-      
-      setFormData(prev => ({
+
+      setFormData((prev) => ({
         ...prev,
-        postText: aiContent
+        postText: aiContent,
       }));
-      
+
       toast.success('AI post generated successfully!');
     } catch (error) {
       console.error('Error generating AI post:', error);
@@ -141,38 +146,38 @@ const SocialSharing = () => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    
+
     if (type === 'checkbox') {
       if (name === 'repeat') {
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          [name]: checked
+          [name]: checked,
         }));
       } else if (name.startsWith('day-')) {
         const day = name.split('-')[1];
-        setFormData(prev => {
+        setFormData((prev) => {
           const newDays = prev.repeatDays.includes(day)
-            ? prev.repeatDays.filter(d => d !== day)
+            ? prev.repeatDays.filter((d) => d !== day)
             : [...prev.repeatDays, day];
           return {
             ...prev,
-            repeatDays: newDays
+            repeatDays: newDays,
           };
         });
       }
     } else {
-      setFormData(prev => {
+      setFormData((prev) => {
         // If repeatType is being changed and it's not 'weekly', clear repeatDays
         if (name === 'repeatType' && value !== 'weekly') {
           return {
             ...prev,
             [name]: value,
-            repeatDays: []
+            repeatDays: [],
           };
         }
         return {
           ...prev,
-          [name]: value
+          [name]: value,
         };
       });
     }
@@ -180,88 +185,87 @@ const SocialSharing = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     try {
       // Get the authentication token and user data from localStorage
       const authData = JSON.parse(localStorage.getItem('auth')) || {};
       const token = authData.token || localStorage.getItem('token');
-   console.log(authData?.user)
-    
-      
-      if (!token ) {
+      console.log(authData?.user);
+
+      if (!token) {
         toast.error('Please log in to schedule posts');
         return;
       }
-      
+
       if (!selectedBusiness) {
         toast.error('Please select a business location first');
         return;
       }
-      
+
       // Check if we have at least one keyword (either user-added or auto-generated)
       if (formData.keywordsArray.length === 0) {
         toast.error('At least one keyword is required for scheduling a post');
         return;
       }
-      
+
       // Allow empty content if keywords are provided (AI will generate)
       if (!formData.postText.trim() && formData.keywordsArray.length === 0) {
         toast.error('Please either enter post content or add keywords for AI generation');
         return;
       }
-      
+
       // Extract account ID and location ID from selectedBusiness
       const accountId = selectedBusiness.accountId;
       const locationId = selectedBusiness.name.split('/')[1];
-      
+
       // Get business name from selectedBusiness
-      const businessName = selectedBusiness?.title || 
-                         selectedBusiness?.locationName || 
-                         selectedBusiness?.name?.split('/').pop() || 
-                         'Business';
-      
+      const businessName =
+        selectedBusiness?.title ||
+        selectedBusiness?.locationName ||
+        selectedBusiness?.name?.split('/').pop() ||
+        'Business';
+
       // Prepare the data for the API
       const postData = {
         content: formData.postText,
         keywords: formData.keywordsArray,
         isScheduled: formData.scheduleType === 'later',
-        scheduledFor: formData.scheduleType === 'later' ? `${formData.scheduleDate}T${formData.scheduleTime}:00` : null,
+        scheduledFor:
+          formData.scheduleType === 'later'
+            ? `${formData.scheduleDate}T${formData.scheduleTime}:00`
+            : null,
         isRecurring: formData.repeat,
         repeatType: formData.repeat ? formData.repeatType : null,
         repeatDays: formData.repeatType === 'weekly' ? formData.repeatDays : [],
         accountId,
         locationId,
-        businessName, 
+        businessName,
         createdBy: '673a8778588c0847f3a6d3c4',
         tokenDetails: {
           // Use googleOAuth values first, fall back to tokenDetails
           accessToken: googleOAuth?.access_token || tokenDetails?.accessToken,
           refreshToken: googleOAuth?.refresh_token || tokenDetails?.refreshToken,
-          expiryDate: googleOAuth?.expiry_date 
-            ? new Date(googleOAuth.expiry_date) 
-            : tokenDetails?.expiryDate 
-              ? new Date(tokenDetails.expiryDate) 
-              : null
+          expiryDate: googleOAuth?.expiry_date
+            ? new Date(googleOAuth.expiry_date)
+            : tokenDetails?.expiryDate
+              ? new Date(tokenDetails.expiryDate)
+              : null,
         },
-        businessData: selectedBusiness 
+        businessData: selectedBusiness,
       };
-      console.log("postData",postData)
-      
+      console.log('postData', postData);
+
       // Make the API call
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE}/api/post/schedule`,
-        postData,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      
+      const response = await axios.post(`${getApiBaseUrl()}/api/post/schedule`, postData, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       // Show success message
       toast.success('Post scheduled successfully!');
-      
+
       // Reset form but keep auto keywords
       const autoKeywords = getAutoKeywords();
       setFormData({
@@ -273,18 +277,15 @@ const SocialSharing = () => {
         scheduleTime: '',
         repeat: false,
         repeatType: 'daily',
-        repeatDays: []
+        repeatDays: [],
       });
       setIsGeneratingAI(false);
-      
     } catch (error) {
       console.error('Error scheduling post:', error);
       const errorMessage = error.response?.data?.message || 'Failed to schedule post';
       toast.error(errorMessage);
     }
   };
-
- 
 
   const daysOfWeek = [
     { value: 'monday', label: 'Mon' },
@@ -293,16 +294,22 @@ const SocialSharing = () => {
     { value: 'thursday', label: 'Thu' },
     { value: 'friday', label: 'Fri' },
     { value: 'saturday', label: 'Sat' },
-    { value: 'sunday', label: 'Sun' }
+    { value: 'sunday', label: 'Sun' },
   ];
 
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-8">
-        <h1 className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}>Schedule Post</h1>
-        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>Create and schedule your social media posts</p>
+        <h1
+          className={`text-2xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'} mb-2`}
+        >
+          Schedule Post
+        </h1>
+        <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
+          Create and schedule your social media posts
+        </p>
       </div>
-      
+
       <div className="bg-[#1a1b2e] rounded-lg p-6">
         <form onSubmit={handleSubmit}>
           {/* Post Content */}
@@ -337,7 +344,7 @@ const SocialSharing = () => {
             <label className="block text-white text-sm font-medium mb-2" htmlFor="keywords">
               Keywords
             </label>
-            
+
             {/* Keywords Tags Display */}
             {formData.keywordsArray.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
@@ -345,14 +352,12 @@ const SocialSharing = () => {
                   // Check if this is an auto keyword
                   const autoKeywords = getAutoKeywords();
                   const isAutoKeyword = autoKeywords.includes(keyword);
-                  
+
                   return (
                     <span
                       key={index}
                       className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${
-                        isAutoKeyword 
-                          ? 'bg-purple-600 text-white' 
-                          : 'bg-blue-600 text-white'
+                        isAutoKeyword ? 'bg-purple-600 text-white' : 'bg-blue-600 text-white'
                       }`}
                     >
                       {keyword}
@@ -365,15 +370,13 @@ const SocialSharing = () => {
                           <FaTimes className="w-3 h-3" />
                         </button>
                       )}
-                      {isAutoKeyword && (
-                        <span className="ml-2 text-xs opacity-75">(auto)</span>
-                      )}
+                      {isAutoKeyword && <span className="ml-2 text-xs opacity-75">(auto)</span>}
                     </span>
                   );
                 })}
               </div>
             )}
-            
+
             <input
               type="text"
               id="keywords"
@@ -385,8 +388,9 @@ const SocialSharing = () => {
               placeholder="Type keywords and press Enter or comma to add"
             />
             <p className="text-gray-400 text-sm mt-1">
-              Press Enter or comma to add keywords. AI will generate content based on these keywords if post content is empty. 
-              Purple tags are auto-generated from your business name and category. Click × to remove user-added keywords.
+              Press Enter or comma to add keywords. AI will generate content based on these keywords
+              if post content is empty. Purple tags are auto-generated from your business name and
+              category. Click × to remove user-added keywords.
             </p>
           </div>
 
@@ -395,10 +399,8 @@ const SocialSharing = () => {
             <h3 className="text-lg font-semibold text-white mb-4 flex items-center">
               <FaCalendarAlt className="mr-2" /> Schedule
             </h3>
-            
+
             <div className="flex flex-col space-y-4">
-            
-              
               <label className="inline-flex items-center">
                 <input
                   type="radio"
@@ -410,7 +412,7 @@ const SocialSharing = () => {
                 />
                 <span className="ml-2 text-white">Schedule for later</span>
               </label>
-              
+
               {formData.scheduleType === 'later' && (
                 <div className="flex flex-col sm:flex-row gap-4 mt-2">
                   <div className="flex-1">
@@ -456,11 +458,13 @@ const SocialSharing = () => {
               />
               <span className="ml-2 text-white font-medium">Repeat this post</span>
             </label>
-            
+
             {formData.repeat && (
               <div className="ml-6 space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Repeat every</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Repeat every
+                  </label>
                   <select
                     name="repeatType"
                     value={formData.repeatType}
@@ -472,12 +476,12 @@ const SocialSharing = () => {
                     <option value="monthly">Month</option>
                   </select>
                 </div>
-                
+
                 {formData.repeatType === 'weekly' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">On days</label>
                     <div className="flex flex-wrap gap-2">
-                      {daysOfWeek.map(day => (
+                      {daysOfWeek.map((day) => (
                         <label key={day.value} className="inline-flex items-center">
                           <input
                             type="checkbox"

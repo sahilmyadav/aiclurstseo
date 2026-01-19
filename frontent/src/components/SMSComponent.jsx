@@ -1,17 +1,12 @@
-import { useEffect, useState } from "react";
-import {
-  FaPaperPlane,
-  FaPhone,
-  FaUpload,
-  FaUser,
-  FaSpinner,
-} from "react-icons/fa";
-import { toast } from "sonner";
-import { useTheme } from "../context/ThemeContext";
-import BulkUploadComponent from "./BulkUploadComponent";
-import BusinessProfileDropdown from "./common/BusinessProfileDropdown";
-import { useAuth } from "./context/AuthContext";
-import { useGoogleBusiness } from "./context/GoogleBusinessContext";
+import { useEffect, useState } from 'react';
+import { FaPaperPlane, FaPhone, FaSpinner, FaUpload, FaUser } from 'react-icons/fa';
+import { toast } from 'sonner';
+import { getApiBaseUrl } from '../config/api';
+import { useTheme } from '../context/ThemeContext';
+import BulkUploadComponent from './BulkUploadComponent';
+import BusinessProfileDropdown from './common/BusinessProfileDropdown';
+import { useAuth } from './context/AuthContext';
+import { useGoogleBusiness } from './context/GoogleBusinessContext';
 
 const SMSComponent = () => {
   const { theme } = useTheme();
@@ -24,16 +19,14 @@ const SMSComponent = () => {
   } = useGoogleBusiness();
 
   const [formData, setFormData] = useState({
-    businessId: "",
-    businessName: "",
-    customerName: "",
-    customerPhone: "",
+    businessId: '',
+    businessName: '',
+    customerName: '',
+    customerPhone: '',
   });
   const [isSending, setIsSending] = useState(false);
   const [showBulkUpload, setShowBulkUpload] = useState(false);
-  const BACKEND_URL =
-    import.meta.env.VITE_API_BASE?.replace(/\/$/, "") ||
-    "http://localhost:8000";
+  const BACKEND_URL = getApiBaseUrl();
 
   // Set the selected business when businesses are loaded or changed
   useEffect(() => {
@@ -43,11 +36,9 @@ const SMSComponent = () => {
       if (businessToSelect) {
         setFormData((prev) => ({
           ...prev,
-          businessId: businessToSelect.id || "",
+          businessId: businessToSelect.id || '',
           businessName:
-            businessToSelect.title ||
-            businessToSelect.locationName ||
-            "Selected Business",
+            businessToSelect.title || businessToSelect.locationName || 'Selected Business',
         }));
       }
     }
@@ -55,7 +46,7 @@ const SMSComponent = () => {
 
   // Format business name for display
   const getBusinessDisplayName = (business) => {
-    return business?.title || business?.locationName || "Business Location";
+    return business?.title || business?.locationName || 'Business Location';
   };
 
   const handleInputChange = (e) => {
@@ -67,42 +58,40 @@ const SMSComponent = () => {
   };
 
   const handleSendSMS = async (e) => {
-    console.log("handleSendSMS triggered");
+    console.log('handleSendSMS triggered');
     e.preventDefault();
 
     if (!formData.businessId) {
-      toast.error("Please select a business");
+      toast.error('Please select a business');
       return;
     }
 
     const phoneRegex = /^\+?[1-9]\d{9,14}$/;
-    const phoneNumber = formData.customerPhone.replace(/[^\d+]/g, "");
+    const phoneNumber = formData.customerPhone.replace(/[^\d+]/g, '');
 
     if (!phoneRegex.test(phoneNumber)) {
-      toast.error(
-        "Please enter a valid phone number with country code (e.g., +1 for US)"
-      );
+      toast.error('Please enter a valid phone number with country code (e.g., +1 for US)');
       return;
     }
 
     if (!token) {
-      toast.error("Authentication error. Please sign in again.");
+      toast.error('Authentication error. Please sign in again.');
       return;
     }
 
     setIsSending(true);
     try {
-      console.log("Request payload:", {
+      console.log('Request payload:', {
         businessName: formData.businessName,
         customerName: formData.customerName.trim(),
         customerPhone: phoneNumber,
       });
 
       const response = await fetch(`${BACKEND_URL}/api/invitations/sms`, {
-        method: "POST",
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           businessName: formData.businessName,
@@ -114,17 +103,17 @@ const SMSComponent = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || "Failed to send SMS invitation");
+        throw new Error(data.error || 'Failed to send SMS invitation');
       }
 
-      toast.success(data.message || "SMS invitation sent successfully!");
+      toast.success(data.message || 'SMS invitation sent successfully!');
       setFormData((prev) => ({
         ...prev,
-        customerName: "",
-        customerPhone: "",
+        customerName: '',
+        customerPhone: '',
       }));
     } catch (error) {
-      console.error("Error sending SMS invitation:", error);
+      console.error('Error sending SMS invitation:', error);
       toast.error(error.message);
     } finally {
       setIsSending(false);
@@ -134,9 +123,11 @@ const SMSComponent = () => {
   if (businessesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <FaSpinner className={`animate-spin text-2xl ${
-          theme === 'dark' ? 'text-purple-500' : 'text-purple-600'
-        }`} />
+        <FaSpinner
+          className={`animate-spin text-2xl ${
+            theme === 'dark' ? 'text-purple-500' : 'text-purple-600'
+          }`}
+        />
       </div>
     );
   }
@@ -146,7 +137,7 @@ const SMSComponent = () => {
       <div className="text-center p-8">
         <p className="text-gray-600 mb-4">No Google Business accounts found.</p>
         <button
-          onClick={() => window.open("/dashboard/integrations", "_blank")}
+          onClick={() => window.open('/dashboard/integrations', '_blank')}
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md"
         >
           Connect Google Business
@@ -165,23 +156,21 @@ const SMSComponent = () => {
   }`;
 
   const inputClasses = `w-full pl-10 px-4 py-2 rounded-md focus:ring-2 focus:border-transparent ${
-    theme === 'dark' 
-      ? 'bg-gray-700 border-gray-600 text-white focus:ring-purple-500' 
+    theme === 'dark'
+      ? 'bg-gray-700 border-gray-600 text-white focus:ring-purple-500'
       : 'bg-white border-gray-300 text-gray-900 focus:ring-purple-500 border'
   }`;
 
   const buttonClasses = `w-full flex items-center justify-center px-6 py-3 ${
-    theme === 'dark' 
-      ? 'bg-indigo-600 hover:bg-indigo-700' 
-      : 'bg-purple-600 hover:bg-purple-700'
+    theme === 'dark' ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-purple-600 hover:bg-purple-700'
   } text-white font-medium rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed`;
 
   return (
     <div className={mainContainerClasses}>
       <div className="mb-8">
-        <h1 className={`text-2xl font-bold mb-2 ${
-          theme === 'dark' ? 'text-white' : 'text-gray-900'
-        }`}>
+        <h1
+          className={`text-2xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+        >
           Send SMS Invitations
         </h1>
         <p className={theme === 'dark' ? 'text-gray-400' : 'text-gray-600'}>
@@ -191,16 +180,16 @@ const SMSComponent = () => {
 
       <div className={cardClasses}>
         <div className="flex justify-between items-center mb-6">
-          <h2 className={`text-xl font-semibold ${
-            theme === 'dark' ? 'text-white' : 'text-gray-900'
-          }`}>
-            {showBulkUpload ? "Bulk Upload Contacts" : "Single Invitation"}
+          <h2
+            className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
+          >
+            {showBulkUpload ? 'Bulk Upload Contacts' : 'Single Invitation'}
           </h2>
           <button
             onClick={() => setShowBulkUpload(!showBulkUpload)}
             className={`flex items-center px-4 py-2 ${
-              theme === 'dark' 
-                ? 'bg-indigo-600 hover:bg-indigo-700' 
+              theme === 'dark'
+                ? 'bg-indigo-600 hover:bg-indigo-700'
                 : 'bg-purple-600 hover:bg-purple-700'
             } text-white rounded-md text-sm font-medium transition-colors`}
           >
@@ -224,20 +213,29 @@ const SMSComponent = () => {
           <form onSubmit={handleSendSMS} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="w-full mb-4">
-                <label className={`block text-sm font-medium mb-1 ${
-                  theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-                }`}>
+                <label
+                  className={`block text-sm font-medium mb-1 ${
+                    theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                  }`}
+                >
                   Select Business
                 </label>
                 <BusinessProfileDropdown
                   onSelect={(business) => {
-                    const businessId = business?.id || business?.locationId || business?.placeId || business?.place_id || business?.name || '';
-                    const businessName = business?.title || business?.locationName || business?.name || '';
-                    
-                    setFormData(prev => ({
+                    const businessId =
+                      business?.id ||
+                      business?.locationId ||
+                      business?.placeId ||
+                      business?.place_id ||
+                      business?.name ||
+                      '';
+                    const businessName =
+                      business?.title || business?.locationName || business?.name || '';
+
+                    setFormData((prev) => ({
                       ...prev,
                       businessId,
-                      businessName
+                      businessName,
                     }));
                   }}
                   className={`w-full ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}
@@ -291,9 +289,9 @@ const SMSComponent = () => {
                     required
                   />
                 </div>
-                <p className={`text-xs mt-1 ${
-                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                }`}>
+                <p
+                  className={`text-xs mt-1 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}
+                >
                   Include country code (e.g., +1 for US)
                 </p>
               </div>
@@ -323,9 +321,11 @@ const SMSComponent = () => {
       </div>
 
       <div className={cardClasses}>
-        <h2 className={`text-xl font-semibold mb-4 ${
-          theme === 'dark' ? 'text-white' : 'text-gray-900'
-        }`}>
+        <h2
+          className={`text-xl font-semibold mb-4 ${
+            theme === 'dark' ? 'text-white' : 'text-gray-900'
+          }`}
+        >
           SMS Preview
         </h2>
       </div>

@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import { CheckCircle, ArrowLeft } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { getApiBaseUrl } from '../../config/api';
 
 const SubscriptionSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -16,26 +17,26 @@ const SubscriptionSuccess = () => {
       // Get the session ID from the URL
       const sessionId = searchParams.get('sessionId');
       const verify = searchParams.get('verify');
-      
+
       console.log('URL Params:', { sessionId, verify }); // Debug log
-      
+
       if (sessionId && verify === 'true') {
         try {
           // Get user ID from localStorage if available
           const user = JSON.parse(localStorage.getItem('user'));
           const userId = user?._id;
-          
+
           // Build the query string with available parameters
           const params = new URLSearchParams({
             sessionId,
-            ...(userId && { userId }) // Only add userId if it exists
+            ...(userId && { userId }), // Only add userId if it exists
           });
-          
+
           const response = await axios.get(
-            `${import.meta.env.VITE_API_BASE}/api/subscription/verify?${params.toString()}`,
+            `${getApiBaseUrl()}/api/subscription/verify?${params.toString()}`,
             { withCredentials: true }
           );
-          console.log("Sucess message",response)
+          console.log('Sucess message', response);
           if (response.data.active) {
             // Set the subscription data from the nested subscription object
             setSubscription(response.data.subscription);
@@ -48,7 +49,9 @@ const SubscriptionSuccess = () => {
           }
         } catch (err) {
           console.error('Error verifying payment:', err);
-          setError(err.response?.data?.error || 'Failed to verify payment. Please contact support.');
+          setError(
+            err.response?.data?.error || 'Failed to verify payment. Please contact support.'
+          );
         } finally {
           setLoading(false);
         }
@@ -91,9 +94,10 @@ const SubscriptionSuccess = () => {
 
   if (subscription) {
     // Only use available data
-    const planName = subscription.planType ? 
-      `${subscription.planType.charAt(0).toUpperCase() + subscription.planType.slice(1)} Plan` : 'Subscription';
-    
+    const planName = subscription.planType
+      ? `${subscription.planType.charAt(0).toUpperCase() + subscription.planType.slice(1)} Plan`
+      : 'Subscription';
+
     // Format dates only if they exist
     const formatDate = (dateString) => {
       if (!dateString) return 'N/A';
@@ -101,13 +105,13 @@ const SubscriptionSuccess = () => {
         return new Date(dateString).toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'long',
-          day: 'numeric'
+          day: 'numeric',
         });
       } catch (e) {
         return 'Invalid date';
       }
     };
-    
+
     const endDate = subscription.endDate ? formatDate(subscription.endDate) : null;
     const startDate = subscription.startDate ? formatDate(subscription.startDate) : null;
 
@@ -120,14 +124,16 @@ const SubscriptionSuccess = () => {
               <CheckCircle className="w-12 h-12 text-green-400" strokeWidth={1.5} />
             </div>
             <h1 className="text-3xl md:text-4xl font-bold mb-3">Order Confirmed!</h1>
-            <p className="text-indigo-400 mt-2">Order ID: {orderId || subscription?.id || subscription?._id || 'N/A'}</p>
+            <p className="text-indigo-400 mt-2">
+              Order ID: {orderId || subscription?.id || subscription?._id || 'N/A'}
+            </p>
           </div>
 
           {/* Order Summary */}
           <div className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden mb-8">
             <div className="p-6 border-b border-gray-700">
               <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
-              
+
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <div>
@@ -144,12 +150,12 @@ const SubscriptionSuccess = () => {
                         style: 'currency',
                         currency: subscription.currency || 'USD',
                         minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
+                        maximumFractionDigits: 2,
                       }).format(subscription.amount / 100)}
                     </span>
                   )}
                 </div>
-                
+
                 {subscription.amount && (
                   <>
                     <div className="flex justify-between text-sm">
@@ -159,11 +165,11 @@ const SubscriptionSuccess = () => {
                           style: 'currency',
                           currency: subscription.currency || 'USD',
                           minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
+                          maximumFractionDigits: 2,
                         }).format(subscription.amount / 100)}
                       </span>
                     </div>
-                    
+
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-400">Tax</span>
                       <span>
@@ -171,11 +177,11 @@ const SubscriptionSuccess = () => {
                           style: 'currency',
                           currency: subscription.currency || 'USD',
                           minimumFractionDigits: 2,
-                          maximumFractionDigits: 2
+                          maximumFractionDigits: 2,
                         }).format(0)}
                       </span>
                     </div>
-                    
+
                     <div className="pt-4 border-t border-gray-700">
                       <div className="flex justify-between font-semibold">
                         <span>Total</span>
@@ -184,7 +190,7 @@ const SubscriptionSuccess = () => {
                             style: 'currency',
                             currency: subscription.currency || 'USD',
                             minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
+                            maximumFractionDigits: 2,
                           }).format(subscription.amount / 100)}
                         </span>
                       </div>
@@ -193,7 +199,7 @@ const SubscriptionSuccess = () => {
                 )}
               </div>
             </div>
-            
+
             <div className="p-6 bg-gray-900/30">
               <h3 className="font-medium mb-3">Subscription Details</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
@@ -234,7 +240,7 @@ const SubscriptionSuccess = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -250,10 +256,13 @@ const SubscriptionSuccess = () => {
               Download Invoice
             </button>
           </div>
-          
+
           <div className="mt-8 text-center">
             <p className="text-gray-500 text-sm">
-              Need help? <a href="#" className="text-indigo-400 hover:underline">Contact Support</a>
+              Need help?{' '}
+              <a href="#" className="text-indigo-400 hover:underline">
+                Contact Support
+              </a>
             </p>
           </div>
         </div>
@@ -267,7 +276,8 @@ const SubscriptionSuccess = () => {
       <div className="bg-gray-800/50 backdrop-blur-sm p-8 rounded-xl border border-gray-700 max-w-md w-full">
         <h1 className="text-2xl font-bold text-white mb-4">Subscription Status</h1>
         <p className="text-gray-400 mb-6">
-          We couldn't verify your subscription status. Please check your account or contact our support team.
+          We couldn't verify your subscription status. Please check your account or contact our
+          support team.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
           <button

@@ -1,30 +1,33 @@
-import React, { useState } from 'react';
-import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useState } from 'react';
+import { FiCheck, FiCopy, FiX } from 'react-icons/fi';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { getApiBaseUrl } from '../config/api';
 import { generateReviewSuggestions } from '../utils/suggestion';
-import { FiCopy, FiCheck, FiX } from 'react-icons/fi';
 
 function MakeReview() {
   const { locationId } = useParams();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  
+
   // Get business name from URL params
-  const businessName = searchParams.get('businessName') 
-    ? searchParams.get('businessName')
+  const businessName = searchParams.get('businessName')
+    ? searchParams
+        .get('businessName')
         .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ')
     : 'Our Business';
-  
-  const businessCategory = searchParams.get('category') 
-    ? searchParams.get('category')
+
+  const businessCategory = searchParams.get('category')
+    ? searchParams
+        .get('category')
         .split('-')
-        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ')
     : 'business';
 
   const reviewUri = searchParams.get('reviewUri');
-  
+
   const [selectedRating, setSelectedRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [showForm, setShowForm] = useState(false);
@@ -32,12 +35,12 @@ function MakeReview() {
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState(null);
-  
+
   // Feedback form state
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    feedback: ''
+    feedback: '',
   });
   const [submitted, setSubmitted] = useState(false);
 
@@ -48,7 +51,7 @@ function MakeReview() {
 
   const handleStarClick = async (rating) => {
     setSelectedRating(rating);
-    
+
     if (rating >= 1 && rating <= 3) {
       // Low rating: show feedback form
       setShowForm(true);
@@ -59,28 +62,28 @@ function MakeReview() {
       setShowForm(false);
       setShowGoogleButton(true);
       setIsLoading(true);
-      
+
       try {
         const businessData = {
           name: businessName,
           primaryCategory: businessCategory,
           categories: {
             primaryCategory: {
-              name: businessCategory
-            }
+              name: businessCategory,
+            },
           },
           location: {
             address: {
               locality: searchParams.get('city') || '',
-              regionCode: searchParams.get('state') || ''
-            }
+              regionCode: searchParams.get('state') || '',
+            },
           },
           websiteUri: searchParams.get('website') || '',
           priceInfo: {
-            priceLevel: searchParams.get('priceLevel') || ''
-          }
+            priceLevel: searchParams.get('priceLevel') || '',
+          },
         };
-        
+
         const generatedSuggestions = await generateReviewSuggestions(businessData, rating);
         setSuggestions(generatedSuggestions);
       } catch (error) {
@@ -93,24 +96,24 @@ function MakeReview() {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmitFeedback = async (e) => {
     e.preventDefault();
-    
+
     try {
       const reviewData = {
         locationId,
         businessName,
         rating: selectedRating,
-        ...formData
+        ...formData,
       };
 
-      const response = await fetch(`${import.meta.env.VITE_API_BASE || 'http://localhost:8000'}/api/reviews/create`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/reviews/create`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -133,8 +136,7 @@ function MakeReview() {
 
   // Get reviewUri from URL parameters
   // const reviewUri = searchParams.get('reviewUri');
-  
-  
+
   const handleGoogleReview = () => {
     if (!reviewUri) {
       console.error('No review URL provided');
@@ -143,10 +145,10 @@ function MakeReview() {
 
     try {
       console.log('Opening review URL:', reviewUri);
-      
+
       // Open the review URL in a new tab
       const reviewWindow = window.open(reviewUri, '_blank', 'noopener,noreferrer');
-      
+
       // Fallback if popup is blocked
       if (!reviewWindow || reviewWindow.closed || typeof reviewWindow.closed === 'undefined') {
         window.location.href = reviewUri;
@@ -160,15 +162,25 @@ function MakeReview() {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
         <div className="w-full max-w-md bg-white rounded-lg p-8 text-center shadow-sm border border-gray-100 relative">
-          <button 
+          <button
             onClick={handleClose}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
           >
             <FiX className="w-5 h-5" />
           </button>
           <div className="mb-6">
-            <svg className="w-16 h-16 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-16 h-16 text-green-500 mx-auto"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-3">Thank You!</h2>
@@ -190,40 +202,36 @@ function MakeReview() {
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-lg p-8 shadow-sm border border-gray-100 relative">
         {/* Close Button */}
-        <button 
+        <button
           onClick={handleClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
         >
           <FiX className="w-5 h-5" />
         </button>
-        
+
         {/* Header */}
         <div className="text-center mb-8">
           {/* Google Logo */}
           <div className="mb-6 flex justify-center">
-            <img 
-              src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" 
-              alt="Google" 
+            <img
+              src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png"
+              alt="Google"
               className="h-8"
             />
           </div>
-          
-          <h1 className="text-2xl font-medium text-gray-900 mb-2">
-            We Value Your Feedback
-          </h1>
-          <p className="text-gray-500 text-sm">
-            How was your experience with us?
-          </p>
-          
+
+          <h1 className="text-2xl font-medium text-gray-900 mb-2">We Value Your Feedback</h1>
+          <p className="text-gray-500 text-sm">How was your experience with us?</p>
+
           {/* Powered By */}
           <div className="mt-2">
             <div className="text-center">
               <div className="text-xs font-medium text-gray-400 mb-1">POWERED BY</div>
               <div className="flex justify-center -mb-1">
-                <img 
-                  src="/clurst transparent logo 2 for white baground.png" 
+                <img
+                  src="/clurst transparent logo 2 for white baground.png"
                   alt="Clurst Logo"
-                  className="h-25 w-auto object-contain" 
+                  className="h-25 w-auto object-contain"
                 />
               </div>
             </div>
@@ -252,7 +260,7 @@ function MakeReview() {
             </button>
           ))}
         </div>
-        
+
         {/* Rating Labels */}
         {selectedRating > 0 && (
           <div className="text-center mb-6">
@@ -265,7 +273,7 @@ function MakeReview() {
             </p>
           </div>
         )}
-        
+
         {selectedRating > 0 && (
           <p className="text-center text-purple-600 mt-3 text-sm">
             You selected {selectedRating} star{selectedRating > 1 ? 's' : ''}
@@ -280,9 +288,7 @@ function MakeReview() {
             </h3>
             <form onSubmit={handleSubmitFeedback} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-purple-700 mb-2">
-                  Name
-                </label>
+                <label className="block text-sm font-medium text-purple-700 mb-2">Name</label>
                 <input
                   type="text"
                   name="name"
@@ -293,11 +299,9 @@ function MakeReview() {
                   placeholder="Your name"
                 />
               </div>
-              
+
               <div>
-                <label className="block text-sm font-medium text-purple-700 mb-2">
-                  Email
-                </label>
+                <label className="block text-sm font-medium text-purple-700 mb-2">Email</label>
                 <input
                   type="email"
                   name="email"
@@ -308,7 +312,7 @@ function MakeReview() {
                   placeholder="your@email.com"
                 />
               </div>
-              
+
               <div>
                 <label className="block text-sm font-medium text-purple-700 mb-2">
                   Your Feedback
@@ -323,7 +327,7 @@ function MakeReview() {
                   placeholder="Tell us how we can improve..."
                 />
               </div>
-              
+
               <button
                 type="submit"
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-purple-200"
@@ -340,15 +344,17 @@ function MakeReview() {
             <div className="text-center">
               <div className="inline-flex items-center justify-center w-14 h-14 bg-green-100 rounded-full mb-3">
                 <svg className="w-7 h-7 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
                 </svg>
               </div>
               <h3 className="text-xl font-bold text-purple-900 mb-1">
                 Awesome! {selectedRating}-star rating!
               </h3>
-              <p className="text-purple-700">
-                Would you like some suggestions for your review?
-              </p>
+              <p className="text-purple-700">Would you like some suggestions for your review?</p>
             </div>
 
             {/* AI Suggestions */}
@@ -356,7 +362,7 @@ function MakeReview() {
               <h4 className="text-sm font-medium text-purple-800 mb-2">
                 {isLoading ? 'Generating suggestions...' : 'Review suggestions:'}
               </h4>
-              
+
               {isLoading ? (
                 <div className="space-y-2">
                   {[1, 2].map((i) => (
@@ -366,14 +372,14 @@ function MakeReview() {
               ) : (
                 <div className="space-y-2">
                   {suggestions.slice(0, 3).map((suggestion, index) => (
-                    <div 
+                    <div
                       key={index}
                       className="p-3 bg-white border border-purple-100 rounded-lg text-sm text-purple-800 transition-all hover:shadow-md cursor-pointer"
                     >
                       <div className="flex justify-between items-start">
-                        <div 
+                        <div
                           className="flex-1 cursor-pointer"
-                          onClick={() => setFormData(prev => ({ ...prev, feedback: suggestion }))}
+                          onClick={() => setFormData((prev) => ({ ...prev, feedback: suggestion }))}
                         >
                           "{suggestion}"
                         </div>
@@ -404,20 +410,20 @@ function MakeReview() {
               <p className="text-center text-purple-700 mb-4">
                 Ready to share your experience on Google?
               </p>
-              
+
               <button
                 onClick={handleGoogleReview}
                 className="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg flex items-center justify-center gap-2"
               >
-              <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
+                <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
+                </svg>
                 <span>Review on Google Profile</span>
               </button>
-              
+
               <button
                 onClick={() => {
                   setSelectedRating(0);

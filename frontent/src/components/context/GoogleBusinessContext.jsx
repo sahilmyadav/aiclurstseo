@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import { getApiBaseUrl } from '../../config/api';
 import { useAuth } from './AuthContext';
 
 const GoogleBusinessContext = createContext();
@@ -18,7 +19,7 @@ export const useGoogleBusiness = () => {
 
 export const GoogleBusinessProvider = ({ children }) => {
   const { user: authUser, token } = useAuth();
-  const BACKEND_URL = (import.meta.env.VITE_API_BASE ).replace(/\/$/, '');
+  const BACKEND_URL = getApiBaseUrl();
   const { subscriptionData } = useAuth();
 
   // ==============================
@@ -26,28 +27,30 @@ export const GoogleBusinessProvider = ({ children }) => {
   // ==============================
   const [state, setState] = useState(() => {
     const saved = localStorage.getItem(getStorageKey(authUser?.id));
-    return saved ? JSON.parse(saved) : {
-      user: null,
-      businesses: [],
-      selectedBusiness: null,
-      selectedBusinesses: [],
-      reviews: [],
-      localReviews: [],
-      loading: false,
-      isConnected: false,
-      reviewUri: '',
-      tokenDetails: {
-        accessToken: null,
-        expiryDate: null,
-        scopes: []
-      },
-      performanceData: null,
-      performanceLoading: false,
-      performanceError: null,
-      scheduledPosts: [],
-      loadingScheduled: false,
-      reviewStats: null
-    };
+    return saved
+      ? JSON.parse(saved)
+      : {
+          user: null,
+          businesses: [],
+          selectedBusiness: null,
+          selectedBusinesses: [],
+          reviews: [],
+          localReviews: [],
+          loading: false,
+          isConnected: false,
+          reviewUri: '',
+          tokenDetails: {
+            accessToken: null,
+            expiryDate: null,
+            scopes: [],
+          },
+          performanceData: null,
+          performanceLoading: false,
+          performanceError: null,
+          scheduledPosts: [],
+          loadingScheduled: false,
+          reviewStats: null,
+        };
   });
 
   // ==============================
@@ -55,20 +58,22 @@ export const GoogleBusinessProvider = ({ children }) => {
   // ==============================
   const [googleOAuth, setGoogleOAuth] = useState(() => {
     const saved = localStorage.getItem(getOAuthStorageKey(authUser?.id));
-    return saved ? JSON.parse(saved) : {
-      access_token: null,
-      refresh_token: null,
-      expiry_date: null,
-    };
+    return saved
+      ? JSON.parse(saved)
+      : {
+          access_token: null,
+          refresh_token: null,
+          expiry_date: null,
+        };
   });
 
-  const setGoogleOAuthTokens = useCallback((tokens) => {
-    setGoogleOAuth(tokens);
-    localStorage.setItem(
-      getOAuthStorageKey(authUser?.id),
-      JSON.stringify(tokens)
-    );
-  }, [authUser?.id]);
+  const setGoogleOAuthTokens = useCallback(
+    (tokens) => {
+      setGoogleOAuth(tokens);
+      localStorage.setItem(getOAuthStorageKey(authUser?.id), JSON.stringify(tokens));
+    },
+    [authUser?.id]
+  );
 
   // ==============================
   // SYNC GOOGLE OAUTH WITH TOKEN DETAILS
@@ -80,8 +85,8 @@ export const GoogleBusinessProvider = ({ children }) => {
           accessToken: googleOAuth.access_token,
           refreshToken: googleOAuth.refresh_token || state.tokenDetails?.refreshToken,
           expiryDate: googleOAuth.expiry_date ? new Date(googleOAuth.expiry_date) : null,
-          scopes: state.tokenDetails?.scopes || []
-        }
+          scopes: state.tokenDetails?.scopes || [],
+        },
       });
     }
   }, [googleOAuth, authUser?.id]);
@@ -89,13 +94,16 @@ export const GoogleBusinessProvider = ({ children }) => {
   // ==============================
   // STATE SETTERS
   // ==============================
-  const updateState = useCallback((updates) => {
-    setState(prev => {
-      const newState = { ...prev, ...updates };
-      localStorage.setItem(getStorageKey(authUser?.id), JSON.stringify(newState));
-      return newState;
-    });
-  }, [authUser?.id]);
+  const updateState = useCallback(
+    (updates) => {
+      setState((prev) => {
+        const newState = { ...prev, ...updates };
+        localStorage.setItem(getStorageKey(authUser?.id), JSON.stringify(newState));
+        return newState;
+      });
+    },
+    [authUser?.id]
+  );
 
   const {
     user,
@@ -113,13 +121,19 @@ export const GoogleBusinessProvider = ({ children }) => {
     performanceError,
     scheduledPosts,
     loadingScheduled,
-    reviewStats
+    reviewStats,
   } = state;
 
   const setUser = useCallback((u) => updateState({ user: u }), [updateState]);
   const setBusinesses = useCallback((v) => updateState({ businesses: v }), [updateState]);
-  const setSelectedBusiness = useCallback((v) => updateState({ selectedBusiness: v }), [updateState]);
-  const setSelectedBusinesses = useCallback((v) => updateState({ selectedBusinesses: v }), [updateState]);
+  const setSelectedBusiness = useCallback(
+    (v) => updateState({ selectedBusiness: v }),
+    [updateState]
+  );
+  const setSelectedBusinesses = useCallback(
+    (v) => updateState({ selectedBusinesses: v }),
+    [updateState]
+  );
   const setReviews = useCallback((v) => updateState({ reviews: v }), [updateState]);
   const setLocalReviews = useCallback((v) => updateState({ localReviews: v }), [updateState]);
   const setLoading = useCallback((v) => updateState({ loading: v }), [updateState]);
@@ -127,12 +141,21 @@ export const GoogleBusinessProvider = ({ children }) => {
   const setReviewUri = useCallback((v) => updateState({ reviewUri: v }), [updateState]);
   const setTokenDetails = useCallback((v) => updateState({ tokenDetails: v }), [updateState]);
   const setPerformanceData = useCallback((v) => updateState({ performanceData: v }), [updateState]);
-  const setPerformanceLoading = useCallback((v) => updateState({ performanceLoading: v }), [updateState]);
-  const setPerformanceError = useCallback((v) => updateState({ performanceError: v }), [updateState]);
+  const setPerformanceLoading = useCallback(
+    (v) => updateState({ performanceLoading: v }),
+    [updateState]
+  );
+  const setPerformanceError = useCallback(
+    (v) => updateState({ performanceError: v }),
+    [updateState]
+  );
   const setScheduledPosts = useCallback((v) => updateState({ scheduledPosts: v }), [updateState]);
-  const setLoadingScheduled = useCallback((v) => updateState({ loadingScheduled: v }), [updateState]);
+  const setLoadingScheduled = useCallback(
+    (v) => updateState({ loadingScheduled: v }),
+    [updateState]
+  );
   const setReviewStats = useCallback((v) => updateState({ reviewStats: v }), [updateState]);
-    console.log("Seleted Business ",selectedBusiness)
+  console.log('Seleted Business ', selectedBusiness);
   // ==============================
   // RESET ON USER CHANGE
   // ==============================
@@ -150,23 +173,22 @@ export const GoogleBusinessProvider = ({ children }) => {
       tokenDetails: {
         accessToken: null,
         expiryDate: null,
-        scopes: []
+        scopes: [],
       },
       performanceData: null,
       performanceLoading: false,
       performanceError: null,
       scheduledPosts: [],
       loadingScheduled: false,
-      reviewStats: null
+      reviewStats: null,
     });
-    
+
     const savedOAuth = localStorage.getItem(getOAuthStorageKey(authUser?.id));
     if (savedOAuth) {
       setGoogleOAuth(JSON.parse(savedOAuth));
     }
-    
   }, [authUser?.id]);
-  
+
   // ==============================
   // AUTH HEADER
   // ==============================
@@ -174,7 +196,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     Authorization: token ? `Bearer ${token}` : undefined,
     'Content-Type': 'application/json',
   });
-  
+
   // console.log("TOken Details",tokenDetails)
   // console.log("Google OAuth",googleOAuth)
   // console.log("Review Stats",reviewStats)
@@ -191,7 +213,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   const connectGoogle = () => {
     window.location.href = `${BACKEND_URL}/auth/google/login`;
   };
- 
+
   // ==============================
   // DISCONNECT GOOGLE
   // ==============================
@@ -199,7 +221,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     if (!silent) {
       toast.info('Disconnecting Google Business Profile...');
     }
-    
+
     try {
       // Clear local state
       setUser(null);
@@ -210,22 +232,22 @@ export const GoogleBusinessProvider = ({ children }) => {
       setLocalReviews([]);
       setIsConnected(false);
       setTokenDetails({ accessToken: null, refreshToken: null, expiryDate: null, scopes: [] });
-      
+
       // Clear Google OAuth tokens
       setGoogleOAuth({
         access_token: null,
         refresh_token: null,
-        expiry_date: null
+        expiry_date: null,
       });
-      
+
       // Clear local storage
       localStorage.removeItem(getStorageKey(authUser?.id));
       localStorage.removeItem(getOAuthStorageKey(authUser?.id));
-      
+
       if (!silent) {
         toast.success('Successfully disconnected Google Business Profile');
       }
-      
+
       return { success: true };
     } catch (error) {
       console.error('Error disconnecting Google:', error);
@@ -234,10 +256,8 @@ export const GoogleBusinessProvider = ({ children }) => {
       }
       return { success: false, error };
     }
-  
   };
 
-  
   // ==============================
   // AUTO DISCONNECT ON SUBSCRIPTION END
   // ==============================
@@ -245,17 +265,17 @@ export const GoogleBusinessProvider = ({ children }) => {
     if (authUser?.id && subscriptionData) {
       const now = new Date();
       const endDate = subscriptionData.endDate ? new Date(subscriptionData.endDate) : null;
-      
+
       // Check if subscription is active
-      const isSubscriptionActive = subscriptionData.status === 'active' && 
-                                endDate && 
-                                endDate > now;
-      
+      const isSubscriptionActive = subscriptionData.status === 'active' && endDate && endDate > now;
+
       // If not active and token exists (meaning user was connected), disconnect
       if (!isSubscriptionActive && (googleOAuth?.access_token || tokenDetails?.accessToken)) {
         console.log('No active subscription - disconnecting Google Business Profile');
         disconnectGoogle(true).then(() => {
-          toast.warning('Your subscription has ended. Google Business Profile has been disconnected.');
+          toast.warning(
+            'Your subscription has ended. Google Business Profile has been disconnected.'
+          );
         });
       }
     }
@@ -285,13 +305,13 @@ export const GoogleBusinessProvider = ({ children }) => {
           setSelectedBusinesses([first]);
           if (first.metadata?.newReviewUri) setReviewUri(first.metadata.newReviewUri);
 
-          await fetchReviews(first.accountId, first.name.split("/")[1]);
-          await fetchLocalReviews(first.name.split("/")[1]);
+          await fetchReviews(first.accountId, first.name.split('/')[1]);
+          await fetchLocalReviews(first.name.split('/')[1]);
         }
       }
     } catch (err) {
       console.error('Error fetching businesses:', err);
-      toast.error("Failed to fetch businesses");
+      toast.error('Failed to fetch businesses');
     } finally {
       setLoading(false);
     }
@@ -303,9 +323,12 @@ export const GoogleBusinessProvider = ({ children }) => {
   const fetchReviews = async (accountId, locationId) => {
     try {
       setLoading(true);
-      const res = await fetch(`${BACKEND_URL}/auth/google/reviews/${accountId}/${locationId}?${googleParams()}`, {
-        headers: authHeaders(),
-      });
+      const res = await fetch(
+        `${BACKEND_URL}/auth/google/reviews/${accountId}/${locationId}?${googleParams()}`,
+        {
+          headers: authHeaders(),
+        }
+      );
 
       const data = await res.json();
       if (res.ok) {
@@ -332,53 +355,53 @@ export const GoogleBusinessProvider = ({ children }) => {
       console.log('No reviews to calculate stats');
       return null;
     }
-    
+
     // Map string ratings to numbers
     const ratingMap = {
-      'ONE': 1,
-      'TWO': 2,
-      'THREE': 3,
-      'FOUR': 4,
-      'FIVE': 5
+      ONE: 1,
+      TWO: 2,
+      THREE: 3,
+      FOUR: 4,
+      FIVE: 5,
     };
-    
+
     const totalReviews = reviews.length;
     const totalRating = reviews.reduce((sum, review) => {
       const rating = ratingMap[review.starRating] || 0;
       // console.log(`Review ID: ${review.reviewId}, Star Rating: ${review.starRating}, Mapped Rating: ${rating}`);
       return sum + rating;
     }, 0);
-    
+
     const averageRating = totalReviews > 0 ? totalRating / totalReviews : 0;
-    
+
     // Group by rating
     const ratingCounts = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-    reviews.forEach(review => {
+    reviews.forEach((review) => {
       const rating = ratingMap[review.starRating];
       if (rating && rating >= 1 && rating <= 5) {
         ratingCounts[rating]++;
       }
     });
-    
+
     // Convert to array format expected by the UI
-    const ratings = [5, 4, 3, 2, 1].map(rating => ({
+    const ratings = [5, 4, 3, 2, 1].map((rating) => ({
       rating,
       count: ratingCounts[rating] || 0,
-      percentage: totalReviews > 0 ? Math.round((ratingCounts[rating] / totalReviews) * 100) : 0
+      percentage: totalReviews > 0 ? Math.round((ratingCounts[rating] / totalReviews) * 100) : 0,
     }));
-    
+
     // Get recent reviews (last 5)
     const recentReviews = [...reviews]
       .sort((a, b) => new Date(b.createTime) - new Date(a.createTime))
       .slice(0, 5);
-    
+
     const result = {
       totalReviews,
       averageRating: parseFloat(averageRating.toFixed(1)),
-      ratings,  // Array format for the UI
-      recentReviews
+      ratings, // Array format for the UI
+      recentReviews,
     };
-    
+
     // console.log('Calculated review stats:', result);
     return result;
   }, []);
@@ -410,8 +433,8 @@ export const GoogleBusinessProvider = ({ children }) => {
     setSelectedBusiness(b);
     if (b.metadata?.newReviewUri) setReviewUri(b.metadata.newReviewUri);
 
-    await fetchReviews(b.accountId, b.name.split("/")[1]);
-    await fetchLocalReviews(b.name.split("/")[1]);
+    await fetchReviews(b.accountId, b.name.split('/')[1]);
+    await fetchLocalReviews(b.name.split('/')[1]);
   };
 
   // ==============================
@@ -419,20 +442,20 @@ export const GoogleBusinessProvider = ({ children }) => {
   // ==============================
   const fetchScheduledPosts = useCallback(async () => {
     if (!selectedBusiness) return;
-    
-    const locationId = selectedBusiness.name.split("/")[1];
+
+    const locationId = selectedBusiness.name.split('/')[1];
     if (!locationId) return;
 
     // console.log('Frontend: Fetching scheduled posts for locationId:', locationId);
-    
+
     setLoadingScheduled(true);
     try {
       const response = await fetch(`${BACKEND_URL}/api/post/user/${locationId}`, {
         headers: authHeaders(),
       });
-      
+
       // console.log('Frontend: Response status:', response.status);
-      
+
       if (response.ok) {
         const data = await response.json();
         // console.log('Frontend: Received data:', data);
@@ -471,42 +494,42 @@ export const GoogleBusinessProvider = ({ children }) => {
     try {
       setPerformanceLoading(true);
       setPerformanceError(null);
-      
-      const locationId = selectedBusiness.name.split("/")[1];
-      
+
+      const locationId = selectedBusiness.name.split('/')[1];
+
       // Format dates as required by the backend
       const start = new Date(startDate);
       const end = new Date(endDate);
-      
+
       // Get the access token from the OAuth context
       const accessToken = googleOAuth?.access_token;
       if (!accessToken) {
         throw new Error('No access token available. Please reconnect your Google account.');
       }
-      
+
       const requestBody = {
         locationId,
         accessToken,
         startDate: {
           year: start.getFullYear(),
           month: start.getMonth() + 1, // JavaScript months are 0-indexed
-          day: start.getDate()
+          day: start.getDate(),
         },
         endDate: {
           year: end.getFullYear(),
           month: end.getMonth() + 1, // JavaScript months are 0-indexed
-          day: end.getDate()
-        }
+          day: end.getDate(),
+        },
       };
 
       const response = await fetch(`${BACKEND_URL}/api/audit/performance`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-          ...authHeaders()
+          Authorization: `Bearer ${accessToken}`,
+          ...authHeaders(),
         },
-        body: JSON.stringify(requestBody)
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
@@ -571,17 +594,17 @@ export const GoogleBusinessProvider = ({ children }) => {
     const access_token = params.get('access_token');
     const refresh_token = params.get('refresh_token');
     const expiry_date = params.get('expiry_date');
-    
+
     if (access_token && authUser?.id) {
       const tokens = {
         access_token,
         refresh_token,
-        expiry_date: expiry_date ? parseInt(expiry_date) : null
+        expiry_date: expiry_date ? parseInt(expiry_date) : null,
       };
-      
+
       // Save tokens to state and localStorage
       setGoogleOAuthTokens(tokens);
-      
+
       // Clean up URL
       const cleanUrl = window.location.pathname;
       window.history.replaceState({}, document.title, cleanUrl);
@@ -595,9 +618,5 @@ export const GoogleBusinessProvider = ({ children }) => {
     }
   }, [googleOAuth.access_token, authUser]);
 
-  return (
-    <GoogleBusinessContext.Provider value={value}>
-      {children}
-    </GoogleBusinessContext.Provider>
-  );
+  return <GoogleBusinessContext.Provider value={value}>{children}</GoogleBusinessContext.Provider>;
 };

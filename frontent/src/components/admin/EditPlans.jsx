@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import { Edit, Plus, Save, X, Trash2 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import axios from 'axios';
+import { Edit, Plus, Save, Trash2, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { getApiBaseUrl } from '../../config/api';
+import { useAuth } from '../context/AuthContext';
 
-const API_URL = import.meta.env.VITE_API_BASE 
+const API_URL = getApiBaseUrl();
 
 const EditPlans = () => {
   const { token } = useAuth();
@@ -14,14 +15,14 @@ const EditPlans = () => {
   const [currentPlan, setCurrentPlan] = useState(null);
 
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
     pricePerProfile: 0,
     discountPercent: 0,
     isPopular: false,
-    features: [""],
-    buttonText: "Get Started",
-    badgeText: "",
+    features: [''],
+    buttonText: 'Get Started',
+    badgeText: '',
     isActive: true,
   });
 
@@ -31,7 +32,7 @@ const EditPlans = () => {
       const res = await axios.get(`${API_URL}/api/admin/plans`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("okkkk",res)
+      console.log('okkkk', res);
       setPlans(res.data);
     } catch (err) {
       console.error(err);
@@ -59,12 +60,12 @@ const EditPlans = () => {
     const { name, value, type, checked } = e.target;
     setFormData((p) => ({
       ...p,
-      [name]: type === "checkbox" ? checked : value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
   const addFeature = () => {
-    setFormData((p) => ({ ...p, features: [...p.features, ""] }));
+    setFormData((p) => ({ ...p, features: [...p.features, ''] }));
   };
 
   const removeFeature = (i) => {
@@ -83,15 +84,11 @@ const EditPlans = () => {
   const savePlan = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.put(
-        `${API_URL}/api/admin/plans/${currentPlan._id}`,
-        formData,
-        { headers: { Authorization: `Bearer ${token}` } },
-      );
+      const res = await axios.put(`${API_URL}/api/admin/plans/${currentPlan._id}`, formData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-      setPlans((p) =>
-        p.map((pl) => (pl._id === currentPlan._id ? res.data : pl)),
-      );
+      setPlans((p) => p.map((pl) => (pl._id === currentPlan._id ? res.data : pl)));
       closeModal();
     } catch (err) {
       console.error(err);
@@ -104,27 +101,27 @@ const EditPlans = () => {
       const response = await axios.patch(
         `${API_URL}/api/admin/plans/${currentPlan._id}/status`,
         { isActive: newStatus },
-        { 
-          headers: { 
+        {
+          headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` 
-          } 
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
       if (response.data) {
         // Update the plans list
-        setPlans(plans.map(plan => 
-          plan._id === currentPlan._id 
-            ? { ...plan, isActive: newStatus } 
-            : plan
-        ));
-        
+        setPlans(
+          plans.map((plan) =>
+            plan._id === currentPlan._id ? { ...plan, isActive: newStatus } : plan
+          )
+        );
+
         // Update the current plan in the modal
         setCurrentPlan({ ...currentPlan, isActive: newStatus });
-        
+
         // Update the form data to reflect the new status
-        setFormData(prev => ({ ...prev, isActive: newStatus }));
+        setFormData((prev) => ({ ...prev, isActive: newStatus }));
       }
     } catch (err) {
       console.error('Error toggling plan status:', err);
@@ -168,7 +165,7 @@ const EditPlans = () => {
                 )}
               </div>
 
-              <button 
+              <button
                 onClick={() => openModal(plan)}
                 className="text-blue-400 hover:text-blue-300 transition-colors p-1 -mt-1 -mr-1"
                 aria-label="Edit plan"
@@ -187,7 +184,7 @@ const EditPlans = () => {
                   </span>
                 )}
                 <span className="text-2xl font-bold text-white">
-                  ${(plan.pricePerProfile * (100 - (plan.discountPercent || 0)) / 100).toFixed(2)}
+                  ${((plan.pricePerProfile * (100 - (plan.discountPercent || 0))) / 100).toFixed(2)}
                 </span>
                 <span className="text-base font-normal text-gray-400 ml-1">/profile</span>
                 {plan.discountPercent > 0 && (
@@ -198,7 +195,8 @@ const EditPlans = () => {
               </div>
               {plan.discountPercent > 0 && (
                 <p className="text-xs text-green-400 mt-1">
-                  Save ${(plan.pricePerProfile * plan.discountPercent / 100).toFixed(2)} per profile
+                  Save ${((plan.pricePerProfile * plan.discountPercent) / 100).toFixed(2)} per
+                  profile
                 </p>
               )}
             </div>
@@ -228,7 +226,7 @@ const EditPlans = () => {
           <div className="bg-gray-800 border border-gray-700 rounded-xl w-full max-w-4xl p-4 shadow-2xl my-2">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-white">Edit Plan</h2>
-              <button 
+              <button
                 onClick={closeModal}
                 className="text-gray-400 hover:text-white transition-colors p-1 -mr-1"
                 aria-label="Close modal"
@@ -263,7 +261,9 @@ const EditPlans = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-1">Price per Profile ($)</label>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">
+                    Price per Profile ($)
+                  </label>
                   <input
                     type="number"
                     name="pricePerProfile"
@@ -280,7 +280,9 @@ const EditPlans = () => {
                     Discount (%)
                     {formData.discountPercent > 0 && (
                       <span className="ml-2 text-xs text-green-400">
-                        Save: ${(formData.pricePerProfile * formData.discountPercent / 100).toFixed(2)} per profile
+                        Save: $
+                        {((formData.pricePerProfile * formData.discountPercent) / 100).toFixed(2)}{' '}
+                        per profile
                       </span>
                     )}
                   </label>
@@ -294,7 +296,9 @@ const EditPlans = () => {
                       max="100"
                       className="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent pr-8 text-sm h-9"
                     />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">%</span>
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                      %
+                    </span>
                   </div>
                 </div>
 
@@ -360,13 +364,12 @@ const EditPlans = () => {
                   onClick={togglePlanStatus}
                   className={`w-full py-3 rounded-lg font-medium transition-colors ${
                     currentPlan?.isActive
-                      ? "bg-red-900/30 hover:bg-red-900/40 text-red-400 border border-red-800/50"
-                      : "bg-green-900/30 hover:bg-green-900/40 text-green-400 border border-green-800/50"
+                      ? 'bg-red-900/30 hover:bg-red-900/40 text-red-400 border border-red-800/50'
+                      : 'bg-green-900/30 hover:bg-green-900/40 text-green-400 border border-green-800/50'
                   }`}
                 >
-                  {currentPlan?.isActive ? "Deactivate Plan" : "Activate Plan"}
+                  {currentPlan?.isActive ? 'Deactivate Plan' : 'Activate Plan'}
                 </button>
-
               </div>
             </form>
             <div className="p-4 border-t border-gray-700 bg-gray-800/80 mt-4">
