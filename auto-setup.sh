@@ -177,9 +177,18 @@ print_success "Permissions set"
 # ===========================================
 print_header "Step 5/5: Starting Application"
 
+# Detect docker-compose command (old vs new syntax)
+if command -v docker-compose &> /dev/null; then
+    DC="docker-compose"
+else
+    DC="docker compose"
+fi
+
+print_info "Using: $DC"
 print_info "Building and starting containers..."
-docker compose down 2>/dev/null || true
-docker compose up --build -d
+
+$DC down 2>/dev/null || true
+$DC up --build -d
 
 # Wait for services
 print_info "Waiting for services to start..."
@@ -187,19 +196,19 @@ sleep 15
 
 # Health check
 echo ""
-if docker compose ps | grep -q "mongodb.*Up\|mongodb.*running"; then
+if $DC ps | grep -q "mongodb.*Up\|mongodb.*running"; then
     print_success "MongoDB: Running"
 else
     print_warning "MongoDB: Starting..."
 fi
 
-if docker compose ps | grep -q "backend.*Up\|backend.*running"; then
+if $DC ps | grep -q "backend.*Up\|backend.*running"; then
     print_success "Backend: Running"
 else
     print_warning "Backend: Starting..."
 fi
 
-if docker compose ps | grep -q "frontend.*Up\|frontend.*running"; then
+if $DC ps | grep -q "frontend.*Up\|frontend.*running"; then
     print_success "Frontend: Running"
 else
     print_warning "Frontend: Starting..."
@@ -219,7 +228,7 @@ echo -e "${GREEN}║                                            ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════╝${NC}"
 echo ""
 echo "Commands:"
-echo "  View logs:  docker compose logs -f"
-echo "  Stop:       docker compose down"
-echo "  Restart:    docker compose restart"
+echo "  View logs:  $DC logs -f"
+echo "  Stop:       $DC down"
+echo "  Restart:    $DC restart"
 echo ""
