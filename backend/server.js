@@ -127,6 +127,24 @@ app.get('/', (req, res) => {
   });
 });
 
+// API root route
+app.get('/api', (req, res) => {
+  res.json({
+    status: 'success',
+    message: 'Clurst API is running!',
+    version: '1.0.0',
+    timestamp: new Date().toISOString(),
+    endpoints: {
+      status: '/api/status',
+      auth: '/api/auth',
+      reviews: '/api/reviews',
+      analytics: '/api/analytics',
+      subscription: '/api/subscription',
+      admin: '/api/admin',
+    },
+  });
+});
+
 // Test API route
 app.get('/api/status', (req, res) => {
   res.json({
@@ -135,6 +153,28 @@ app.get('/api/status', (req, res) => {
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV || 'development',
     version: '1.0.0',
+  });
+});
+
+// Health check with DB status
+app.get('/api/health', async (req, res) => {
+  const mongoose = await import('mongoose');
+  const dbState = mongoose.default.connection.readyState;
+  const dbStates = {
+    0: 'disconnected',
+    1: 'connected',
+    2: 'connecting',
+    3: 'disconnecting',
+  };
+
+  res.json({
+    status: dbState === 1 ? 'healthy' : 'degraded',
+    timestamp: new Date().toISOString(),
+    database: {
+      status: dbStates[dbState] || 'unknown',
+      name: mongoose.default.connection.db?.databaseName || 'not connected',
+    },
+    environment: process.env.NODE_ENV || 'development',
   });
 });
 
