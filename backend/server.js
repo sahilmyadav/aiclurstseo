@@ -63,6 +63,12 @@ const corsOptions = {
       return callback(null, true);
     }
 
+    // Allow clurst.io domain (production)
+    if (originUrl.hostname === 'clurst.io' || originUrl.hostname.endsWith('.clurst.io')) {
+      console.log('Allowing clurst.io domain:', origin);
+      return callback(null, true);
+    }
+
     console.warn('CORS blocked origin:', origin);
     const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
     return callback(new Error(msg), false);
