@@ -5,7 +5,7 @@
 # ===========================================
 # Run this on your VPS after cloning:
 #   curl -sSL https://raw.githubusercontent.com/sahilmyadav/aiclurstseo/main/quick-install.sh | bash
-# 
+#
 # Or locally:
 #   ./quick-install.sh [YOUR_VPS_IP]
 # ===========================================
@@ -33,7 +33,7 @@ echo "Detected IP: $VPS_IP"
 # Check if we're in the project directory
 if [ ! -f "docker-compose.yml" ]; then
     echo -e "${YELLOW}Not in project directory. Looking for aiclurstseo...${NC}"
-    
+
     if [ -d "aiclurstseo" ]; then
         cd aiclurstseo
     elif [ -d "$HOME/aiclurstseo" ]; then

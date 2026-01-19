@@ -41,7 +41,7 @@ echo "Mode: $MODE"
 echo "Server IP: $VPS_IP"
 
 # ===========================================
-# Step 1: Install Docker
+# Step 1: Install Docker & Buildx
 # ===========================================
 print_header "Step 1/5: Installing Docker"
 
@@ -58,11 +58,23 @@ else
     print_success "Docker already installed"
 fi
 
+# Install/Update Docker Buildx
+print_info "Ensuring Docker Buildx is up to date..."
+BUILDX_VERSION=$(curl -s https://api.github.com/repos/docker/buildx/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+BUILDX_VERSION=${BUILDX_VERSION:-v0.19.3}
+mkdir -p ~/.docker/cli-plugins/
+curl -sSL "https://github.com/docker/buildx/releases/download/${BUILDX_VERSION}/buildx-${BUILDX_VERSION}.linux-amd64" -o ~/.docker/cli-plugins/docker-buildx
+chmod +x ~/.docker/cli-plugins/docker-buildx
+docker buildx version 2>/dev/null && print_success "Docker Buildx installed: $(docker buildx version)" || print_warning "Buildx installation skipped"
+
+# Install Docker Compose Plugin
 if ! docker compose version &> /dev/null; then
-    print_info "Installing Docker Compose..."
-    sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-    sudo chmod +x /usr/local/bin/docker-compose
-    print_success "Docker Compose installed!"
+    print_info "Installing Docker Compose plugin..."
+    COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | grep '"tag_name"' | cut -d'"' -f4)
+    COMPOSE_VERSION=${COMPOSE_VERSION:-v2.32.4}
+    curl -sSL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-x86_64" -o ~/.docker/cli-plugins/docker-compose
+    chmod +x ~/.docker/cli-plugins/docker-compose
+    print_success "Docker Compose plugin installed!"
 else
     print_success "Docker Compose available"
 fi
@@ -177,18 +189,15 @@ print_success "Permissions set"
 # ===========================================
 print_header "Step 5/5: Starting Application"
 
-# Detect docker-compose command (old vs new syntax)
-if command -v docker-compose &> /dev/null; then
-    DC="docker-compose"
-else
-    DC="docker compose"
-fi
+# Always use docker compose (plugin syntax) since we installed it
+DC="docker compose"
 
 print_info "Using: $DC"
 print_info "Building and starting containers..."
 
 $DC down 2>/dev/null || true
-$DC up --build -d
+$DC build --no-cache
+$DC up -d
 
 # Wait for services
 print_info "Waiting for services to start..."
