@@ -1,27 +1,4 @@
 services:
-  # MongoDB Database
-  mongodb:
-    image: mongo:7.0
-    container_name: clurst-mongodb
-    restart: unless-stopped
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-adminpassword}
-      MONGO_INITDB_DATABASE: clurst
-    volumes:
-      - mongodb_data:/data/db
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
-    ports:
-      - '27017:27017'
-    networks:
-      - clurst-network
-    healthcheck:
-      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-
   # Backend API
   backend:
     build:
@@ -29,17 +6,13 @@ services:
       dockerfile: Dockerfile
     container_name: clurst-backend
     restart: unless-stopped
-    depends_on:
-      mongodb:
-        condition: service_healthy
     environment:
       # Server
       NODE_ENV: production
       PORT: 8000
 
-      # MongoDB - connects to mongodb container
-      MONGODB_URI: mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD:-adminpassword}@mongodb:27017/clurst?authSource=admin
-      MONGODB_DB: clurst
+      # MongoDB - uses MongoDB Atlas from .env
+      MONGODB_URI: ${MONGODB_URI}
 
       # JWT
       JWT_SECRET: ${JWT_SECRET}
@@ -163,7 +136,3 @@ services:
 networks:
   clurst-network:
     driver: bridge
-
-volumes:
-  mongodb_data:
-    driver: local
