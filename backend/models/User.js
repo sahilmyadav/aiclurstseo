@@ -19,6 +19,15 @@ const UserSchema = new mongoose.Schema(
       enabled: { type: Boolean, default: false },
       lastUpdated: { type: Date, default: Date.now }
     }],
+    // Add auto-reply timing fields
+    autoReplyLastRun: { 
+      type: Date, 
+      default: null 
+    },
+    autoReplyNextRun: { 
+      type: Date, 
+      default: null 
+    },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
