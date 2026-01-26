@@ -8,6 +8,17 @@ const UserSchema = new mongoose.Schema(
     phone: { type: String, trim: true },
     isActive: { type: Boolean, default: true },
     autoReply: { type: Boolean, default: true },
+    autoReplyConfigs: [{
+      locationId: String,
+      accountId: String,
+      tokenDetails: {
+        accessToken: String,
+        refreshToken: String,
+        expiryDate: Date
+      },
+      enabled: { type: Boolean, default: false },
+      lastUpdated: { type: Date, default: Date.now }
+    }],
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
