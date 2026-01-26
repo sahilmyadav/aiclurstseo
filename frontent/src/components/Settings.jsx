@@ -3,12 +3,13 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
+import { Image } from 'lucide-react';
 
 const SettingsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { theme } = useTheme();
-  const { selectedBusiness, tokenDetails, isConnected } = useGoogleBusiness();
+  const { selectedBusiness, isConnected, media, loadingMedia, mediaError, fetchMedia } = useGoogleBusiness();
   
   const [formData, setFormData] = useState({
     name: "",
@@ -16,8 +17,6 @@ const SettingsPage = () => {
   });
 
   const [isLoading, setIsLoading] = useState(true);
-  const [photos, setPhotos] = useState([]);
-  const [loadingPhotos, setLoadingPhotos] = useState(false);
 
   // Handle save changes
   const handleSaveChanges = () => {
@@ -26,55 +25,23 @@ const SettingsPage = () => {
     alert('Changes saved successfully!');
   };
 
-  // Fetch Google My Business photos
-  const fetchPhotos = async () => {
-    if (!isConnected || !selectedBusiness || !tokenDetails?.accessToken) {
-      setPhotos([]);
-      return;
-    }
-
-    setLoadingPhotos(true);
-    try {
+  // Fetch media when Settings page is visited
+  useEffect(() => {
+    if (isConnected && selectedBusiness) {
       const accountId = selectedBusiness.accountId;
       const locationId = selectedBusiness.name?.split('/')[1];
       
-      if (!accountId || !locationId) {
-        throw new Error('Missing account or location ID');
-      }
-
-      const BACKEND_URL = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '');
-      
-      // Build URL with OAuth parameters
-      const params = new URLSearchParams({
-        access_token: tokenDetails.accessToken,
-        ...(tokenDetails.refreshToken && { refresh_token: tokenDetails.refreshToken }),
-        ...(tokenDetails.expiryDate && { expiry_date: tokenDetails.expiryDate.getTime() })
-      });
-
-      const url = `${BACKEND_URL}/auth/google/accounts/${accountId}/locations/${locationId}/media?${params}`;
-      
-      const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
+      if (accountId && locationId) {
+        // Only fetch if no media exists
+        if (media.length === 0) {
+          console.log('No cached media found, fetching from API...');
+          fetchMedia(accountId, locationId);
+        } else {
+          console.log('Using cached media:', media.length, 'items');
         }
-      });
-
-      const data = await response.json();
-      
-      if (response.ok) {
-        setPhotos(data.mediaItems || []);
-      } else {
-        console.error('Failed to fetch photos:', data.error);
-        setPhotos([]);
       }
-    } catch (error) {
-      console.error('Error fetching photos:', error);
-      setPhotos([]);
-    } finally {
-      setLoadingPhotos(false);
     }
-  };
+  }, [isConnected, selectedBusiness, media.length, fetchMedia]);
 
   useEffect(() => {
     if (!user) {
@@ -93,11 +60,6 @@ const SettingsPage = () => {
     
     setIsLoading(false);
   }, [user]);
-
-  // Fetch photos when business or tokens change
-  useEffect(() => {
-    fetchPhotos();
-  }, [selectedBusiness, tokenDetails, isConnected]);
 
   if (!user) {
     return null; // Will redirect in useEffect
@@ -200,25 +162,59 @@ const SettingsPage = () => {
                   Google My Business Photos
                 </h3>
                 <button
-                  onClick={fetchPhotos}
-                  disabled={loadingPhotos}
+                  onClick={() => {
+                    const accountId = selectedBusiness.accountId;
+                    const locationId = selectedBusiness.name?.split('/')[1];
+                    if (accountId && locationId) {
+                      fetchMedia(accountId, locationId, true); // Force refresh
+                    }
+                  }}
+                  disabled={loadingMedia}
                   className={`px-3 py-1 text-sm rounded-md font-medium transition-colors ${
                     theme === 'dark'
                       ? 'bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50'
                       : 'bg-purple-500 hover:bg-purple-600 text-white disabled:opacity-50'
                   }`}
                 >
-                  {loadingPhotos ? 'Loading...' : 'Refresh'}
+                  {loadingMedia ? 'Loading...' : 'Refresh'}
                 </button>
               </div>
 
-              {loadingPhotos ? (
+              {loadingMedia ? (
                 <div className="flex justify-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                  <p className="ml-3 text-gray-500">Loading photos...</p>
                 </div>
-              ) : photos.length > 0 ? (
+              ) : mediaError ? (
+                <div className="text-center py-8">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-red-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <p className={`${
+                    theme === 'dark' ? 'text-red-400' : 'text-red-500'
+                  }`}>
+                    Error loading photos: {mediaError}
+                  </p>
+                  <button
+                    onClick={() => {
+                      const accountId = selectedBusiness.accountId;
+                      const locationId = selectedBusiness.name?.split('/')[1];
+                      if (accountId && locationId) {
+                        fetchMedia(accountId, locationId, true);
+                      }
+                    }}
+                    className={`mt-4 px-4 py-2 rounded-md font-medium ${
+                      theme === 'dark'
+                        ? 'bg-purple-600 hover:bg-purple-700 text-white'
+                        : 'bg-purple-500 hover:bg-purple-600 text-white'
+                    }`}
+                  >
+                    Try Again
+                  </button>
+                </div>
+              ) : media.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-                  {photos.map((photo, index) => {
+                  {media.map((photo, index) => {
                     // Mobile pattern: 2-1-2-1-2-1...
                     // Desktop: uniform 4 columns
                     const isMobile = window.innerWidth < 640; // sm breakpoint
@@ -251,7 +247,11 @@ const SettingsPage = () => {
                               isMobile && rowSpan === 2 ? 'h-48' : 'h-32'
                             }`}
                             onError={(e) => {
+                              console.error('Image failed to load:', e.target.src);
                               e.target.src = 'https://via.placeholder.com/300x300/800080/FFFFFF?text=No+Image';
+                            }}
+                            onLoad={(e) => {
+                              console.log('Image loaded successfully:', e.target.src);
                             }}
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-end p-3">
