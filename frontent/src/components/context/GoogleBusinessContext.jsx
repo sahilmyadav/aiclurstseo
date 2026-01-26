@@ -533,6 +533,105 @@ export const GoogleBusinessProvider = ({ children }) => {
   };
 
   // ==============================
+  // NEW STATE: Google My Business Media
+  // ==============================
+  const [mediaState, setMediaState] = useState(() => {
+    const saved = localStorage.getItem(getMediaStorageKey(authUser?.id));
+    return saved ? JSON.parse(saved) : {
+      media: [],
+      loadingMedia: false,
+      mediaError: null,
+      hasVisitedSettings: false
+    };
+  });
+
+  const updateMediaState = useCallback((updates) => {
+    setMediaState(prev => {
+      const newState = { ...prev, ...updates };
+      // Always save to localStorage
+      localStorage.setItem(getMediaStorageKey(authUser?.id), JSON.stringify(newState));
+      return newState;
+    });
+  }, [authUser?.id]);
+
+  const { media, loadingMedia, mediaError, hasVisitedSettings } = mediaState;
+
+  // ==============================
+  // FETCH GOOGLE MY BUSINESS MEDIA
+  // ==============================
+  const fetchMedia = useCallback(async (accountId, locationId, force = false) => {
+    if (!accountId || !locationId || !tokenDetails?.accessToken) {
+      updateMediaState({ media: [], loadingMedia: false, mediaError: null });
+      return;
+    }
+
+    // Only fetch if:
+    // 1. Force refresh is requested OR
+    // 2. No media exists
+    if (!force && media.length > 0) {
+      console.log('Using cached media, skipping API call');
+      return; // Already have media, don't fetch again
+    }
+
+    console.log('Fetching GMB media for:', accountId, locationId);
+    updateMediaState({ loadingMedia: true, mediaError: null });
+
+    try {
+      const BACKEND_URL = (import.meta.env.VITE_API_BASE || '').replace(/\/$/, '');
+      
+      // Build URL with OAuth parameters
+      const params = new URLSearchParams({
+        access_token: tokenDetails.accessToken,
+        ...(tokenDetails.refreshToken && { refresh_token: tokenDetails.refreshToken }),
+        ...(tokenDetails.expiryDate && { expiry_date: tokenDetails.expiryDate.getTime() })
+      });
+
+      const url = `${BACKEND_URL}/auth/google/accounts/${accountId}/locations/${locationId}/media?${params}`;
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+
+      const data = await response.json();
+      console.log('Media API response:', data);
+      
+      if (response.ok) {
+        const mediaItems = data.mediaItems || [];
+        console.log(`Fetched ${mediaItems.length} media items`);
+        updateMediaState({ 
+          media: mediaItems, 
+          loadingMedia: false, 
+          mediaError: null,
+          hasVisitedSettings: true
+        });
+      } else {
+        console.error('Failed to fetch media:', data.error);
+        updateMediaState({ 
+          media: [], 
+          loadingMedia: false, 
+          mediaError: data.error || 'Failed to fetch media' 
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching media:', error);
+      updateMediaState({ 
+        media: [], 
+        loadingMedia: false, 
+        mediaError: error.message 
+      });
+    }
+  }, [tokenDetails, authUser?.id, media.length, updateMediaState]);
+
+  // ==============================
+  // AUTO-FETCH MEDIA - REMOVED AUTO-FETCHING
+  // ==============================
+  // Removed the useEffect that auto-fetches when business changes
+  // Media will only be fetched when explicitly requested (e.g., visiting Settings page)
+
+  // ==============================
   // VALUE EXPORT
   // ==============================
   const value = {
@@ -563,6 +662,12 @@ export const GoogleBusinessProvider = ({ children }) => {
     fetchLocalReviews,
     fetchPerformanceMetrics,
     fetchScheduledPosts,
+    // Media related values
+    media,
+    loadingMedia,
+    mediaError,
+    hasVisitedSettings,
+    fetchMedia,
   };
 
   // Handle OAuth callback and save tokens from URL
@@ -601,3 +706,6 @@ export const GoogleBusinessProvider = ({ children }) => {
     </GoogleBusinessContext.Provider>
   );
 };
+
+// Helper function for media storage key
+const getMediaStorageKey = (userId) => `gmb_media_${userId || 'guest'}`;

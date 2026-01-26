@@ -3,6 +3,25 @@ import { jsPDF } from "jspdf";
 import { Download, Star } from "lucide-react";
 import { useGoogleBusiness } from "./context/GoogleBusinessContext";
 
+// Helper function to convert image URL to base64
+const getImageBase64 = (url) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+      resolve(dataURL);
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
+};
+
 // Custom function to draw a bar chart in the PDF
 const drawBarChart = (doc, x, y, data, width, height, maxValue, monthLabels) => {
   try {
@@ -101,7 +120,7 @@ const drawBarChart = (doc, x, y, data, width, height, maxValue, monthLabels) => 
 };
 
 const Report = ({ buttonText = "Download Audit Report", className = "" }) => {
-  const { selectedBusiness, reviews = [], reviewStats, performanceData } = useGoogleBusiness();
+  const { selectedBusiness, reviews = [], reviewStats, performanceData, media = [] } = useGoogleBusiness();
 
   // Helper: Page Break Logic
   const safeY = (doc, y, margin = 20) => {
@@ -129,7 +148,7 @@ const Report = ({ buttonText = "Download Audit Report", className = "" }) => {
     return y + 18;
   };
 
-  const generate = () => {
+  const generate = async () => {
     if (!selectedBusiness) {
       alert("Please select a business profile first!");
       return;
@@ -293,7 +312,79 @@ const Report = ({ buttonText = "Download Audit Report", className = "" }) => {
 
     y += 5;
 
-    // --- 3. MONTHLY REVIEW TRENDS ---
+    // --- 3. BUSINESS MEDIA SECTION ---
+    if (media && media.length > 0) {
+      y = drawSectionHeader(doc, "Business Media Gallery", y);
+      
+      // Show first 2-3 images
+      const imagesToShow = media.slice(0, 3);
+      const imageWidth = 50;
+      const imageHeight = 40;
+      const spacing = 10;
+      const startX = 20;
+      
+      // Fetch and embed images
+      for (let index = 0; index < imagesToShow.length; index++) {
+        const image = imagesToShow[index];
+        y = safeY(doc, y, 60); // Ensure enough space for image
+        
+        // Extract image URL
+        const imageUrl = image?.googleUrl || 
+                         image?.thumbnailUrl || 
+                         image?.url || 
+                         image?.sourceUrl || 
+                         (typeof image === 'string' ? image : null);
+        
+        if (imageUrl) {
+          try {
+            // Convert image to base64
+            const base64Image = await getImageBase64(imageUrl);
+            
+            // Add image to PDF
+            doc.addImage(
+              base64Image,
+              'JPEG',
+              startX + (index * (imageWidth + spacing)),
+              y,
+              imageWidth,
+              imageHeight
+            );
+            
+            // Add border around image
+            doc.setDrawColor(200, 200, 200);
+            doc.rect(startX + (index * (imageWidth + spacing)), y, imageWidth, imageHeight, 'S');
+            
+            // Add description if available
+            const imageDescription = image?.description || 
+                                    image?.caption || 
+                                    image?.name || 
+                                    `Business Photo ${index + 1}`;
+            
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7);
+            doc.setTextColor(100, 100, 100);
+            const splitDesc = doc.splitTextToSize(imageDescription, imageWidth - 4);
+            doc.text(splitDesc, startX + (index * (imageWidth + spacing)) + 2, y + imageHeight + 8);
+            
+          } catch (error) {
+            console.error('Error loading image:', error);
+            // Fallback: show placeholder with error message
+            doc.setFillColor(240, 240, 240);
+            doc.rect(startX + (index * (imageWidth + spacing)), y, imageWidth, imageHeight, 'F');
+            doc.setDrawColor(200, 200, 200);
+            doc.rect(startX + (index * (imageWidth + spacing)), y, imageWidth, imageHeight, 'S');
+            doc.setFontSize(8);
+            doc.setFont("helvetica", "bold");
+            doc.setTextColor(150, 150, 150);
+            doc.text('Image Unavailable', startX + (index * (imageWidth + spacing)) + 5, y + 20);
+          }
+        }
+      }
+      
+      y += imageHeight + 20;
+    }
+
+    // --- 4. MONTHLY REVIEW TRENDS ---
     if (reviews && reviews.length > 0) {
       // Check if we need a new page
       y = safeY(doc, y, 100); // Make sure we have enough space for the chart
