@@ -18,7 +18,9 @@ import analyticsRoutes from './routes/analytics.js';
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import a from "./routes/analytics.js";
 import planRoutes from "./routes/planRoutes.js";
+import autoReplyRoutes from "./routes/autoReplyRoutes.js";
 import { startSubscriptionJobs } from './jobs/subscriptionJobs.js';
+import { startAutoReplyJob } from './jobs/autoReplyJob.js';
 dotenv.config();
 
 const app = express();
@@ -59,6 +61,7 @@ initializeFirebase();
 // Start subscription jobs
 if (process.env.NODE_ENV !== 'test') {
   startSubscriptionJobs();
+  startAutoReplyJob();
 }
 
 // Start the post scheduler (runs every 5 minutes)
@@ -79,6 +82,7 @@ app.use((req, res, next) => {
 
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/admin/plans", planRoutes);
+app.use("/api/auto-reply", autoReplyRoutes);
 app.use("/auth/google", googleRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
