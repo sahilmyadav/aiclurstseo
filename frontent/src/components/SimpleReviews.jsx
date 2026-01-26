@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import { useAuth } from './context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { toast } from 'sonner';
 import { MessageSquareText, MessageSquare, X, Sparkles, Loader2, CheckCircle, RefreshCw, Clock } from 'lucide-react';
 import axios from 'axios';
@@ -9,6 +10,7 @@ import { generateAIReviewReply } from '../utils/aiReplyGenerator';
 const SimpleReviews = () => {
   const { reviews, selectedBusiness, tokenDetails, selectBusiness } = useGoogleBusiness();
   const { user, token, toggleAutoReply } = useAuth();
+  const { theme } = useTheme();
   const [isAutoReplyOn, setIsAutoReplyOn] = useState(user?.autoReply || false);
   // Add new state for reply functionality
   const [replyDialogOpen, setReplyDialogOpen] = useState(false);
@@ -306,16 +308,34 @@ const SimpleReviews = () => {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className={`p-6 max-w-6xl mx-auto min-h-screen ${
+      theme === 'dark' 
+        ? 'bg-gray-900 text-white' 
+        : 'bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] text-gray-900'
+    }`}>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">Reviews Management</h1>
+        <h1 className={`text-3xl font-bold mb-6 ${
+          theme === 'dark' ? 'text-white' : 'text-purple-900'
+        }`}>
+          Reviews Management
+        </h1>
         
         {/* Auto-reply Toggle with Timer */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-800 dark:to-gray-900 rounded-2xl p-6 shadow-lg border border-blue-100 dark:border-gray-700">
+        <div className={`rounded-2xl p-6 shadow-lg ${
+          theme === 'dark' 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] border border-gray-200 shadow-sm'
+        }`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
-              <h3 className="font-bold text-lg text-gray-900 dark:text-white">Auto Reply System</h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+              <h3 className={`font-bold text-lg ${
+                theme === 'dark' ? 'text-white' : 'text-purple-900'
+              }`}>
+                Auto Reply System
+              </h3>
+              <p className={`text-sm mt-1 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-600'
+              }`}>
                 Automatically respond to new reviews with AI-generated responses
               </p>
               {/* Timer display when auto-reply is on */}
@@ -327,7 +347,7 @@ const SimpleReviews = () => {
                       <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                       </svg>
-                      <span className="text-green-700 dark:text-green-300">
+                      <span className={theme === 'dark' ? 'text-green-400' : 'text-green-700'}>
                         Last run: {formatDate(lastRunTime)}
                       </span>
                     </div>
@@ -335,19 +355,27 @@ const SimpleReviews = () => {
                   {/* Next check time */}
                   <div className="flex items-center text-sm">
                     <Clock className="w-4 h-4 text-blue-500 mr-2" />
-                    <span className="text-blue-700 dark:text-blue-300">
+                    <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-700'}>
                       Next check at {formatTime(nextCheckTime)}
                     </span>
                   </div>
                   {/* Countdown timer */}
                   <div className="flex items-center text-sm">
-                    <div className="flex items-center px-2 py-1 bg-blue-100 dark:bg-blue-900/30 rounded-md">
-                      <span className="text-blue-800 dark:text-blue-200 font-mono">
+                    <div className={`flex items-center px-2 py-1 rounded-md ${
+                      theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'
+                    }`}>
+                      <span className={`font-mono ${
+                        theme === 'dark' ? 'text-blue-300' : 'text-blue-800'
+                      }`}>
                         {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
                       </span>
-                      <span className="text-blue-600 dark:text-blue-400 ml-1">min</span>
+                      <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-600 ml-1'}>
+                        min
+                      </span>
                     </div>
-                    <span className="text-blue-700 dark:text-blue-300 ml-2">
+                    <span className={`ml-2 ${
+                      theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
+                    }`}>
                       until next check
                     </span>
                   </div>
@@ -364,8 +392,8 @@ const SimpleReviews = () => {
               <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-7 peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-blue-600 dark:peer-focus:ring-blue-800"></div>
               <span className={`ml-4 text-base font-semibold ${
                 isAutoReplyOn 
-                  ? 'text-blue-600 dark:text-blue-400' 
-                  : 'text-gray-500 dark:text-gray-400'
+                  ? (theme === 'dark' ? 'text-blue-400' : 'text-blue-600')
+                  : (theme === 'dark' ? 'text-gray-400' : 'text-gray-500')
               }`}>
                 {isAutoReplyOn ? 'AUTO' : 'MANUAL'}
               </span>
@@ -380,11 +408,17 @@ const SimpleReviews = () => {
           reviews.map((review) => (
             <div 
               key={review.name} 
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow border border-gray-100 dark:border-gray-700"
+              className={`rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow ${
+                theme === 'dark' 
+                  ? 'bg-gray-800 border-gray-700' 
+                  : 'bg-white hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] border border-gray-200 shadow-sm'
+              }`}
             >
               <div className="flex justify-between items-start mb-4">
                 <div>
-                  <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-1">
+                  <h4 className={`font-bold text-lg mb-1 ${
+                    theme === 'dark' ? 'text-white' : 'text-purple-900'
+                  }`}>
                     {review.reviewer?.displayName || 'Anonymous Reviewer'}
                   </h4>
                   <div className="flex items-center mt-1">
@@ -393,12 +427,14 @@ const SimpleReviews = () => {
                         key={i} 
                         className={`text-xl ${i < (review.starRating === 'ONE' ? 1 : review.starRating === 'TWO' ? 2 : review.starRating === 'THREE' ? 3 : review.starRating === 'FOUR' ? 4 : 5) 
                           ? 'text-yellow-400' 
-                          : 'text-gray-300 dark:text-gray-600'}`}
+                          : (theme === 'dark' ? 'text-gray-600' : 'text-gray-300')}`}
                       >
                         ★
                       </span>
                     ))}
-                    <span className="ml-2 text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <span className={`ml-2 text-sm font-medium ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-500'
+                    }`}>
                       {review.starRating === 'ONE' ? 1 : 
                        review.starRating === 'TWO' ? 2 : 
                        review.starRating === 'THREE' ? 3 : 
@@ -407,7 +443,9 @@ const SimpleReviews = () => {
                     </span>
                   </div>
                 </div>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
+                <span className={`text-sm ${
+                  theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                }`}>
                   {new Date(review.createTime).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'long',
@@ -416,25 +454,37 @@ const SimpleReviews = () => {
                 </span>
               </div>
               
-              <p className="mt-2 text-gray-700 dark:text-gray-300 text-base leading-relaxed mb-4">
+              <p className={`mt-2 text-base leading-relaxed mb-4 ${
+                theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+              }`}>
                 {review.comment}
               </p>
               
               {review.reviewReply ? (
-                <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-l-4 border-blue-500">
+                <div className={`mt-4 p-4 rounded-lg border-l-4 ${
+                  theme === 'dark' 
+                    ? 'bg-blue-900/30 border-blue-500' 
+                    : 'bg-blue-50 border-blue-500'
+                }`}>
                   <div className="flex items-start space-x-2">
                     <div className="w-5 h-5 mt-0.5 flex items-center justify-center rounded-full bg-blue-500 flex-shrink-0">
                       <span className="text-xs font-bold text-white">✓</span>
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                      <p className={`text-sm font-medium ${
+                        theme === 'dark' ? 'text-blue-300' : 'text-blue-800'
+                      }`}>
                         Response
                       </p>
-                      <p className="text-gray-700 dark:text-gray-300 text-base leading-relaxed">
+                      <p className={`text-base leading-relaxed ${
+                        theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                      }`}>
                         {review.reviewReply.comment}
                       </p>
                       {review.reviewReply.updateTime && (
-                        <span className="inline-block mt-2 text-xs text-gray-500 dark:text-gray-400">
+                        <span className={`inline-block mt-2 text-xs ${
+                          theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                        }`}>
                           Replied on {new Date(review.reviewReply.updateTime).toLocaleDateString('en-US', {
                             month: 'short',
                             day: 'numeric',
@@ -447,8 +497,14 @@ const SimpleReviews = () => {
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 p-4 bg-orange-50 dark:bg-orange-900/30 rounded-lg border border-dashed border-orange-200 dark:border-orange-700">
-                  <p className="text-center text-gray-500 dark:text-gray-400 font-medium flex items-center justify-center gap-2">
+                <div className={`mt-4 p-4 rounded-lg border border-dashed ${
+                  theme === 'dark' 
+                    ? 'bg-orange-900/30 border-orange-700' 
+                    : 'bg-orange-50 border-orange-200'
+                }`}>
+                  <p className={`text-center font-medium flex items-center justify-center gap-2 ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                  }`}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                     </svg>
@@ -480,12 +536,22 @@ const SimpleReviews = () => {
             </div>
           ))
         ) : (
-          <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className={`text-center py-16 rounded-xl shadow-lg ${
+            theme === 'dark' 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] border border-gray-200 shadow-sm'
+          }`}>
             <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
             </svg>
-            <h3 className="mt-4 text-lg font-medium text-gray-900 dark:text-white">No reviews found</h3>
-            <p className="mt-2 text-gray-500 dark:text-gray-400">
+            <h3 className={`mt-4 text-lg font-medium ${
+              theme === 'dark' ? 'text-white' : 'text-purple-900'
+            }`}>
+              No reviews found
+            </h3>
+            <p className={`mt-2 ${
+              theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+            }`}>
               There are no reviews for this location yet.
             </p>
           </div>
@@ -494,17 +560,29 @@ const SimpleReviews = () => {
 
       {/* Reply Dialog with AI Suggestions */}
       {replyDialogOpen && (
-        <div className="fixed inset-0 bg-black/50 dark:bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden border border-blue-100 dark:border-gray-700">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className={`rounded-xl shadow-2xl w-full max-w-5xl flex flex-col md:flex-row overflow-hidden ${
+            theme === 'dark' 
+              ? 'bg-gray-800 border-gray-700' 
+              : 'bg-white border border-gray-200 shadow-sm'
+          }`}>
             {/* Left side - Reply Form */}
-            <div className="flex-1 p-6 border-r border-blue-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <div className={`flex-1 p-6 border-r ${
+              theme === 'dark' 
+                ? 'bg-gray-800 border-gray-700' 
+                : 'bg-white border-gray-200'
+            }`}>
               <div className="flex justify-between items-center mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                <h3 className={`text-lg font-semibold ${
+                  theme === 'dark' ? 'text-white' : 'text-purple-900'
+                }`}>
                   {isEditMode ? 'Edit Reply' : 'Reply to Review'}
                 </h3>
                 <button
                   type="button"
-                  className="text-gray-400 hover:text-blue-600 dark:hover:text-gray-300"
+                  className={`${
+                    theme === 'dark' ? 'text-gray-400 hover:text-blue-400' : 'text-gray-400 hover:text-blue-600'
+                  }`}
                   onClick={() => setReplyDialogOpen(false)}
                 >
                   <X className="h-5 w-5" />
@@ -514,14 +592,20 @@ const SimpleReviews = () => {
               <div className="space-y-4">
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <label htmlFor="reply-text" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                    <label htmlFor="reply-text" className={`block text-sm font-medium ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
                       {isEditMode ? 'Edit your reply' : 'Your Reply'}
                     </label>
                     <button
                       type="button"
                       onClick={generateAIReview}
                       disabled={isGeneratingAI || !currentReview}
-                      className="inline-flex items-center text-sm px-3 py-1.5 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:hover:bg-blue-800/50 dark:text-blue-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed border border-blue-100 dark:border-blue-900/50"
+                      className={`inline-flex items-center text-sm px-3 py-1.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        theme === 'dark' 
+                          ? 'bg-blue-900/50 hover:bg-blue-900 text-blue-300 border border-blue-800' 
+                          : 'bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-100'
+                      }`}
                     >
                       {isGeneratingAI ? (
                         <>
@@ -541,7 +625,11 @@ const SimpleReviews = () => {
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
                     rows={8}
-                    className="w-full px-4 py-3 border border-blue-200 dark:border-gray-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400 resize-none"
+                    className={`w-full px-4 py-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none ${
+                      theme === 'dark' 
+                        ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' 
+                        : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500'
+                    }`}
                     placeholder="Type your response or generate one with AI..."
                   />
                 </div>
@@ -550,7 +638,11 @@ const SimpleReviews = () => {
                   <button
                     type="button"
                     onClick={() => setReplyDialogOpen(false)}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-blue-200 dark:border-gray-600 rounded-lg hover:bg-blue-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+                    className={`px-4 py-2 text-sm font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors ${
+                      theme === 'dark' 
+                        ? 'text-gray-300 bg-gray-700 border border-gray-600 hover:bg-gray-600' 
+                        : 'text-gray-700 bg-white border border-gray-300 hover:bg-gray-50'
+                    }`}
                   >
                     Cancel
                   </button>
@@ -558,7 +650,7 @@ const SimpleReviews = () => {
                     type="button"
                     onClick={submitReply}
                     disabled={replyLoading || !replyText.trim()}
-                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {replyLoading ? (
                       <span className="flex items-center">
@@ -574,16 +666,26 @@ const SimpleReviews = () => {
             </div>
 
             {/* Right side - AI Suggestions */}
-            <div className="w-full md:w-80 bg-blue-50/50 dark:bg-gray-800/80 border-t md:border-t-0 md:border-l border-blue-100 dark:border-gray-700 p-6 overflow-y-auto max-h-[80vh]">
+            <div className={`w-full md:w-80 p-6 overflow-y-auto max-h-[80vh] ${
+              theme === 'dark' 
+                ? 'bg-gray-800/80 border-t md:border-t-0 md:border-l border-gray-700' 
+                : 'bg-blue-50 border-t md:border-t-0 md:border-l border-gray-200'
+            }`}>
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-sm font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">
+                <h4 className={`text-sm font-semibold uppercase tracking-wider ${
+                  theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
+                }`}>
                   AI Assistant
                 </h4>
                 <div className="flex items-center space-x-2">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     isGeneratingAI
-                      ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
-                      : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
+                      ? (theme === 'dark' 
+                          ? 'bg-yellow-900/50 text-yellow-300' 
+                          : 'bg-yellow-100 text-yellow-800')
+                      : (theme === 'dark' 
+                          ? 'bg-blue-900/50 text-blue-300' 
+                          : 'bg-blue-100 text-blue-800')
                   }`}>
                     {isGeneratingAI ? 'Generating...' : 'Ready'}
                   </span>
@@ -592,14 +694,26 @@ const SimpleReviews = () => {
 
               {aiSuggestion ? (
                 <div className="space-y-4">
-                  <div className="bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-900/50 p-4 shadow-sm">
+                  <div className={`rounded-lg p-4 shadow-sm ${
+                    theme === 'dark' 
+                      ? 'bg-gray-700 border border-purple-800' 
+                      : 'bg-white border border-purple-200'
+                  }`}>
                     <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-medium text-purple-700 dark:text-purple-300">Suggestion</span>
+                      <span className={`text-xs font-medium ${
+                        theme === 'dark' ? 'text-purple-300' : 'text-purple-700'
+                      }`}>
+                        Suggestion
+                      </span>
                       <div className="flex space-x-2">
                         <button
                           type="button"
                           onClick={() => setReplyText(aiSuggestion)}
-                          className="text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300"
+                          className={`${
+                            theme === 'dark' 
+                              ? 'text-purple-400 hover:text-purple-300' 
+                              : 'text-purple-600 hover:text-purple-800'
+                          }`}
                           title="Use this suggestion"
                         >
                           <CheckCircle className="w-4 h-4" />
@@ -607,21 +721,32 @@ const SimpleReviews = () => {
                         <button
                           type="button"
                           onClick={() => setAiSuggestion('')}
-                          className="text-gray-400 hover:text-purple-500 dark:text-gray-500 dark:hover:text-gray-400"
+                          className={`${
+                            theme === 'dark' 
+                              ? 'text-gray-500 hover:text-gray-400' 
+                              : 'text-gray-400 hover:text-purple-500'
+                          }`}
                           title="Dismiss"
                         >
                           <X className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-line">{aiSuggestion}</p>
+                    <p className={`text-sm whitespace-pre-line ${
+                      theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
+                    }`}>
+                      {aiSuggestion}
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={generateAIReview}
                     disabled={isGeneratingAI}
-                    className="w-full flex items-center justify-center px-4 py-2 text-sm text-purple-600 hover:text-purple-800 dark:text-purple-400 dark:hover:text-purple-300 bg-purple-50 hover:bg-purple-100 dark:bg-purple-900/20 dark:hover:bg-purple-900/30 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
+                    className={`w-full flex items-center justify-center px-4 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      theme === 'dark' 
+                        ? 'text-purple-400 hover:text-purple-300 bg-purple-900/30 hover:bg-purple-900/50' 
+                        : 'text-purple-600 hover:text-purple-800 bg-purple-50 hover:bg-purple-100'
+                    }`}>
                     {isGeneratingAI ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -637,31 +762,61 @@ const SimpleReviews = () => {
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/40 mb-3 border border-purple-200 dark:border-purple-800">
-                    <Sparkles className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                  <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-3 border ${
+                    theme === 'dark' 
+                      ? 'bg-purple-900/30 border-purple-800' 
+                      : 'bg-purple-100 border-purple-200'
+                  }`}>
+                    <Sparkles className={`h-6 w-6 ${
+                      theme === 'dark' ? 'text-purple-400' : 'text-purple-600'
+                    }`} />
                   </div>
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">AI-Powered Suggestions</h4>
-                  <p className="text-xs text-purple-700/80 dark:text-gray-400 mb-4">
+                  <h4 className={`text-sm font-medium mb-1 ${
+                    theme === 'dark' ? 'text-white' : 'text-purple-900'
+                  }`}>
+                    AI-Powered Suggestions
+                  </h4>
+                  <p className={`text-xs mb-4 ${
+                    theme === 'dark' ? 'text-gray-400' : 'text-purple-700/80'
+                  }`}>
                     Click "Generate with AI" to get a suggested response
                   </p>
-                  <div className="space-y-3 text-left text-xs text-purple-700/80 dark:text-gray-400">
+                  <div className="space-y-3 text-left text-xs">
                     <div className="flex items-start">
-                      <div className="flex-shrink-0 h-5 w-5 text-purple-500">
+                      <div className={`flex-shrink-0 h-5 w-5 ${
+                        theme === 'dark' ? 'text-purple-500' : 'text-purple-500'
+                      }`}>
                         <CheckCircle className="h-5 w-5" />
                       </div>
-                      <p className="ml-2">Personalized based on review content</p>
+                      <p className={`ml-2 ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-purple-700/80'
+                      }`}>
+                        Personalized based on review content
+                      </p>
                     </div>
                     <div className="flex items-start">
-                      <div className="flex-shrink-0 h-5 w-5 text-purple-500">
+                      <div className={`flex-shrink-0 h-5 w-5 ${
+                        theme === 'dark' ? 'text-purple-500' : 'text-purple-500'
+                      }`}>
                         <CheckCircle className="h-5 w-5" />
                       </div>
-                      <p className="ml-2">Professional and friendly tone</p>
+                      <p className={`ml-2 ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-purple-700/80'
+                      }`}>
+                        Professional and friendly tone
+                      </p>
                     </div>
                     <div className="flex items-start">
-                      <div className="flex-shrink-0 h-5 w-5 text-purple-500">
+                      <div className={`flex-shrink-0 h-5 w-5 ${
+                        theme === 'dark' ? 'text-purple-500' : 'text-purple-500'
+                      }`}>
                         <CheckCircle className="h-5 w-5" />
                       </div>
-                      <p className="ml-2">Customized for your business</p>
+                      <p className={`ml-2 ${
+                        theme === 'dark' ? 'text-gray-400' : 'text-purple-700/80'
+                      }`}>
+                        Customized for your business
+                      </p>
                     </div>
                   </div>
                 </div>
