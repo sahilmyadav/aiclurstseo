@@ -18,6 +18,7 @@ import {
   Settings,
   BarChart2,
   CreditCard,
+  Image,
 } from 'lucide-react';
 
 const lightLogo = '/clurst transparent logo 2 for white baground.png';
@@ -117,7 +118,7 @@ const SideNav = () => {
     { name: 'Widgets', icon: LayoutGrid, path: '/dashboard/widgets', active: location.pathname === '/dashboard/widgets' },
     { name: 'Integrations', icon: GitBranch, path: '/dashboard/integrations', active: location.pathname === '/dashboard/integrations' },
     { name: 'Auto Posting', icon: Share2, path: '/dashboard/social-sharing', active: location.pathname === '/dashboard/social-sharing' },
-    { name: 'Settings', icon: Settings, path: '/dashboard/settings', active: location.pathname === '/dashboard/settings' },
+    { name: 'GMB Media', icon: Image, path: '/dashboard/settings', active: location.pathname === '/dashboard/settings' },
     { name: 'Subscription', icon: CreditCard, path: '/dashboard/subscription', active: location.pathname === '/dashboard/subscription' },
     { name: 'Billing', icon: CreditCard, path: '/dashboard/billing', active: location.pathname === '/dashboard/billing' },
     { name: 'Logout', icon: LogOut, path: '#', active: false, isLogout: true },
