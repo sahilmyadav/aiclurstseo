@@ -28,6 +28,16 @@ const SimpleReviews = () => {
   const [timeLeft, setTimeLeft] = useState({ minutes: 0, seconds: 0 });
   // Add backend last run time
   const [lastRunTime, setLastRunTime] = useState(null);
+  // Add tabs state
+  const [activeTab, setActiveTab] = useState('all'); // 'all', 'replied', 'needReply'
+
+  // Filter reviews based on active tab
+  const filteredReviews = reviews?.filter(review => {
+    if (activeTab === 'all') return true;
+    if (activeTab === 'replied') return review.reviewReply !== undefined;
+    if (activeTab === 'needReply') return review.reviewReply === undefined;
+    return true;
+  }) || [];
 
   useEffect(() => {
     setIsAutoReplyOn(user?.autoReply || false);
@@ -321,7 +331,7 @@ const SimpleReviews = () => {
         </h1>
         
         {/* Auto-reply Toggle with Timer */}
-        <div className={`rounded-2xl p-6 shadow-lg ${
+        <div className={`rounded-2xl p-6 shadow-lg mb-6 ${
           theme === 'dark' 
             ? 'bg-gray-800 border-gray-700' 
             : 'bg-white hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] border border-gray-200 shadow-sm'
@@ -400,12 +410,85 @@ const SimpleReviews = () => {
             </label>
           </div>
         </div>
+
+        {/* Tabs */}
+        <div className={`rounded-2xl p-2 mb-6 ${
+          theme === 'dark' 
+            ? 'bg-gray-800 border-gray-700' 
+            : 'bg-white border border-gray-200 shadow-sm'
+        }`}>
+          <div className="flex space-x-1">
+            <button
+              onClick={() => setActiveTab('all')}
+              className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'all'
+                  ? (theme === 'dark'
+                      ? 'bg-purple-600 text-white shadow-lg'
+                      : 'bg-purple-600 text-white shadow-lg')
+                  : (theme === 'dark'
+                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-purple-700')
+              }`}
+            >
+              All Reviews
+              <span className={`ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
+                activeTab === 'all'
+                  ? (theme === 'dark' ? 'bg-white/20' : 'bg-white/20')
+                  : (theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200')
+              }`}>
+                {reviews?.length || 0}
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('replied')}
+              className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'replied'
+                  ? (theme === 'dark'
+                      ? 'bg-green-600 text-white shadow-lg'
+                      : 'bg-green-600 text-white shadow-lg')
+                  : (theme === 'dark'
+                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-green-700')
+              }`}
+            >
+              Replied
+              <span className={`ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
+                activeTab === 'replied'
+                  ? (theme === 'dark' ? 'bg-white/20' : 'bg-white/20')
+                  : (theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200')
+              }`}>
+                {reviews?.filter(r => r.reviewReply !== undefined).length || 0}
+              </span>
+            </button>
+            <button
+              onClick={() => setActiveTab('needReply')}
+              className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
+                activeTab === 'needReply'
+                  ? (theme === 'dark'
+                      ? 'bg-orange-600 text-white shadow-lg'
+                      : 'bg-orange-600 text-white shadow-lg')
+                  : (theme === 'dark'
+                      ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                      : 'text-gray-600 hover:bg-gray-100 hover:text-orange-700')
+              }`}
+            >
+              Need Reply
+              <span className={`ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full text-xs ${
+                activeTab === 'needReply'
+                  ? (theme === 'dark' ? 'bg-white/20' : 'bg-white/20')
+                  : (theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200')
+              }`}>
+                {reviews?.filter(r => r.reviewReply === undefined).length || 0}
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Reviews List */}
       <div className="space-y-6">
-        {reviews && reviews.length > 0 ? (
-          reviews.map((review) => (
+        {filteredReviews.length > 0 ? (
+          filteredReviews.map((review) => (
             <div 
               key={review.name} 
               className={`rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow ${
@@ -547,12 +630,16 @@ const SimpleReviews = () => {
             <h3 className={`mt-4 text-lg font-medium ${
               theme === 'dark' ? 'text-white' : 'text-purple-900'
             }`}>
-              No reviews found
+              {activeTab === 'all' && 'No reviews found'}
+              {activeTab === 'replied' && 'No replied reviews'}
+              {activeTab === 'needReply' && 'All reviews replied!'}
             </h3>
             <p className={`mt-2 ${
               theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
             }`}>
-              There are no reviews for this location yet.
+              {activeTab === 'all' && 'There are no reviews for this location yet.'}
+              {activeTab === 'replied' && 'No reviews have been replied to yet.'}
+              {activeTab === 'needReply' && 'Great job! All reviews have been responded to.'}
             </p>
           </div>
         )}
