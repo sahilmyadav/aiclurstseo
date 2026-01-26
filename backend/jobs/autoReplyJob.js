@@ -5,9 +5,19 @@ import { replyToReview } from '../controllers/reviewReplyController.js';
 import axios from 'axios';
 
 //  Auto-reply job that runs every 5 minutes
-const autoReplyJob = cron.schedule('*/1 * * * *', async () => {
+const autoReplyJob = cron.schedule('*/5 * * * *', async () => {
   try {
     console.log('🔄 Running auto-reply job...');
+    const jobStartTime = new Date();
+
+    // Update all users' last run time when job starts
+    await User.updateMany(
+      { autoReply: true, isActive: true },
+      { 
+        autoReplyLastRun: jobStartTime,
+        autoReplyNextRun: new Date(jobStartTime.getTime() + 5 * 60000) // 5 minutes from now
+      }
+    );
 
     // Find all users with autoReply enabled and autoReplyConfigs
     const users = await User.find({
