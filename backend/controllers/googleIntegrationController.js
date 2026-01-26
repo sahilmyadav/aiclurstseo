@@ -253,3 +253,36 @@ export const getGooglePosts = async (req, res) => {
 export const disconnectGoogle = async (req, res) => {
   res.json({ message: "Disconnected. Tokens are managed in frontend now." });
 };
+
+export const getGoogleMedia = async (req, res) => {
+  try {
+    const tokens = {
+      access_token: req.query.access_token,
+      refresh_token: req.query.refresh_token,
+      expiry_date: parseInt(req.query.expiry_date)
+    };
+
+    if (!tokens.access_token) return res.status(401).json({ error: "Not authenticated" });
+
+    const { accountId, locationId } = req.params;
+    const token = await getBearerToken(tokens);
+
+    // Fetch media items from Google My Business API
+    const mediaRes = await axios.get(
+      `https://mybusiness.googleapis.com/v4/accounts/${accountId}/locations/${locationId}/media`,
+      { 
+        headers: { Authorization: `Bearer ${token}` },
+        params: {
+          pageSize: 50 // Fetch up to 50 media items
+        }
+      }
+    );
+
+    res.json(mediaRes.data);
+  } catch (error) {
+    console.error('Error fetching Google media:', error);
+    res.status(error.response?.status || 500).json({
+      error: error.response?.data?.error || error.message,
+    });
+  }
+};
