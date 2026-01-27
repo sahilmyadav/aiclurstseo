@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
@@ -16,14 +16,33 @@ import {
   Calendar,
   Info,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Image
 } from 'lucide-react';
 import Report from './Report';
 
 const BusinessDetails = () => {
   const { theme } = useTheme();
-  const { selectedBusiness, loading } = useGoogleBusiness();
+  const { selectedBusiness, loading, media, loadingMedia, mediaError, fetchMedia } = useGoogleBusiness();
   const navigate = useNavigate();
+
+  // Fetch media when component mounts and business is selected
+  useEffect(() => {
+    if (selectedBusiness && selectedBusiness.accountId) {
+      const accountId = selectedBusiness.accountId;
+      const locationId = selectedBusiness.name?.split('/')[1];
+      
+      if (accountId && locationId) {
+        // Only fetch if no media exists (context handles caching)
+        if (media.length === 0) {
+          console.log('BusinessDetails: No cached media found, fetching from API...');
+          fetchMedia(accountId, locationId);
+        } else {
+          console.log('BusinessDetails: Using cached media from context:', media.length, 'items');
+        }
+      }
+    }
+  }, [selectedBusiness, media.length, fetchMedia]);
 
   if (loading) {
     return (
@@ -147,6 +166,9 @@ const BusinessDetails = () => {
   const primaryPhone = extractValue(selectedBusiness.phoneNumbers?.primaryPhone, 'number', 'phoneNumber');
   const websiteUri = extractValue(selectedBusiness.websiteUri, 'url', 'websiteUrl');
 
+  // Extract business images from context (not from selectedBusiness directly)
+  const displayImages = media.slice(0, 3); // Show only first 2-3 images
+
   return (
     <div className={`min-h-screen py-8 px-4 ${theme === 'dark' ? 'bg-[#0f1020] text-white' : 'text-gray-900 bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)]'}`}>
       <div className="max-w-7xl mx-auto">
@@ -169,6 +191,121 @@ const BusinessDetails = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content - Left Column (2/3) */}
           <div className="lg:col-span-2 space-y-6 overflow-hidden">
+            {/* Business Images Section - Enhanced */}
+            {loadingMedia ? (
+              <div className={`rounded-xl p-6 ${theme === 'dark' ? 'bg-[#1a1b2e]/90 border border-white/10' : 'bg-white border border-gray-200 shadow-sm'}`}>
+                <div className="flex items-center mb-4">
+                  <Image className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-gray-700'}`} />
+                  <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Business Media</h2>
+                </div>
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+                  <p className="ml-3 text-gray-500">Loading media...</p>
+                </div>
+              </div>
+            ) : mediaError ? (
+              <div className={`rounded-xl p-6 ${theme === 'dark' ? 'bg-[#1a1b2e]/90 border border-white/10' : 'bg-white border border-gray-200 shadow-sm'}`}>
+                <div className="flex items-center mb-4">
+                  <Image className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-gray-700'}`} />
+                  <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Business Media</h2>
+                </div>
+                <div className="text-center py-8">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-red-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <p className={`${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`}>
+                    Error loading media: {mediaError}
+                  </p>
+                </div>
+              </div>
+            ) : displayImages.length > 0 && (
+              <div className={`rounded-xl p-6 ${theme === 'dark' 
+                ? 'bg-[#1a1b2e]/90 border border-white/10' 
+                : 'bg-white border border-gray-200 shadow-sm'}`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center">
+                    <Image className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-gray-700'}`} />
+                    <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Business Media</h2>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (selectedBusiness && selectedBusiness.accountId) {
+                        const accountId = selectedBusiness.accountId;
+                        const locationId = selectedBusiness.name?.split('/')[1];
+                        if (accountId && locationId) {
+                          console.log('BusinessDetails: Refreshing media...');
+                          fetchMedia(accountId, locationId, true); // Force refresh
+                        }
+                      }
+                    }}
+                    disabled={loadingMedia}
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
+                      theme === 'dark'
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50'
+                        : 'bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50'
+                    }`}
+                  >
+                    {loadingMedia ? 'Refreshing...' : 'Refresh'}
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {displayImages.map((image, index) => {
+                    // Extract image URL from various possible structures
+                    const imageUrl = image?.googleUrl || 
+                                     image?.thumbnailUrl || 
+                                     image?.url || 
+                                     image?.sourceUrl || 
+                                     (typeof image === 'string' ? image : null);
+                    
+                    // Extract image description/caption
+                    const imageDescription = image?.description || 
+                                            image?.caption || 
+                                            image?.name || 
+                                            `Media ${index + 1}`;
+                    
+                    if (!imageUrl) return null;
+                    
+                    return (
+                      <div 
+                        key={index} 
+                        className={`rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1 ${
+                          theme === 'dark' ? 'bg-gray-800' : 'bg-white'
+                        }`}
+                      >
+                        <div className="relative group">
+                          <img 
+                            src={imageUrl} 
+                            alt={imageDescription}
+                            className="w-full h-40 sm:h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+                            onError={(e) => {
+                              console.error('Business image failed to load:', e.target.src);
+                              e.target.src = 'https://via.placeholder.com/300x300/800080/FFFFFF?text=No+Image';
+                            }}
+                            onLoad={(e) => {
+                              console.log('Business image loaded successfully:', e.target.src);
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end p-3">
+                            <p className={`text-sm font-medium text-white transition-opacity duration-300`}>
+                              {imageDescription}
+                            </p>
+                          </div>
+                          <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            {index + 1}/{displayImages.length}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                {media.length > 3 && (
+                  <p className={`text-sm mt-3 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+                    Showing {displayImages.length} of {media.length} media items
+                  </p>
+                )}
+              </div>
+            )}
+
             {/* Basic Information */}
             <div className={`rounded-xl p-6 ${theme === 'dark' 
               ? 'bg-[#1a1b2e]/90 border border-white/10' 

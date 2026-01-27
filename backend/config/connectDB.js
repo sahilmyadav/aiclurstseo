@@ -51,5 +51,3 @@ async function connectDB() {
     return null;
   }
 }
-
-export { connectDB };

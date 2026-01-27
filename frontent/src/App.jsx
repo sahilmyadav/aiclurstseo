@@ -39,6 +39,7 @@ import About from './pages/About'
 import Billing from './components/subscription/Billing'
 import BusinessDetails from './components/BusinessDetails'
 import UserSubscriptionDetails from './components/subscription/UserSubsriptionDetails'
+import SimpleReviews from './components/SimpleReviews'
 
 const AppContent = () => {
   const location = useLocation()
@@ -92,7 +93,7 @@ const AppContent = () => {
           >
             <Route index element={<Dashboard />} />
             <Route path="reviews" element={<InboxMessage />} />
-            <Route path="handle-reviews" element={<Reviews />} />
+            <Route path="handle-reviews" element={<SimpleReviews />} />
             <Route path="audit" element={<Audit />} />
             <Route path="review-link" element={<ReviewLink />} />
             <Route path="widgets" element={<WebsiteWidgets />} />

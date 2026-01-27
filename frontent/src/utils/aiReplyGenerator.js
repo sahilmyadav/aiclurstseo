@@ -1,18 +1,34 @@
 // Using Vite environment variables
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-// Array of different response templates to add variety
-const RESPONSE_TEMPLATES = [
-  "We're {grateful/sorry} to hear about your experience at {businessName}. {positive/negative} We {appreciate/value} your feedback and {look forward to serving you again/hope to have another chance to serve you}.",
-  "Thank you for your {rating}-star review! Your feedback {is incredibly valuable/helps us improve}. We're {thrilled/sorry} to hear about your experience and {appreciate you taking the time to share it/will use it to improve}.",
-  "{Hello/Greetings} from {businessName}! We {are delighted/truly appreciate} your {rating}-star review. {Positive/Negative} feedback like yours {helps us grow/helps us improve our services}.",
-  "We {sincerely appreciate/are grateful for} your {rating}-star review of {businessName}. Your {positive/constructive} feedback {means a lot to our team/will help us serve you better} in the future.",
-  "Thank you for choosing {businessName} and for taking the time to leave us a {rating}-star review. We {are thrilled/truly value} your {kind/constructive} words and {look forward to/hope to have another chance at} serving you again!"
+// Array of human-like response starters to avoid generic phrases
+const HUMAN_STARTERS = [
+  "Thanks for taking the time to share your experience",
+  "We really appreciate you letting us know how things went",
+  "Your feedback means a lot to our team",
+  "Thank you for your honest review",
+  "We're grateful you shared your thoughts with us",
+  "Thanks for being a customer and for your feedback"
 ];
 
-// Helper function to get a random template
-const getRandomTemplate = () => {
-  return RESPONSE_TEMPLATES[Math.floor(Math.random() * RESPONSE_TEMPLATES.length)];
+// Array of human-like closings
+const HUMAN_CLOSINGS = [
+  "We hope to see you again soon",
+  "Looking forward to serving you again",
+  "We'd love to have you back",
+  "Hope to make your next visit even better",
+  "Can't wait to welcome you back",
+  "We're here whenever you need us"
+];
+
+// Helper function to get a random human-like starter
+const getRandomStarter = () => {
+  return HUMAN_STARTERS[Math.floor(Math.random() * HUMAN_STARTERS.length)];
+};
+
+// Helper function to get a random human-like closing
+const getRandomClosing = () => {
+  return HUMAN_CLOSINGS[Math.floor(Math.random() * HUMAN_CLOSINGS.length)];
 };
 
 /**
@@ -41,28 +57,31 @@ export const generateAIReviewReply = async (
     // Randomize temperature for more varied responses (between 0.7 and 1.0)
     const temperature = 0.7 + (Math.random() * 0.3);
     
-    // Get a random template for more variety
-    const template = getRandomTemplate();
+    // Get random human-like starter and closing
+    const starter = getRandomStarter();
+    const closing = getRandomClosing();
     
-    // Create a specific prompt for review responses with more variety
-    const prompt = `You are a helpful assistant that generates professional and friendly responses to customer reviews.
-
-Business Details:
-- Name: ${businessName}
-- Category: ${businessType}
+    // Create a specific prompt for human-like responses
+    const prompt = `You are a genuine human writing a response to a customer review. 
+You are the manager/owner of ${businessName}, a ${businessType}.
 
 Review Details:
 - Rating: ${rating} out of 5
 - Review: "${reviewText}"
 
-Instructions for the response:
-1. Use this template as inspiration but make it sound natural: "${template}"
-2. Be ${tone} and ${rating <= 2 ? 'apologetic' : 'appreciative'}
-3. Keep it between 2-4 sentences
-4. Make it sound human and authentic
-5. Vary your responses - don't use the same phrases every time
-6. ${rating <= 2 ? 'Offer to make things right' : 'Express gratitude'}
-7. Use natural language variations
+Important Rules:
+1. Start your response with one of these human-like phrases: ${HUMAN_STARTERS.join('", "')}
+2. NEVER start with: "We are so grateful for your fantastic 5-star review", "Thank you for your [rating]-star review", "We're thrilled to hear from you", or any other generic business greeting
+3. Be authentic and sound like a real person
+4. For 5-star reviews: Mention specific aspects mentioned in the review if possible, express genuine happiness
+5. For 4-star reviews: Show appreciation and address any minor concerns
+6. For 3-star or lower reviews: Be empathetic and offer specific help
+7. Keep responses conversational (2-4 sentences)
+8. End naturally with a warm closing like: ${HUMAN_CLOSINGS.join('", "')}
+9. Don't overthink it - write naturally as you would in person
+
+Example Good Response for a 5-star review about food:
+"${HUMAN_STARTERS[0]}. It's amazing to hear you enjoyed our food! The chef will definitely love to know about that. We work hard to make everything fresh, and it's wonderful to hear it showed. ${HUMAN_CLOSINGS[0]}!"
 
 ${isEdit ? 'This is an edit of an existing response. Maintain the same tone and intent but make it fresh.' : ''}
 
@@ -95,7 +114,6 @@ Generated Response:`;
     }
 
     const data = await response.json();
-    console.log('Gemini API Response:', data);
     const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!textResponse) {
@@ -103,8 +121,25 @@ Generated Response:`;
     }
     
     // Clean up the response
-    const reply = textResponse.replace(/^[\"']|[\"']$/g, '').trim();
-    console.log('Generated Response:', reply);
+    let reply = textResponse.replace(/^[\"']|[\"']$/g, '').trim();
+    
+    // If response still starts with banned phrases, replace it with a fallback approach
+    const bannedStarts = [
+      "we are so grateful",
+      "thank you for your",
+      "we're thrilled",
+      "we truly appreciate",
+      "we appreciate your feedback"
+    ];
+    
+    const startsWithBanned = bannedStarts.some(banned => 
+      reply.toLowerCase().startsWith(banned)
+    );
+    
+    if (startsWithBanned || reply.length < 10) {
+      // Use the fallback approach
+      return getFallbackResponse(reviewText, rating, businessName, businessType);
+    }
     
     if (!reply) {
       throw new Error('Generated response is empty after cleanup');
@@ -114,47 +149,35 @@ Generated Response:`;
   } catch (error) {
     console.error('Error generating AI reply:', error);
     // Return a fallback response if the API call fails
-    return getFallbackResponse(reviewText, rating, businessName);
+    return getFallbackResponse(reviewText, rating, businessName, businessType);
   }
 };
 
-// Fallback responses in case the API call fails
-const getFallbackResponse = (reviewText, rating, businessName = 'our business') => {
-  const business = businessName || 'our business';
-  const ratingText = `${rating}-star`;
-  
-  // Different response templates for different rating ranges
-  const positiveResponses = [
-    `Thank you for your ${ratingText} review! We're absolutely delighted to hear about your wonderful experience at ${business}. Your satisfaction means everything to us, and we can't wait to welcome you back soon!`,
-    `We're over the moon about your ${ratingText} rating! Thank you for choosing ${business} and for taking the time to share your positive experience. We truly appreciate your support and look forward to serving you again!`,
-    `Your ${ratingText} review made our day! At ${business}, we strive to provide excellent service, and we're thrilled to know we hit the mark. Thank you for your kind words - we can't wait to see you again soon!`,
-    `Thank you for the amazing ${ratingText} review! We're so happy to hear you enjoyed your time at ${business}. Your feedback inspires us to keep delivering great experiences. See you again soon!`
-  ];
-
-  const neutralResponses = [
-    `Thank you for your ${ratingText} review of ${business}. We appreciate you taking the time to share your thoughts. We're always looking for ways to improve, and your feedback helps us do better.`,
-    `We appreciate your ${ratingText} rating of ${business}. Your feedback is valuable to us as we work to enhance our services. We hope to have the opportunity to serve you again soon.`,
-    `Thank you for your ${ratingText} review. We're glad you chose ${business} and appreciate your honest feedback. We're committed to continuous improvement and hope to exceed your expectations next time.`
-  ];
-
-  const negativeResponses = [
-    `Thank you for your feedback and your ${ratingText} rating. We're truly sorry to hear about your experience at ${business}. Please know that we take all feedback seriously and would appreciate the opportunity to make things right.`,
-    `We're genuinely sorry to hear about your experience at ${business}. Your ${ratingText} rating is important feedback for us. We'd love to understand how we can improve - please reach out to us directly.`,
-    `Thank you for taking the time to share your feedback. We're disappointed to hear about your ${ratingText} experience at ${business} and would welcome the chance to address your concerns personally.`
-  ];
-
-  // Select a random response based on rating
-  let responses;
+// Human-like fallback responses - avoid generic business language
+const getFallbackResponse = (reviewText, rating, businessName, businessType) => {
+  // Clean and natural response for positive reviews
   if (rating >= 4) {
-    responses = positiveResponses;
-  } else if (rating <= 2) {
-    responses = negativeResponses;
-  } else {
-    responses = neutralResponses;
+    // Analyze review for key words
+    const text = reviewText.toLowerCase();
+    
+    if (text.includes('food') || text.includes('delicious') || text.includes('tasty')) {
+      return `${HUMAN_STARTERS[0]} - so glad to hear you loved our food! ${getRandomClosing()} and thank you again!`;
+    } else if (text.includes('service') || text.includes('staff') || text.includes('helpful')) {
+      return `Hearing good things about our service always makes my day! Thanks for being part of the ${businessName} family. ${getRandomClosing()}!`;
+    } else if (text.includes('clean') || text.includes('place')) {
+      return `Thank you for your kind words! Keeping our space great is our top priority, and your feedback proves it matters. We can't wait to have you back soon!`;
+    } else {
+      return `What a nice review, thank you so much! Every word you've written has been put in a note we send to the team - things like yours inspire us daily. Looking forward to your next visit!`;
+    }
+  } 
+  // Human-like response for average ratings
+  else if (rating >= 3) {
+    return `${HUMAN_STARTERS[2]}. We're working to improve each day and we take reviews like this very seriously. Can you message us about any specific issues you'd like addressed? Thanks!`;
   }
-
-  // Return a random response from the selected category
-  return responses[Math.floor(Math.random() * responses.length)];
+  // Genuine response for low ratings
+  else {
+    return `Thank you for the feedback and being straight with us. We want to make sure all customers walk out the door completely happy. I will call/email to sort it out.`;
+  }
 };
 
 import { useState } from 'react';
