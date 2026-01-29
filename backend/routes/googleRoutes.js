@@ -6,7 +6,7 @@ import {
   getGoogleReviews,
   createGooglePost,
   getGooglePosts,
-  getGoogleMedia
+
 } from "../controllers/googleIntegrationController.js";
 
 const router = express.Router();
@@ -32,7 +32,5 @@ router.get("/accounts/:accountId/locations/:locationId/localPosts", getGooglePos
 // 🔁 Alt posts (simple) - using the same handler as the main posts endpoint
 router.get("/posts/:accountId/:locationId", getGooglePosts);
 
-// 📷 Get media/photos
-router.get("/accounts/:accountId/locations/:locationId/media", getGoogleMedia);
 
 export default router;

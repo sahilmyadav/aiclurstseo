@@ -24,6 +24,42 @@ import { useTheme } from '../context/ThemeContext';
 
 const Audit = () => {
   const { theme } = useTheme();
+
+  // Cache key for performance data
+  const getCacheKey = (businessId, startDate, endDate) => {
+    return `performance_${businessId}_${startDate.toISOString().split('T')[0]}_${endDate.toISOString().split('T')[0]}`;
+  };
+
+  // Cache performance data
+  const cachePerformanceData = (key, data) => {
+    try {
+      const cacheData = {
+        data,
+        timestamp: new Date().getTime()
+      };
+      localStorage.setItem(key, JSON.stringify(cacheData));
+    } catch (error) {
+      console.error('Error caching performance data:', error);
+    }
+  };
+
+  // Get cached performance data
+  const getCachedPerformanceData = (key) => {
+    try {
+      const cachedData = localStorage.getItem(key);
+      if (!cachedData) return null;
+      
+      const { data, timestamp } = JSON.parse(cachedData);
+      // Cache is valid for 1 hour (3600000 ms)
+      const isCacheValid = (new Date().getTime() - timestamp) < 3600000;
+      
+      return isCacheValid ? data : null;
+    } catch (error) {
+      console.error('Error retrieving cached performance data:', error);
+      return null;
+    }
+  };
+
   const [activeTab, setActiveTab] = useState('overview');
   const [dateRange, setDateRange] = useState([
     new Date(new Date().setDate(new Date().getDate() - 30)), // 30 days ago
@@ -55,7 +91,7 @@ const Audit = () => {
   } = useGoogleBusiness();
 
   const timerRef = useRef(null);
-
+ console.log("Performance data",performanceData)
   // Handle date range change for temp state
   const handleDateRangeChange = (dates) => {
     if (dates && dates[0] && dates[1]) {
@@ -95,6 +131,68 @@ const Audit = () => {
       }
     };
   }, []);
+
+  // Load performance data on component mount and when selected business changes
+  useEffect(() => {
+    // This effect should trigger when the component mounts and when selectedBusiness changes
+    console.log('Audit component mounted or selectedBusiness changed', { 
+      hasSelectedBusiness: !!selectedBusiness,
+      hasDateRange: !!(dateRange[0] && dateRange[1])
+    });
+
+    const loadData = async () => {
+      if (!selectedBusiness) {
+        console.log('No selected business, skipping data load');
+        return;
+      }
+
+      console.log('Loading performance data for business:', selectedBusiness.id);
+      
+      try {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const today = new Date();
+        
+        const cacheKey = getCacheKey(selectedBusiness.id, thirtyDaysAgo, today);
+        console.log('Using cache key:', cacheKey);
+        
+        // Try to get data from cache first
+        const cachedData = getCachedPerformanceData(cacheKey);
+        if (cachedData) {
+          console.log('Using cached performance data');
+          // Update the performance data in context
+          await fetchPerformanceMetrics({
+            startDate: thirtyDaysAgo,
+            endDate: today,
+            useCache: true,
+            cachedData
+          });
+          return;
+        }
+        
+        console.log('No valid cache, fetching from API...');
+        
+        // If no cache, fetch from API
+        const data = await fetchPerformanceMetrics({
+          startDate: thirtyDaysAgo,
+          endDate: today
+        });
+        
+        // Cache the new data
+        if (data) {
+          console.log('Caching performance data...');
+          cachePerformanceData(cacheKey, data);
+        }
+        
+        console.log('Performance data loaded successfully');
+      } catch (error) {
+        console.error('Error loading performance data:', error);
+        toast.error('Failed to load performance data');
+      }
+    };
+
+    loadData();
+  }, [selectedBusiness?.id]);
 
   // Handle business selection
   const handleBusinessSelect = (businessOrBusinesses) => {
@@ -511,39 +609,80 @@ const Audit = () => {
                             </div>
 
                             {/* Performance Metrics in Overview */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {/* Impressions Card */}
                               <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
                                 ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
-                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md'}`}>
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Website Clicks</span>
-                                  <Globe className="w-4 h-4 text-blue-400" />
+                                  <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Total Impressions</span>
+                                  <BarChart3 className="w-4 h-4 text-purple-400" />
                                 </div>
-                                <div className="text-3xl font-bold text-blue-400">
-                                  {performanceLoading ? (
-                                    <span className="text-sm">Loading...</span>
-                                  ) : (
-                                    performanceData?.websiteClicks || 0
-                                  )}
+                                <div className="text-2xl font-bold text-purple-400">
+                                  {performanceLoading ? '...' : performanceData?.impressions || 0}
                                 </div>
-                                <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>all time</div>
+                                <div className="grid grid-cols-2 gap-2 mt-2 text-xs">
+                                  <div className={`${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+                                    <div>Search</div>
+                                    <div className="font-medium">
+                                      {performanceLoading ? '...' : (performanceData?.desktopSearchImpressions || 0) + (performanceData?.mobileSearchImpressions || 0)}
+                                    </div>
+                                  </div>
+                                  <div className={`${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+                                    <div>Maps</div>
+                                    <div className="font-medium">
+                                      {performanceLoading ? '...' : (performanceData?.desktopMapsImpressions || 0) + (performanceData?.mobileMapsImpressions || 0)}
+                                    </div>
+                                  </div>
+                                </div>
                               </div>
 
+                              {/* Engagement Card */}
                               <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
                                 ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
-                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,99%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,99%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,99%)_0px,transparent_50%),white]'}`}>
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md'}`}>
                                 <div className="flex items-center justify-between mb-2">
-                                  <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Call Clicks</span>
+                                  <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Engagement</span>
+                                  <TrendingUp className="w-4 h-4 text-blue-400" />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <div className="text-xl font-bold text-blue-400">
+                                      {performanceLoading ? '...' : performanceData?.views || 0}
+                                    </div>
+                                    <div className={`text-xs ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Profile Views</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xl font-bold text-green-400">
+                                      {performanceLoading ? '...' : performanceData?.directionRequests || 0}
+                                    </div>
+                                    <div className={`text-xs ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Directions</div>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Actions Card */}
+                              <div className={`rounded-lg p-4 transition-all duration-300 hover:-translate-y-0.5 ${theme === 'dark' 
+                                ? 'bg-[#1a1b2e]/90 border border-white/10 hover:bg-[#1a1b2e]' 
+                                : 'bg-white border border-gray-200 shadow-sm hover:shadow-md'}`}>
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className={`text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Actions</span>
                                   <Phone className="w-4 h-4 text-green-400" />
                                 </div>
-                                <div className="text-3xl font-bold text-green-400">
-                                  {performanceLoading ? (
-                                    <span className="text-sm">Loading...</span>
-                                  ) : (
-                                    performanceData?.callClicks || 0
-                                  )}
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div>
+                                    <div className="text-xl font-bold text-green-400">
+                                      {performanceLoading ? '...' : performanceData?.calls || 0}
+                                    </div>
+                                    <div className={`text-xs ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Calls</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-xl font-bold text-blue-400">
+                                      {performanceLoading ? '...' : performanceData?.websiteClicks || 0}
+                                    </div>
+                                    <div className={`text-xs ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Website Clicks</div>
+                                  </div>
                                 </div>
-                                <div className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>all time</div>
                               </div>
                             </div>
 

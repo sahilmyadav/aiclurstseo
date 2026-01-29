@@ -407,11 +407,54 @@ export const GoogleBusinessProvider = ({ children }) => {
   // SELECT BUSINESS
   // ==============================
   const selectBusiness = async (b) => {
+    console.log('selectBusiness called with business:', b?.id, b?.name);
+    
+    // Update the selected business in state
     setSelectedBusiness(b);
-    if (b.metadata?.newReviewUri) setReviewUri(b.metadata.newReviewUri);
+    
+    if (b?.metadata?.newReviewUri) {
+      console.log('Setting review URI:', b.metadata.newReviewUri);
+      setReviewUri(b.metadata.newReviewUri);
+    }
 
-    await fetchReviews(b.accountId, b.name.split("/")[1]);
-    await fetchLocalReviews(b.name.split("/")[1]);
+    try {
+      console.log('Starting to fetch reviews...');
+      
+      // Fetch reviews and local reviews in parallel
+      await Promise.all([
+        fetchReviews(b.accountId, b.name.split("/")[1]),
+        fetchLocalReviews(b.name.split("/")[1])
+      ]);
+      
+      console.log('Reviews fetched successfully');
+
+      // After reviews are loaded, fetch performance metrics
+      if (b) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const today = new Date();
+        
+        console.log('Fetching performance metrics...', {
+          startDate: thirtyDaysAgo,
+          endDate: today,
+          locationId: b.name.split("/")[1]
+        });
+        
+        try {
+          await fetchPerformanceMetrics({
+            startDate: thirtyDaysAgo,
+            endDate: today
+          });
+          console.log('Performance metrics fetched successfully');
+        } catch (error) {
+          console.error('Error in fetchPerformanceMetrics:', error);
+          toast.error('Failed to load performance data');
+        }
+      }
+    } catch (error) {
+      console.error('Error in selectBusiness:', error);
+      toast.error('Failed to load business data');
+    }
   };
 
   // ==============================
@@ -462,10 +505,17 @@ export const GoogleBusinessProvider = ({ children }) => {
   // ==============================
   // PERFORMANCE METRICS
   // ==============================
-  const fetchPerformanceMetrics = async ({ startDate, endDate }) => {
+  const fetchPerformanceMetrics = async ({ startDate, endDate, useCache = false, cachedData = null }) => {
     if (!selectedBusiness) {
       console.error('No business selected');
       return null;
+    }
+
+    // If using cached data and it's provided
+    if (useCache && cachedData) {
+      console.log('Using cached performance data');
+      setPerformanceData(cachedData.totals);
+      return cachedData;
     }
 
     try {
@@ -498,6 +548,8 @@ export const GoogleBusinessProvider = ({ children }) => {
           day: end.getDate()
         }
       };
+      console.log("startDate",startDate,endDate)
+      console.log("accesstoken",accessToken)
 
       const response = await fetch(`${BACKEND_URL}/api/audit/performance`, {
         method: 'POST',
@@ -520,12 +572,13 @@ export const GoogleBusinessProvider = ({ children }) => {
         throw new Error(errorData.error || 'Failed to fetch performance metrics');
       }
       const data = await response.json();
-      // console.log("Performace",data)
+      console.log("Performace",data)
       setPerformanceData(data.totals);
       return data;
     } catch (error) {
       console.error('Error fetching performance metrics:', error);
       setPerformanceError(error.message);
+      toast.error('Failed to load performance data');
       return null;
     } finally {
       setPerformanceLoading(false);
@@ -586,7 +639,7 @@ export const GoogleBusinessProvider = ({ children }) => {
         ...(tokenDetails.expiryDate && { expiry_date: tokenDetails.expiryDate.getTime() })
       });
 
-      const url = `${BACKEND_URL}/auth/google/accounts/${accountId}/locations/${locationId}/media?${params}`;
+      const url = `${BACKEND_URL}/api/auth/google/media/accounts/${accountId}/locations/${locationId}/media?${params}`;
       
       const response = await fetch(url, {
         method: 'GET',
@@ -594,7 +647,7 @@ export const GoogleBusinessProvider = ({ children }) => {
           'Content-Type': 'application/json',
         }
       });
-
+      
       const data = await response.json();
       console.log('Media API response:', data);
       

@@ -29,10 +29,17 @@ export const fetchPerformanceMetrics = async (req, res) => {
     // Construct the API URL
     const apiUrl = `https://businessprofileperformance.googleapis.com/v1/locations/${locationId}:fetchMultiDailyMetricsTimeSeries`;
     
-    // Prepare query parameters
+    // Prepare query parameters with ALL available metrics
     const params = new URLSearchParams();
-    params.append('dailyMetrics', 'WEBSITE_CLICKS');
+    // Add all available metrics
+    params.append('dailyMetrics', 'BUSINESS_IMPRESSIONS_DESKTOP_MAPS');
+    params.append('dailyMetrics', 'BUSINESS_IMPRESSIONS_DESKTOP_SEARCH');
+    params.append('dailyMetrics', 'BUSINESS_IMPRESSIONS_MOBILE_MAPS');
+    params.append('dailyMetrics', 'BUSINESS_IMPRESSIONS_MOBILE_SEARCH');
+    params.append('dailyMetrics', 'BUSINESS_CONVERSATIONS');
+    params.append('dailyMetrics', 'BUSINESS_DIRECTION_REQUESTS');
     params.append('dailyMetrics', 'CALL_CLICKS');
+    params.append('dailyMetrics', 'WEBSITE_CLICKS');
     
     // Add start date
     params.append('dailyRange.start_date.year', startDate.year);
@@ -53,100 +60,18 @@ export const fetchPerformanceMetrics = async (req, res) => {
         'Content-Type': 'application/json'
       }
     });
-    // console.log('website click',response.data.multiDailyMetricTimeSeries)
-    // Access the data
-const timeSeriesArray = response.data.multiDailyMetricTimeSeries;
 
-// Loop through each item in the array
-timeSeriesArray.forEach((metricItem, index) => {
-  // console.log(`Metric Item ${index}:`, metricItem);
-  
-  // Access the dailyMetricTimeSeries array within each item
-  if (metricItem.dailyMetricTimeSeries) {
-    metricItem.dailyMetricTimeSeries.forEach((dailyData, dailyIndex) => {
-      // console.log(`Date: ${dailyData.date}, Value: ${dailyData.value}`);
-    });
-  }
-});
-
-
-    // Calculate totals
-    const totals = calculateLast30DaysTotals(response.data);
+    // Process the response data to extract all metrics
+    const processedData = processPerformanceMetrics(response.data);
     
-    // Log the totals for debugging
-    console.log('Performance Totals:', totals);
-    
-    // Log the detailed structure for debugging
-    if (response.data.multiDailyMetricTimeSeries) {
-      response.data.multiDailyMetricTimeSeries.forEach((metricItem, index) => {
-        // console.log(`Metric Item ${index}:`, JSON.stringify(metricItem, null, 2));
-        
-        // Access the dailyMetricTimeSeries array within each item
-        if (metricItem.dailyMetricTimeSeries) {
-          metricItem.dailyMetricTimeSeries.forEach((dailyMetric, dailyIndex) => {
-            // console.log(`Daily Metric ${dailyIndex}:`, dailyMetric.dailyMetric);
-            
-            // Log the structure of timeSeries for debugging
-            // console.log('TimeSeries structure:', typeof dailyMetric.timeSeries, Array.isArray(dailyMetric.timeSeries));
-            if (dailyMetric.timeSeries) {
-              // console.log('TimeSeries keys:', Object.keys(dailyMetric.timeSeries));
-            }
-            
-            // Access the timeSeries data - handle all possible structures
-            if (dailyMetric.timeSeries) {
-              // If timeSeries has datedValues array
-              if (dailyMetric.timeSeries.datedValues && Array.isArray(dailyMetric.timeSeries.datedValues)) {
-                // console.log(`Time Series (datedValues format):`);
-                dailyMetric.timeSeries.datedValues.forEach((timeData, timeIndex) => {
-                  const value = timeData.value ? parseInt(timeData.value, 10) : 0;
-                  if (timeData.date) {
-                    // console.log(`  Date: ${timeData.date.year}-${timeData.date.month}-${timeData.date.day}, Value: ${value}`);
-                  } else {
-                    console.log(`  Date: unknown, Value: ${value}`);
-                  }
-                });
-              }
-              // If timeSeries is directly an array
-              else if (Array.isArray(dailyMetric.timeSeries)) {
-                // console.log(`Time Series (direct array format):`);
-                dailyMetric.timeSeries.forEach((timeData, timeIndex) => {
-                  const value = timeData.value ? parseInt(timeData.value, 10) : 0;
-                  if (timeData.date) {
-                    // console.log(`  Date: ${timeData.date.year}-${timeData.date.month}-${timeData.date.day}, Value: ${value}`);
-                  } else {
-                    console.log(`  Date: unknown, Value: ${value}`);
-                  }
-                });
-              }
-              // If timeSeries is an object with a timeSeries array
-              else if (dailyMetric.timeSeries.timeSeries && Array.isArray(dailyMetric.timeSeries.timeSeries)) {
-                // console.log(`Time Series (object format with timeSeries array):`);
-                dailyMetric.timeSeries.timeSeries.forEach((timeData, timeIndex) => {
-                  const value = timeData.value ? parseInt(timeData.value, 10) : 0;
-                  if (timeData.date) {
-                    // console.log(`  Date: ${timeData.date.year}-${timeData.date.month}-${timeData.date.day}, Value: ${value}`);
-                  } else {
-                    console.log(`  Date: unknown, Value: ${value}`);
-                  }
-                });
-              }
-              // If timeSeries is an object but not an array
-              else {
-                console.log(`Time Series (object format):`, JSON.stringify(dailyMetric.timeSeries, null, 2));
-              }
-            }
-          });
-        }
-      });
-    }
-    console.log("Performance Metrics Fetched Successfully", totals.websiteClicks, totals.callClicks)
+    console.log("Performance Metrics Fetched Successfully");
     return res.status(200).json({
       success: true,
       data: response.data,
-      totals: {
-        websiteClicks: totals.websiteClicks,
-        callClicks: totals.callClicks
-      }
+      processedData: processedData,
+      totals: processedData.totals,
+      dailyMetrics: processedData.dailyMetrics,
+      metricsByType: processedData.metricsByType
     });
   } catch (error) {
     console.error('Error fetching performance metrics:', error.response?.data || error.message);
@@ -157,6 +82,131 @@ timeSeriesArray.forEach((metricItem, index) => {
       details: error.response?.data || error.message
     });
   }
+};
+
+// Process performance metrics data to extract all metrics
+const processPerformanceMetrics = (responseData) => {
+  const result = {
+    totals: {
+      views: 0,
+      impressions: 0,
+      calls: 0,
+      websiteClicks: 0,
+      directionRequests: 0,
+      conversations: 0,
+      desktopMapsImpressions: 0,
+      desktopSearchImpressions: 0,
+      mobileMapsImpressions: 0,
+      mobileSearchImpressions: 0
+    },
+    dailyMetrics: [],
+    metricsByType: {}
+  };
+
+  if (!responseData || !responseData.multiDailyMetricTimeSeries) {
+    return result;
+  }
+
+  // Create a map to store daily metrics by date
+  const dailyMetricsMap = new Map();
+
+  // Process the nested structure
+  responseData.multiDailyMetricTimeSeries.forEach(metricItem => {
+    if (metricItem.dailyMetricTimeSeries) {
+      metricItem.dailyMetricTimeSeries.forEach(dailyMetric => {
+        const metricType = dailyMetric.dailyMetric;
+        
+        if (dailyMetric.timeSeries && dailyMetric.timeSeries.datedValues && Array.isArray(dailyMetric.timeSeries.datedValues)) {
+          dailyMetric.timeSeries.datedValues.forEach(timeData => {
+            const dateStr = `${timeData.date.year}-${String(timeData.date.month).padStart(2, '0')}-${String(timeData.date.day).padStart(2, '0')}`;
+            const value = timeData.value ? parseInt(timeData.value, 10) : 0;
+
+            // Initialize the date entry if it doesn't exist
+            if (!dailyMetricsMap.has(dateStr)) {
+              dailyMetricsMap.set(dateStr, {
+                date: dateStr,
+                views: 0,
+                impressions: 0,
+                calls: 0,
+                websiteClicks: 0,
+                directionRequests: 0,
+                conversations: 0,
+                desktopMapsImpressions: 0,
+                desktopSearchImpressions: 0,
+                mobileMapsImpressions: 0,
+                mobileSearchImpressions: 0
+              });
+            }
+
+            const dayData = dailyMetricsMap.get(dateStr);
+
+            // Map metrics to our structure
+            switch (metricType) {
+              case 'BUSINESS_IMPRESSIONS_DESKTOP_MAPS':
+                dayData.views += value;
+                dayData.impressions += value;
+                dayData.desktopMapsImpressions += value;
+                result.totals.views += value;
+                result.totals.impressions += value;
+                result.totals.desktopMapsImpressions += value;
+                break;
+              case 'BUSINESS_IMPRESSIONS_DESKTOP_SEARCH':
+                dayData.impressions += value;
+                dayData.desktopSearchImpressions += value;
+                result.totals.impressions += value;
+                result.totals.desktopSearchImpressions += value;
+                break;
+              case 'BUSINESS_IMPRESSIONS_MOBILE_MAPS':
+                dayData.views += value;
+                dayData.impressions += value;
+                dayData.mobileMapsImpressions += value;
+                result.totals.views += value;
+                result.totals.impressions += value;
+                result.totals.mobileMapsImpressions += value;
+                break;
+              case 'BUSINESS_IMPRESSIONS_MOBILE_SEARCH':
+                dayData.impressions += value;
+                dayData.mobileSearchImpressions += value;
+                result.totals.impressions += value;
+                result.totals.mobileSearchImpressions += value;
+                break;
+              case 'BUSINESS_CONVERSATIONS':
+                dayData.conversations += value;
+                result.totals.conversations += value;
+                break;
+              case 'BUSINESS_DIRECTION_REQUESTS':
+                dayData.directionRequests += value;
+                result.totals.directionRequests += value;
+                break;
+              case 'CALL_CLICKS':
+                dayData.calls += value;
+                result.totals.calls += value;
+                break;
+              case 'WEBSITE_CLICKS':
+                dayData.websiteClicks += value;
+                result.totals.websiteClicks += value;
+                break;
+            }
+
+            // Also store metrics by type
+            if (!result.metricsByType[metricType]) {
+              result.metricsByType[metricType] = [];
+            }
+            result.metricsByType[metricType].push({
+              date: dateStr,
+              value: value
+            });
+          });
+        }
+      });
+    }
+  });
+
+  // Convert the map to an array and sort by date
+  result.dailyMetrics = Array.from(dailyMetricsMap.values())
+    .sort((a, b) => new Date(a.date) - new Date(b.date));
+ console.log("resut",result)
+  return result;
 };
 
 // Calculate totals for the last 30 days

@@ -8,6 +8,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import { authLimiter } from './middleware/rateLimiter.js';
 import googleRoutes from './routes/googleRoutes.js';
+import googleMediaRoutes from './routes/googleMediaRoutes.js';
 import authRoutes from './routes/auth.js';
 import auditRoutes from './routes/auditRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
@@ -84,9 +85,11 @@ app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/admin/plans", planRoutes);
 app.use("/api/auto-reply", autoReplyRoutes);
 app.use("/auth/google", googleRoutes);
+app.use("/api/auth/google/media", googleMediaRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints
 app.use('/api/auth', authLimiter, authRoutes);
+
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/post', scheduleRoutes);
