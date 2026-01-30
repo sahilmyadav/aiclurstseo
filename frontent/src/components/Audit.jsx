@@ -123,7 +123,7 @@ const Audit = () => {
     };
   }, [cooldownTimer]);
 
-  // Cleanup timer on unmount
+  // Cleanup timer on unmounts
   useEffect(() => {
     return () => {
       if (timerRef.current) {
