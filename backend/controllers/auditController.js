@@ -6,11 +6,11 @@ export const fetchPerformanceMetrics = async (req, res) => {
   try {
     const { locationId, startDate, endDate, accessToken, refresh_token, expiry_date } = req.body;
 
-    console.log("Fetching performance metrics with params:", {
-      locationId,
-      startDate,
-      endDate
-    });
+    // console.log("Fetching performance metrics with params:", {
+    //   locationId,
+    //   startDate,
+    //   endDate
+    // });
 
     if (!locationId || !startDate || !endDate || !accessToken) {
       return res.status(400).json({
@@ -64,14 +64,122 @@ export const fetchPerformanceMetrics = async (req, res) => {
     // Process the response data to extract all metrics
     const processedData = processPerformanceMetrics(response.data);
     
-    console.log("Performance Metrics Fetched Successfully");
+    // Calculate performance and engagement scores
+    const performanceScore = calculatePerformanceScore(processedData);
+    const engagementScore = calculateEngagementScore(processedData);
+    
+    // Initialize profile and SEO scores
+    let profileScore = 0;
+    let seoScore = 0;
+    
+    try {
+      // Fetch business profile for additional scores
+      const profileResponse = await axios.get(
+        `https://mybusinessbusinessinformation.googleapis.com/v1/locations/${locationId}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      const businessProfile = profileResponse.data;
+      profileScore = calculateProfileCompletionScore(businessProfile);
+      seoScore = calculateSeoScore(businessProfile);
+    } catch (profileError) {
+      console.error('Error fetching business profile:', profileError.message);
+    }
+    
+    // Calculate overall weighted score
+    const overallScore = Math.round((
+      performanceScore * 0.4 +
+      engagementScore * 0.3 +
+      profileScore * 0.2 +
+      seoScore * 0.1
+    ) * 10) / 10;
+    
+    console.log("Performance Metrics and Scores Calculated Successfully");
+    
+    // Prepare daily metrics data
+    const dailyData = processedData.dailyMetrics.map(day => ({
+      date: day.date,
+      views: day.views,
+      impressions: day.impressions,
+      calls: day.calls,
+      websiteClicks: day.websiteClicks,
+      directionRequests: day.directionRequests,
+      conversations: day.conversations,
+      desktopMapsImpressions: day.desktopMapsImpressions,
+      desktopSearchImpressions: day.desktopSearchImpressions,
+      mobileMapsImpressions: day.mobileMapsImpressions,
+      mobileSearchImpressions: day.mobileSearchImpressions
+    })).sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    // Group by month for monthly totals
+    const monthlyData = {};
+    dailyData.forEach(day => {
+      const [year, month] = day.date.split('-');
+      const monthKey = `${year}-${month}`;
+      
+      if (!monthlyData[monthKey]) {
+        monthlyData[monthKey] = {
+          month: monthKey,
+          views: 0,
+          impressions: 0,
+          calls: 0,
+          websiteClicks: 0,
+          directionRequests: 0,
+          conversations: 0,
+          desktopMapsImpressions: 0,
+          desktopSearchImpressions: 0,
+          mobileMapsImpressions: 0,
+          mobileSearchImpressions: 0
+        };
+      }
+      
+      // Sum up all metrics for the month
+      Object.keys(monthlyData[monthKey]).forEach(metric => {
+        if (metric !== 'month') {
+          monthlyData[monthKey][metric] += day[metric] || 0;
+        }
+      });
+    });
+    
+    const monthlyTotals = Object.values(monthlyData).sort((a, b) => a.month.localeCompare(b.month));
+    
     return res.status(200).json({
       success: true,
-      data: response.data,
-      processedData: processedData,
-      totals: processedData.totals,
-      dailyMetrics: processedData.dailyMetrics,
-      metricsByType: processedData.metricsByType
+      data: {
+        // Total metrics
+        totals: {
+          views: processedData.totals.views,
+          impressions: processedData.totals.impressions,
+          calls: processedData.totals.calls,
+          websiteClicks: processedData.totals.websiteClicks,
+          directionRequests: processedData.totals.directionRequests,
+          conversations: processedData.totals.conversations,
+          desktopMapsImpressions: processedData.totals.desktopMapsImpressions,
+          desktopSearchImpressions: processedData.totals.desktopSearchImpressions,
+          mobileMapsImpressions: processedData.totals.mobileMapsImpressions,
+          mobileSearchImpressions: processedData.totals.mobileSearchImpressions,
+          lastUpdated: new Date().toISOString()
+        },
+        
+        // Daily metrics for each day
+        daily: dailyData,
+        
+        // Monthly totals
+        monthly: monthlyTotals,
+        
+        // Scores
+        scores: {
+          performance: Math.round(performanceScore),
+          engagement: Math.round(engagementScore),
+          profile: Math.round(profileScore),
+          seo: Math.round(seoScore),
+          overall: Math.round(overallScore)
+        }
+      }
     });
   } catch (error) {
     console.error('Error fetching performance metrics:', error.response?.data || error.message);
@@ -205,7 +313,7 @@ const processPerformanceMetrics = (responseData) => {
   // Convert the map to an array and sort by date
   result.dailyMetrics = Array.from(dailyMetricsMap.values())
     .sort((a, b) => new Date(a.date) - new Date(b.date));
- console.log("resut",result)
+//  console.log("resut",result)
   return result;
 };
 
@@ -458,14 +566,13 @@ export const getAuditAnalysis = async (req, res) => {
       });
     }
 
-    console.log(' [AUDIT] Analysis completed successfully',result.analysis);
+    console.log(' [AUDIT] Analysis completed successfully', result.analysis);
     res.json({
       success: true,
-      audit: result.analysis,
+      analysis: result.analysis,
       reviewCount: result.reviewCount,
       generatedAt: result.generatedAt
     });
-
   } catch (error) {
     console.error(' [AUDIT] getAuditAnalysis error:', error.message);
     res.status(500).json({
@@ -473,4 +580,136 @@ export const getAuditAnalysis = async (req, res) => {
       error: 'Failed to generate audit analysis'
     });
   }
+};
+
+// Calculate performance score (0-100)
+const calculatePerformanceScore = (metrics) => {
+  if (!metrics?.totals) return 0;
+  
+  const {
+    impressions = 0,
+    views = 0,
+    calls = 0,
+    websiteClicks = 0,
+    directionRequests = 0
+  } = metrics.totals;
+
+  const totalEngagement = (calls * 1.2) + (websiteClicks * 1.0) + (directionRequests * 0.8);
+  
+  let score = 0;
+  
+  if (impressions > 0) {
+    const engagementRate = Math.min((totalEngagement / impressions) * 1000, 70);
+    const volumeScore = Math.min(Math.log10(impressions + 1) * 10, 30);
+    score = Math.round(engagementRate + volumeScore);
+  }
+  
+  return Math.min(100, Math.max(0, score));
+};
+
+// Calculate engagement score (0-100)
+const calculateEngagementScore = (metrics) => {
+  if (!metrics?.totals) return 0;
+  
+  const {
+    impressions = 0,
+    calls = 0,
+    websiteClicks = 0,
+    directionRequests = 0,
+    conversations = 0
+  } = metrics.totals;
+
+  const totalActions = calls + websiteClicks + directionRequests + conversations;
+  
+  if (impressions === 0) return 0;
+  
+  const engagementRate = (totalActions / impressions) * 100;
+  
+  let score = 0;
+  if (engagementRate > 0) {
+    score = Math.log10(engagementRate * 10 + 1) * 25;
+  }
+  
+  return Math.min(100, Math.max(0, Math.round(score)));
+};
+
+// Calculate profile completion score (0-100)
+const calculateProfileCompletionScore = (profile) => {
+  if (!profile) return 0;
+  
+  const requiredFields = {
+    name: [10, (p) => p?.name?.trim()],
+    title: [10, (p) => p?.title?.trim()],
+    description: [15, (p) => p?.profile?.description?.trim()],
+    address: [15, (p) => p?.storefrontAddress?.addressLines?.length > 0],
+    phone: [10, (p) => p?.primaryPhone?.trim()],
+    website: [10, (p) => p?.websiteUri?.trim()],
+    hours: [10, (p) => p?.regularHours?.periods?.length > 0],
+    categories: [10, (p) => p?.categories?.primaryCategory?.name],
+    attributes: [5, (p) => Object.keys(p?.attributes || {}).length > 0],
+    photos: [5, (p) => p?.metadata?.photos?.count > 0]
+  };
+
+  let score = 0;
+  let totalWeight = 0;
+
+  for (const [field, [weight, check]] of Object.entries(requiredFields)) {
+    if (check(profile)) {
+      score += weight;
+    }
+    totalWeight += weight;
+  }
+
+  return Math.round((score / totalWeight) * 100);
+};
+
+// Calculate SEO score (0-100)
+const calculateSeoScore = (profile) => {
+  if (!profile) return 0;
+  
+  let score = 0;
+  
+  // Check description quality (0-30 points)
+  const description = profile?.profile?.description || '';
+  if (description) {
+    const descLength = description.length;
+    if (descLength >= 100 && descLength <= 300) {
+      score += 30;
+    } else if (descLength > 0) {
+      score += 15;
+    }
+  }
+  
+  // Check categories (0-20 points)
+  if (profile.categories?.primaryCategory?.name) {
+    score += 20;
+  }
+  
+  // Check attributes (0-20 points)
+  const attributes = Object.keys(profile.attributes || {});
+  if (attributes.length >= 3) {
+    score += 20;
+  } else if (attributes.length > 0) {
+    score += 10;
+  }
+  
+  // Check website (0-15 points)
+  if (profile.websiteUri) {
+    score += 15;
+  }
+  
+  // Check hours (0-15 points)
+  if (profile.regularHours?.periods?.length > 0) {
+    score += 15;
+  }
+  
+  return Math.min(100, score);
+};
+
+// Export the score calculation functions
+export {
+  calculatePerformanceScore,
+  calculateEngagementScore,
+  calculateProfileCompletionScore,
+  calculateSeoScore
 };

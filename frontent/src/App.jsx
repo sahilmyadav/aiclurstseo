@@ -40,6 +40,7 @@ import Billing from './components/subscription/Billing'
 import BusinessDetails from './components/BusinessDetails'
 import UserSubscriptionDetails from './components/subscription/UserSubsriptionDetails'
 import SimpleReviews from './components/SimpleReviews'
+import AuditTool from './components/AuditTool'
 
 const AppContent = () => {
   const location = useLocation()
@@ -94,7 +95,7 @@ const AppContent = () => {
             <Route index element={<Dashboard />} />
             <Route path="reviews" element={<InboxMessage />} />
             <Route path="handle-reviews" element={<SimpleReviews />} />
-            <Route path="audit" element={<Audit />} />
+            <Route path="audit" element={<AuditTool />} />
             <Route path="review-link" element={<ReviewLink />} />
             <Route path="widgets" element={<WebsiteWidgets />} />
             <Route path="integrations" element={<Integrations />} />

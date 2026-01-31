@@ -251,7 +251,7 @@ const SettingsPage = () => {
                               e.target.src = 'https://via.placeholder.com/300x300/800080/FFFFFF?text=No+Image';
                             }}
                             onLoad={(e) => {
-                              console.log('Image loaded successfully:', e.target.src);
+                              // console.log('Image loaded successfully:', e.target.src);
                             }}
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-end p-3">

@@ -314,6 +314,24 @@ export const GoogleBusinessProvider = ({ children }) => {
         // Calculate and set review stats
         const stats = calculateReviewStats(reviews);
         setReviewStats(stats);
+        
+        // Automatically fetch performance data when reviews are loaded
+        if (accountId && locationId) {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          const today = new Date();
+          
+          try {
+            await fetchPerformanceMetrics({
+              startDate: thirtyDaysAgo,
+              endDate: today,
+              accountId,
+              locationId
+            });
+          } catch (error) {
+            console.error('Error fetching performance data after reviews:', error);
+          }
+        }
       } else {
         throw new Error(data.error || 'Failed to fetch reviews');
       }
@@ -505,9 +523,13 @@ export const GoogleBusinessProvider = ({ children }) => {
   // ==============================
   // PERFORMANCE METRICS
   // ==============================
-  const fetchPerformanceMetrics = async ({ startDate, endDate, useCache = false, cachedData = null }) => {
-    if (!selectedBusiness) {
-      console.error('No business selected');
+  const fetchPerformanceMetrics = async ({ startDate, endDate, accountId, locationId, useCache = false, cachedData = null }) => {
+    // Use provided accountId/locationId or fallback to selectedBusiness
+    const targetAccountId = accountId || selectedBusiness?.accountId;
+    const targetLocationId = locationId || (selectedBusiness?.name ? selectedBusiness.name.split("/")[1] : null);
+    
+    if (!targetAccountId || !targetLocationId) {
+      console.error('No business selected or accountId/locationId not provided');
       return null;
     }
 
@@ -522,12 +544,6 @@ export const GoogleBusinessProvider = ({ children }) => {
       setPerformanceLoading(true);
       setPerformanceError(null);
       
-      const locationId = selectedBusiness.name.split("/")[1];
-      
-      // Format dates as required by the backend
-      const start = new Date(startDate);
-      const end = new Date(endDate);
-      
       // Get the access token from the OAuth context
       const accessToken = googleOAuth?.access_token;
       if (!accessToken) {
@@ -535,21 +551,19 @@ export const GoogleBusinessProvider = ({ children }) => {
       }
       
       const requestBody = {
-        locationId,
+        locationId: targetLocationId,
         accessToken,
         startDate: {
-          year: start.getFullYear(),
-          month: start.getMonth() + 1, // JavaScript months are 0-indexed
-          day: start.getDate()
+          year: startDate.getFullYear(),
+          month: startDate.getMonth() + 1, // JavaScript months are 0-indexed
+          day: startDate.getDate()
         },
         endDate: {
-          year: end.getFullYear(),
-          month: end.getMonth() + 1, // JavaScript months are 0-indexed
-          day: end.getDate()
+          year: endDate.getFullYear(),
+          month: endDate.getMonth() + 1, // JavaScript months are 0-indexed
+          day: endDate.getDate()
         }
       };
-      console.log("startDate",startDate,endDate)
-      console.log("accesstoken",accessToken)
 
       const response = await fetch(`${BACKEND_URL}/api/audit/performance`, {
         method: 'POST',
@@ -566,15 +580,23 @@ export const GoogleBusinessProvider = ({ children }) => {
         if (response.status === 401) {
           // Handle expired or invalid token
           setPerformanceError('Your session has expired. Please reconnect your Google account.');
-          // Optionally trigger re-authentication
-          // disconnectGoogle();
         }
         throw new Error(errorData.error || 'Failed to fetch performance metrics');
       }
-      const data = await response.json();
-      console.log("Performace",data)
-      setPerformanceData(data.totals);
-      return data;
+      
+      const dataF = await response.json();
+      const data = dataF.data;
+
+      console.log("Performance data fetched:", data);
+      
+      // Store all performance data including daily, monthly, scores and totals
+      const fullPerformanceData = {
+        ...data,  // includes totals, daily, monthly, and scores
+        lastUpdated: new Date().toISOString()
+      };
+      
+      setPerformanceData(fullPerformanceData);
+      return fullPerformanceData;
     } catch (error) {
       console.error('Error fetching performance metrics:', error);
       setPerformanceError(error.message);
@@ -752,6 +774,28 @@ export const GoogleBusinessProvider = ({ children }) => {
       fetchBusinesses();
     }
   }, [googleOAuth.access_token, authUser]);
+
+  // Auto-fetch performance data on page load/refresh when business is selected
+  useEffect(() => {
+    if (selectedBusiness?.accountId && selectedBusiness?.name) {
+      const locationId = selectedBusiness.name.split("/")[1];
+      if (locationId) {
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        const today = new Date();
+        
+        // Fetch performance data for last 30 days
+        fetchPerformanceMetrics({
+          startDate: thirtyDaysAgo,
+          endDate: today,
+          accountId: selectedBusiness.accountId,
+          locationId: locationId
+        }).catch(error => {
+          console.error('Error fetching performance data on page load:', error);
+        });
+      }
+    }
+  }, [selectedBusiness?.accountId, selectedBusiness?.name]);
 
   return (
     <GoogleBusinessContext.Provider value={value}>
