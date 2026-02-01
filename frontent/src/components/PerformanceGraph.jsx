@@ -34,7 +34,7 @@ const PerformanceGraph = ({ data, theme }) => {
     <div
       className={`p-5 rounded-xl ${
         theme === 'dark' ? 'bg-[#1a1b2e]' : 'bg-white'
-      } border`}
+      } shadow-md hover:shadow-lg transition-shadow duration-200`}
     >
       {/* Header */}
       <div className="flex justify-between items-center mb-4">

@@ -188,50 +188,72 @@ function MakeReview() {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white rounded-lg p-8 shadow-sm border border-gray-100 relative">
+      <div className="w-full max-w-4xl bg-white rounded-lg shadow-sm border border-gray-100 relative overflow-hidden">
         {/* Close Button */}
         <button 
           onClick={handleClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 z-10"
         >
           <FiX className="w-5 h-5" />
         </button>
         
-        {/* Header */}
-        <div className="text-center mb-8">
-          {/* Google Logo */}
-          <div className="mb-6 flex justify-center">
-            <img 
-              src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" 
-              alt="Google" 
-              className="h-8"
-            />
-          </div>
-          
-          <h1 className="text-2xl font-medium text-gray-900 mb-2">
-            We Value Your Feedback
-          </h1>
-          <p className="text-gray-500 text-sm">
-            How was your experience with us?
-          </p>
-          
-          {/* Powered By */}
-          <div className="mt-2">
+        <div className="md:flex">
+          {/* Left Column - Header */}
+          <div className="hidden md:flex flex-col justify-center items-center p-8 bg-gray-50 w-full md:w-1/3 lg:w-2/5">
             <div className="text-center">
-              <div className="text-xs font-medium text-gray-400 mb-1">POWERED BY</div>
-              <div className="flex justify-center -mb-1">
+              {/* Google Logo */}
+              <div className="mb-6">
                 <img 
-                  src="/clurst transparent logo 2 for white baground.png" 
-                  alt="Clurst Logo"
-                  className="h-25 w-auto object-contain" 
+                  src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" 
+                  alt="Google" 
+                  className="h-8 mx-auto"
                 />
+              </div>
+              
+              <h1 className="text-2xl font-medium text-gray-900 mb-2">
+                We Value Your Feedback
+              </h1>
+              <p className="text-gray-500 text-sm">
+                How was your experience with us?
+              </p>
+              
+              {/* Powered By */}
+              <div className="mt-8">
+                <div className="text-center">
+                  <div className="text-xs font-medium text-gray-400 mb-2">POWERED BY</div>
+                  <div className="flex justify-center">
+                    <img 
+                      src="/clurst transparent logo 2 for white baground.png" 
+                      alt="Clurst Logo"
+                      className="h-32 w-auto object-contain" 
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+          
+          {/* Right Column - Form */}
+          <div className="w-full md:w-2/3 lg:w-3/5 md:p-6">
+            {/* Mobile Header - Only shown on small screens */}
+            <div className="md:hidden text-center mb-6">
+              <div className="mb-4">
+                <img 
+                  src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" 
+                  alt="Google" 
+                  className="h-6 mx-auto"
+                />
+              </div>
+              <h1 className="text-xl font-medium text-gray-900 mb-1">
+                We Value Your Feedback
+              </h1>
+              <p className="text-gray-500 text-sm mb-4">
+                How was your experience with us?
+              </p>
+            </div>
 
-        {/* Star Rating */}
-        <div className="flex justify-center my-8">
+            {/* Star Rating */}
+            <div className="flex justify-center my-6">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
               key={star}
@@ -267,7 +289,7 @@ function MakeReview() {
         )}
         
         {selectedRating > 0 && (
-          <p className="text-center text-purple-600 mt-3 text-sm">
+          <p className="text-center text-black mt-3 text-sm">
             You selected {selectedRating} star{selectedRating > 1 ? 's' : ''}
           </p>
         )}
@@ -275,12 +297,12 @@ function MakeReview() {
         {/* Feedback Form (for 1-3 stars) */}
         {showForm && (
           <div className="animate-fadeIn">
-            <h3 className="text-lg font-semibold text-purple-700 mb-4">
+            <h3 className="text-lg font-semibold text-gray-800 mb-4">
               We'd love to hear your feedback
             </h3>
             <form onSubmit={handleSubmitFeedback} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-purple-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Name
                 </label>
                 <input
@@ -289,13 +311,13 @@ function MakeReview() {
                   value={formData.name}
                   onChange={handleFormChange}
                   required
-                  className="w-full px-4 py-3 border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white/90 text-purple-900 placeholder-purple-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/90 text-gray-900 placeholder-gray-400"
                   placeholder="Your name"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-purple-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email
                 </label>
                 <input
@@ -304,13 +326,13 @@ function MakeReview() {
                   value={formData.email}
                   onChange={handleFormChange}
                   required
-                  className="w-full px-4 py-3 border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white/90 text-purple-900 placeholder-purple-300"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/90 text-gray-900 placeholder-gray-400"
                   placeholder="your@email.com"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-medium text-purple-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Your Feedback
                 </label>
                 <textarea
@@ -319,14 +341,14 @@ function MakeReview() {
                   onChange={handleFormChange}
                   required
                   rows={4}
-                  className="w-full px-4 py-3 border border-purple-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white/90 text-purple-900 placeholder-purple-300 resize-none"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/90 text-gray-900 placeholder-gray-400 resize-none"
                   placeholder="Tell us how we can improve..."
                 />
               </div>
               
               <button
                 type="submit"
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-purple-200"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg hover:shadow-blue-100"
               >
                 Submit Feedback
               </button>
@@ -343,24 +365,24 @@ function MakeReview() {
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold text-purple-900 mb-1">
+              <h3 className="text-xl font-bold text-gray-900 mb-1">
                 Awesome! {selectedRating}-star rating!
               </h3>
-              <p className="text-purple-700">
+              <p className="text-gray-700">
                 Would you like some suggestions for your review?
               </p>
             </div>
 
             {/* AI Suggestions */}
             <div className="mt-4">
-              <h4 className="text-sm font-medium text-purple-800 mb-2">
+              <h4 className="text-sm font-medium text-gray-800 mb-2">
                 {isLoading ? 'Generating suggestions...' : 'Review suggestions:'}
               </h4>
               
               {isLoading ? (
                 <div className="space-y-2">
                   {[1, 2].map((i) => (
-                    <div key={i} className="h-3 bg-purple-100 rounded-full animate-pulse"></div>
+                    <div key={i} className="h-3 bg-gray-100 rounded-full animate-pulse"></div>
                   ))}
                 </div>
               ) : (
@@ -368,7 +390,7 @@ function MakeReview() {
                   {suggestions.slice(0, 3).map((suggestion, index) => (
                     <div 
                       key={index}
-                      className="p-3 bg-white border border-purple-100 rounded-lg text-sm text-purple-800 transition-all hover:shadow-md cursor-pointer"
+                      className="p-3 bg-white border border-gray-100 rounded-lg text-sm text-gray-800 transition-all hover:shadow-md cursor-pointer"
                     >
                       <div className="flex justify-between items-start">
                         <div 
@@ -384,7 +406,7 @@ function MakeReview() {
                             setCopiedIndex(index);
                             setTimeout(() => setCopiedIndex(null), 2000);
                           }}
-                          className="ml-2 p-1 text-purple-400 hover:text-purple-600 rounded-full hover:bg-purple-50 transition-colors"
+                          className="ml-2 p-1 text-blue-400 hover:text-blue-600 rounded-full hover:bg-blue-50 transition-colors"
                           title="Copy to clipboard"
                         >
                           {copiedIndex === index ? (
@@ -400,8 +422,8 @@ function MakeReview() {
               )}
             </div>
 
-            <div className="mt-6 pt-4 border-t border-purple-100">
-              <p className="text-center text-purple-700 mb-4">
+            <div className="mt-6 pt-4 border-t border-gray-100">
+              <p className="text-center text-gray-700 mb-4">
                 Ready to share your experience on Google?
               </p>
               
@@ -423,7 +445,7 @@ function MakeReview() {
                   setSelectedRating(0);
                   setShowGoogleButton(false);
                 }}
-                className="mt-3 text-purple-600 hover:text-purple-800 text-sm font-medium"
+                className="mt-3 text-blue-600 hover:text-blue-800 text-sm font-medium"
               >
                 Maybe later
               </button>
@@ -437,6 +459,8 @@ function MakeReview() {
             <p>Please select a rating to continue</p>
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );
