@@ -121,9 +121,9 @@ export const getGoogleBusinesses = async (req, res) => {
             }
           }
         );
-        console.log("locations >>>>>>>>>>>>",locationsRes)
+        // console.log("locations >>>>>>>>>>>>",locationsRes)
         const locations = locationsRes.data.locations || [];
-        console.log("locations >>>>>>>>>>>>",locations)
+        // console.log("locations >>>>>>>>>>>>",locations)
         allLocations.push(...locations.map(loc => ({ ...loc, accountId })));
       } catch (locErr) { }
     }

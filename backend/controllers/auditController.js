@@ -4,13 +4,14 @@ import { getBearerToken } from './googleIntegrationController.js';
 // Fetch performance metrics from Google Business Profile API
 export const fetchPerformanceMetrics = async (req, res) => {
   try {
-    const { locationId, startDate, endDate, accessToken, refresh_token, expiry_date } = req.body;
+    const { locationId, startDate, endDate, accessToken, refresh_token, expiry_date ,selectedBusiness} = req.body;
 
-    // console.log("Fetching performance metrics with params:", {
-    //   locationId,
-    //   startDate,
-    //   endDate
-    // });
+    console.log("Fetching performance metrics with params:", {
+      locationId,
+      selectedBusiness,
+      startDate,
+      endDate
+    });
 
     if (!locationId || !startDate || !endDate || !accessToken) {
       return res.status(400).json({
@@ -65,29 +66,59 @@ export const fetchPerformanceMetrics = async (req, res) => {
     const processedData = processPerformanceMetrics(response.data);
     
     // Calculate performance and engagement scores
-    const performanceScore = calculatePerformanceScore(processedData);
+    const performanceScore = calculatePerformanceScore(processedData,selectedBusiness );
     const engagementScore = calculateEngagementScore(processedData);
     
-    // Initialize profile and SEO scores
-    let profileScore = 0;
-    let seoScore = 0;
+    // Initialize profile and SEO scores with default values
+    let profileScore = 60; // Default score if no business data is provided
+    let seoScore = 60;    // Default score if no business data is provided
     
-    try {
-      // Fetch business profile for additional scores
-      const profileResponse = await axios.get(
-        `https://mybusinessbusinessinformation.googleapis.com/v1/locations/${locationId}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      const businessProfile = profileResponse.data;
+    // Get business profile from either destructured params or request body
+    const businessProfile = selectedBusiness || req.body.selectedBusiness;
+    
+    // Debug log to check what's being received
+    console.log('Received business profile data:', {
+      hasSelectedBusiness: !!selectedBusiness,
+      hasReqBodySelectedBusiness: !!req.body.selectedBusiness,
+      businessProfile: businessProfile ? {
+        name: businessProfile.name,
+        title: businessProfile.title,
+        hasDescription: !!businessProfile?.profile?.description,
+        hasAddress: !!businessProfile?.storefrontAddress,
+        hasPhone: !!businessProfile?.phoneNumbers?.primaryPhone,
+        hasWebsite: !!businessProfile?.websiteUri,
+        hasHours: !!businessProfile?.regularHours,
+        hasCategories: !!businessProfile?.categories,
+        hasAttributes: !!(businessProfile?.attributes && Object.keys(businessProfile.attributes).length > 0),
+        hasPhotos: businessProfile?.metadata?.photos?.count > 0
+      } : 'no profile',
+      requestBodyKeys: Object.keys(req.body)
+    });
+    
+    if (businessProfile) {
+      console.log('Using provided business profile data from request');
+      // Log the profile data (safely, without sensitive info)
+      const safeProfileData = {
+        name: businessProfile?.name,
+        title: businessProfile?.title,
+        hasDescription: !!businessProfile?.profile?.description,
+        hasAddress: !!businessProfile?.storefrontAddress,
+        hasPhone: !!businessProfile?.phoneNumbers?.primaryPhone,
+        hasWebsite: !!businessProfile?.websiteUri,
+        hasHours: !!businessProfile?.regularHours,
+        hasCategories: !!businessProfile?.categories,
+        hasAttributes: !!(businessProfile?.attributes && Object.keys(businessProfile.attributes).length > 0),
+        hasPhotos: businessProfile?.metadata?.photos?.count > 0
+      };
+      console.log('Business profile data:', JSON.stringify(safeProfileData, null, 2));
+      
+      // Calculate profile and SEO scores
       profileScore = calculateProfileCompletionScore(businessProfile);
-      seoScore = calculateSeoScore(businessProfile);
-    } catch (profileError) {
-      console.error('Error fetching business profile:', profileError.message);
+      seoScore = calculateSeoScore(businessProfile, locationId);
+      
+      console.log('Calculated scores:', { profileScore, seoScore });
+    } else {
+      console.log('No business profile data provided in request, using default scores');
     }
     
     // Calculate overall weighted score
@@ -146,6 +177,33 @@ export const fetchPerformanceMetrics = async (req, res) => {
     });
     
     const monthlyTotals = Object.values(monthlyData).sort((a, b) => a.month.localeCompare(b.month));
+    
+    // Log scores and totals
+    console.log('\n=== Performance Metrics and Scores ===');
+    console.log('Scores:', {
+      performanceScore: performanceScore.toFixed(1),
+      engagementScore: engagementScore.toFixed(1),
+      profileScore: profileScore.toFixed(1),
+      seoScore: seoScore.toFixed(1),
+      overallScore: overallScore.toFixed(1)
+    });
+    
+    console.log('\n=== Last 30 Days Totals ===');
+    console.log(JSON.stringify({
+      views: processedData.totals.views,
+      impressions: processedData.totals.impressions,
+      calls: processedData.totals.calls,
+      websiteClicks: processedData.totals.websiteClicks,
+      directionRequests: processedData.totals.directionRequests,
+      conversations: processedData.totals.conversations,
+      desktopMapsImpressions: processedData.totals.desktopMapsImpressions,
+      desktopSearchImpressions: processedData.totals.desktopSearchImpressions,
+      mobileMapsImpressions: processedData.totals.mobileMapsImpressions,
+      mobileSearchImpressions: processedData.totals.mobileSearchImpressions
+    }, null, 2));
+    
+    console.log('\n=== Monthly Totals ===');
+    console.table(monthlyTotals);
     
     return res.status(200).json({
       success: true,
@@ -706,65 +764,74 @@ const calculateProfileCompletionScore = (profile) => {
     totalWeight += weight;
   }
 
-  return Math.round((score / totalWeight) * 100);
+  // Calculate percentage score
+  const finalScore = totalWeight > 0 ? Math.round((score / totalWeight) * 100) : 0;
+  return Math.min(100, Math.max(0, finalScore));
 };
 
-// Calculate SEO score (0-100)
-const calculateSeoScore = (profile) => {
-  if (!profile) return 0;
-  
+// Calculate SEO score (0-100) based on business profile completeness
+const calculateSeoScore = (profile, locationId = 'default') => {
+  if (!profile) return 60; // Default score if no profile data
+
   let score = 0;
-  
-  // Check description quality (0-30 points)
-  const description = profile?.profile?.description || '';
-  if (description) {
-    const descLength = description.length;
-    if (descLength >= 100 && descLength <= 300) {
-      score += 30;
-    } else if (descLength > 0) {
-      score += 15;
-    }
+  const pointsPerField = 10; // Each field is worth 10 points
+
+  // Check each field and add points if present
+  if (profile?.name) score += pointsPerField;          // Name
+  if (profile?.title) score += pointsPerField;         // Title
+  if (profile?.profile?.description) score += pointsPerField;  // Description
+  if (profile?.storefrontAddress) score += pointsPerField;     // Address
+  if (profile?.phoneNumbers?.primaryPhone) score += pointsPerField;  // Phone
+  if (profile?.websiteUri) score += pointsPerField;    // Website
+  if (profile?.regularHours) score += pointsPerField;  // Business Hours
+  if (profile?.categories) score += pointsPerField;    // Categories
+  if (profile?.attributes && Object.keys(profile.attributes).length > 0) {
+    score += pointsPerField;  // Attributes
   }
-  
-  // Check categories (0-20 points)
-  if (profile.categories?.primaryCategory?.name) {
-    score += 20;
+  if (profile?.metadata?.photos?.count > 0) {
+    score += pointsPerField;  // Photos
   }
-  
-  // Check attributes (0-20 points)
-  const attributes = Object.keys(profile.attributes || {});
-  if (attributes.length >= 3) {
-    score += 20;
-  } else if (attributes.length > 0) {
-    score += 10;
-  }
-  
-  // Check website (0-15 points)
-  if (profile.websiteUri) {
-    score += 15;
-  }
-  
-  // Check hours (0-15 points)
-  if (profile.regularHours?.periods?.length > 0) {
-    score += 15;
-  }
-  
-  return Math.min(100, score);
+
+  // Log the score calculation for debugging
+  console.log('SEO Score Calculation:', {
+    name: !!profile?.name,
+    title: !!profile?.title,
+    description: !!profile?.profile?.description,
+    address: !!profile?.storefrontAddress,
+    phone: !!profile?.phoneNumbers?.primaryPhone,
+    website: !!profile?.websiteUri,
+    hours: !!profile?.regularHours,
+    categories: !!profile?.categories,
+    attributes: !!(profile?.attributes && Object.keys(profile.attributes).length > 0),
+    photos: !!(profile?.metadata?.photos?.count > 0),
+    totalScore: score
+  });
+
+  // Ensure score is between 0 and 100
+  return Math.min(100, Math.max(0, score));
 };
 
-// Export the score calculation functions
 export {
   calculatePerformanceScore,
   calculateEngagementScore,
   calculateProfileCompletionScore,
-  calculateSeoScore
+  calculateSeoScore,
+  generateAuditAnalysisFromPerformanceData
 };
 
-// New function to generate audit analysis from performance data
-export const generateAuditAnalysisFromPerformanceData = async (
-  performanceData, 
-  scores, 
-  totals, 
+/**
+ * Generate audit analysis from performance data
+ * @param {Object} performanceData - The performance data to analyze
+ * @param {Object} scores - The calculated scores
+ * @param {Object} totals - The calculated totals
+ * @param {string} businessName - The name of the business
+ * @param {Object} [businessInfo={}] - Additional business information
+ * @returns {Promise<Object>} - The analysis result
+ */
+const generateAuditAnalysisFromPerformanceData = async (
+  performanceData,
+  scores,
+  totals,
   businessName,
   businessInfo = {}
 ) => {

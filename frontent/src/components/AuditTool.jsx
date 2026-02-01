@@ -48,17 +48,17 @@ const AuditTool = () => {
       className={`min-h-screen w-full transition-colors ${
         theme === 'dark'
           ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white'
-          : 'bg-gray-50 text-gray-900'
+          : 'bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] text-gray-900'
       }`}
     >
-      <div className="p-4 sm:p-6 space-y-6">
+      <div className="p-3 sm:p-6 space-y-6 max-w-7xl mx-auto">
 
         {/* ================= Business Selection ================= */}
         <div
-          className={`p-4 rounded-xl border ${
+          className={`p-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.01] ${
             theme === 'dark'
-              ? 'bg-[#1a1b2e] border-white/10'
-              : 'bg-white'
+              ? 'bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 hover:border-gray-600 backdrop-blur-sm text-white shadow-lg'
+              : 'bg-white shadow-sm hover:shadow-md border border-gray-100 hover:border-gray-200'
           }`}
         >
           <h2 className="text-lg font-semibold mb-3">
@@ -72,25 +72,33 @@ const AuditTool = () => {
             className="w-full"
           />
 
-          <p className="text-xs text-gray-500 mt-1">
+          <p className={`text-xs mt-1 ${
+            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+          }`}>
             {businesses?.length || 0} profiles available
           </p>
 
           {selectedBusiness && (
             <div
-              className={`mt-4 p-3 rounded-md border ${
+              className={`p-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.01] ${
                 theme === 'dark'
-                  ? 'bg-[#242538] border-white/10'
-                  : 'bg-gray-50'
+                  ? 'bg-gray-800/80 border border-gray-700 hover:border-gray-600 shadow-lg'
+                  : 'bg-white shadow-sm hover:shadow-md border border-gray-100 hover:border-gray-200'
               }`}
             >
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">
+                <span className={`text-sm font-medium ${
+                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                }`}>
                   {selectedBusiness.title ||
                     selectedBusiness.locationName ||
                     'Business Profile'}
                 </span>
-                <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400">
+                <span className={`text-xs px-2 py-1 rounded-full ${
+                  theme === 'dark'
+                    ? 'bg-green-900/30 text-green-400'
+                    : 'bg-green-100 text-green-800'
+                }`}>
                   Active
                 </span>
               </div>
@@ -100,8 +108,10 @@ const AuditTool = () => {
           {/* ================= Tabs ================= */}
           {selectedBusiness && (
             <div
-              className={`flex gap-2 mt-4 p-1 rounded-lg w-fit ${
-                theme === 'dark' ? 'bg-[#242538]' : 'bg-gray-100'
+              className={`flex gap-2 mt-4 p-1 rounded-xl w-fit transition-all duration-300 ${
+                theme === 'dark'
+                  ? 'bg-gray-800/70 border border-white/10'
+                  : 'bg-white/80 border border-gray-100 shadow-sm'
               }`}
             >
               {['overview', 'performance', 'insights'].map(tab => (
@@ -153,31 +163,37 @@ const AuditTool = () => {
                 {/* Scores */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {[
-                    { label: 'Performance', value: performanceData?.scores?.performance, icon: BarChart, color: 'blue' },
+                    { label: 'Performance', value: performanceData?.scores?.performance, icon: BarChart, color: 'purple' },
                     { label: 'Engagement', value: performanceData?.scores?.engagement, icon: Activity, color: 'green' },
-                    { label: 'Profile', value: performanceData?.scores?.profile, icon: Star, color: 'yellow' },
-                    { label: 'SEO', value: performanceData?.scores?.seo, icon: Globe, color: 'purple' }
+                    { label: 'Overall', value: performanceData?.scores?.overall, icon: Star, color: 'yellow' },
+                    { label: 'SEO', value: performanceData?.scores?.seo, icon: Globe, color: 'blue' }
                   ].map(({ label, value, icon: Icon, color }) => (
                     <div
                       key={label}
-                      className={`p-4 rounded-xl border ${
+                      className={`p-6 rounded-2xl flex flex-col justify-between h-48 transition-all duration-300 transform hover:scale-[1.02] ${
                         theme === 'dark'
-                          ? 'bg-[#1a1b2e] border-white/10'
-                          : 'bg-white'
+                          ? 'bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 hover:border-gray-600 backdrop-blur-sm shadow-lg'
+                          : `bg-${color}-50 shadow-sm border border-${color}-100 hover:border-${color}-200 hover:shadow-md`
                       }`}
                     >
                       <div className="flex justify-between">
                         <div>
-                          <div className="flex items-center gap-2">
-                            <Icon className={`w-5 h-5 text-${color}-500`} />
-                            <span className="text-sm font-medium">{label}</span>
+                          <div className="flex items-center gap-3">
+                            <div className={`p-2 rounded-lg bg-${color}-200/70`}>
+                              <Icon className={`w-5 h-5 text-${color}-700`} />
+                            </div>
+                            <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+                              {label}
+                            </span>
                           </div>
-                          <div className="text-3xl font-bold mt-2">
+                          <div className={`text-3xl font-bold mt-3 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                             {value || 0}%
                           </div>
                         </div>
                         <div
-                          className={`h-14 w-14 rounded-full border-4 border-${color}-500 flex items-center justify-center font-bold`}
+                          className={`h-14 w-14 rounded-full border-4 border-${color}-200 ${theme === 'dark' ? 'bg-gray-700/80' : 'bg-white/80'} flex items-center justify-center font-bold ${
+                            theme === 'dark' ? 'text-white' : `text-${color}-700`
+                          }`}
                         >
                           {value || 0}%
                         </div>
@@ -198,17 +214,19 @@ const AuditTool = () => {
                   ].map(({ label, value, icon: Icon }) => (
                     <div
                       key={label}
-                      className={`p-3 rounded-lg border ${
+                      className={`p-4 rounded-2xl transition-all duration-300 transform hover:scale-[1.02] ${
                         theme === 'dark'
-                          ? 'bg-[#1a1b2e] border-white/10'
-                          : 'bg-white'
+                          ? 'bg-gray-800/80 hover:bg-gray-700/80 border border-gray-700 hover:border-gray-600 backdrop-blur-sm shadow-lg'
+                          : 'bg-white shadow-sm hover:shadow-md border border-gray-100 hover:border-gray-200'
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <Icon className="w-4 h-4 text-purple-500" />
-                        <span className="text-xs font-medium">{label}</span>
+                        <span className={`text-xs font-medium ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                          {label}
+                        </span>
                       </div>
-                      <div className="text-xl font-bold">
+                      <div className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         {value || 0}
                       </div>
                     </div>

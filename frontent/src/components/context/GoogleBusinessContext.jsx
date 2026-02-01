@@ -524,6 +524,13 @@ export const GoogleBusinessProvider = ({ children }) => {
   // PERFORMANCE METRICS
   // ==============================
   const fetchPerformanceMetrics = async ({ startDate, endDate, accountId, locationId, useCache = false, cachedData = null }) => {
+    // Ensure we have the selected business data
+    if (!selectedBusiness) {
+      console.error('No business selected. Cannot fetch performance metrics.');
+      setPerformanceError('No business selected. Please select a business first.');
+      return null;
+    }
+
     // Use provided accountId/locationId or fallback to selectedBusiness
     const targetAccountId = accountId || selectedBusiness?.accountId;
     const targetLocationId = locationId || (selectedBusiness?.name ? selectedBusiness.name.split("/")[1] : null);
@@ -550,8 +557,16 @@ export const GoogleBusinessProvider = ({ children }) => {
         throw new Error('No access token available. Please reconnect your Google account.');
       }
       
+      // Log the business data being sent
+      console.log('Sending business data to backend:', {
+        name: selectedBusiness?.name,
+        title: selectedBusiness?.title,
+        hasAccountId: !!selectedBusiness?.accountId
+      });
+      
       const requestBody = {
         locationId: targetLocationId,
+        selectedBusiness: selectedBusiness, // Explicitly use selectedBusiness from state
         accessToken,
         startDate: {
           year: startDate.getFullYear(),
@@ -562,7 +577,9 @@ export const GoogleBusinessProvider = ({ children }) => {
           year: endDate.getFullYear(),
           month: endDate.getMonth() + 1, // JavaScript months are 0-indexed
           day: endDate.getDate()
-        }
+        },
+        // Include account ID for reference
+        accountId: targetAccountId
       };
 
       const response = await fetch(`${BACKEND_URL}/api/audit/performance`, {
