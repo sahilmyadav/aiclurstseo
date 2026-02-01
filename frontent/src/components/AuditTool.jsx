@@ -226,8 +226,11 @@ const AuditTool = () => {
                           {label}
                         </span>
                       </div>
-                      <div className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                      <div className={`text-xl font-bold mb-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                         {value || 0}
+                      </div>
+                      <div className={`text-[10px] ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+                        Last 30 days
                       </div>
                     </div>
                   ))}
