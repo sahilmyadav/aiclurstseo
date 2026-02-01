@@ -88,13 +88,15 @@ const Navbar = () => {
                 >
                   SEO
                 </Link>
-                <Link 
-                  to="/analytics-dashboard" 
-                  className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
-                  activeClassName="text-purple-700 bg-purple-50"
-                >
-                  Analytics
-                </Link>
+                {user?.role === 'admin' && (
+                  <Link 
+                    to="/analytics-dashboard" 
+                    className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
+                    activeClassName="text-purple-700 bg-purple-50"
+                  >
+                    Analytics
+                  </Link>
+                )}
               </>
             )}
 
@@ -159,7 +161,7 @@ const Navbar = () => {
                 { name: 'Dashboard', path: user?.role === 'admin' ? '/ad-dashboard' : '/dashboard' },
                 { name: 'Reviews', path: '/reviews' },
                 { name: 'SEO', path: '/seo-dashboard' },
-                { name: 'Analytics', path: '/analytics-dashboard' },
+                ...(user?.role === 'admin' ? [{ name: 'Analytics', path: '/analytics-dashboard' }] : []),
                 { name: 'Settings', path: '/dashboard/settings' }
               ] : [])
             ].map((item, index) => (
