@@ -4,6 +4,7 @@ import { useTheme } from '../context/ThemeContext';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import BusinessProfileDropdown from './common/BusinessProfileDropdown';
 import PerformanceGraph from './PerformanceGraph';
+import AuditInsights from './AuditInsights';
 
 import {
   Brain,
@@ -226,20 +227,11 @@ const AuditTool = () => {
 
             {/* ================= INSIGHTS ================= */}
             {activeTab === 'insights' && (
-              <div
-                className={`p-6 rounded-xl border ${
-                  theme === 'dark'
-                    ? 'bg-[#1a1b2e] border-white/10'
-                    : 'bg-white'
-                }`}
-              >
-                <h3 className="text-lg font-semibold mb-2">
-                  Insights
-                </h3>
-                <p className="text-gray-500">
-                  AI-powered recommendations will appear here.
-                </p>
-              </div>
+              <AuditInsights
+                performanceData={performanceData}
+                theme={theme}
+                selectedBusiness={selectedBusiness}
+              />
             )}
           </>
         )}

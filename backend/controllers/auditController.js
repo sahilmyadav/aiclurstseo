@@ -533,12 +533,13 @@ export const getAuditAnalysis = async (req, res) => {
   console.log('🔍 [AUDIT] Received audit request:', {
     businessId: req.body.businessId,
     businessName: req.body.businessName,
-    reviewCount: req.body.reviews?.length || 0
+    reviewCount: req.body.reviews?.length || 0,
+    hasPerformanceData: !!req.body.performanceData
   });
 
   try {
-    const { businessId, businessName, reviews } = req.body;
-
+    const { businessId, businessName, reviews, performanceData, scores, totals,selectedBusiness } = req.body;
+ console.log("SEleted Busines FOr audit",selectedBusiness)
     if (!businessId || !businessName) {
       console.error(' [AUDIT] Missing required fields:', { businessId, businessName });
       return res.status(400).json({
@@ -547,11 +548,56 @@ export const getAuditAnalysis = async (req, res) => {
       });
     }
 
+    // If we have performance data but no reviews, generate analysis based on performance data
+    if (performanceData && (!reviews || !reviews.length)) {
+      console.log(' [AUDIT] Generating analysis from performance data and business info...');
+      
+      // Extract relevant business info for the audit
+      const businessInfo = selectedBusiness ? {
+        businessName: selectedBusiness.title || businessName,
+        category: selectedBusiness.categories?.primaryCategory?.displayName,
+        location: selectedBusiness.storefrontAddress?.locality 
+          ? `${selectedBusiness.storefrontAddress.locality}, ${selectedBusiness.storefrontAddress.administrativeArea}`
+          : null,
+        website: selectedBusiness.websiteUri,
+        phone: selectedBusiness.phoneNumbers?.primaryPhone,
+        address: selectedBusiness.storefrontAddress?.addressLines?.[0],
+        placeId: selectedBusiness.metadata?.placeId
+      } : { businessName };
+      
+      console.log(' [AUDIT] Business info for audit:', businessInfo);
+      
+      const result = await generateAuditAnalysisFromPerformanceData(
+        performanceData, 
+        scores, 
+        totals, 
+        businessName,
+        businessInfo
+      );
+      
+      if (!result.success) {
+        console.error(' [AUDIT] Performance data analysis failed:', result.error);
+        return res.status(503).json({ 
+          success: false,
+          error: result.error
+        });
+      }
+      
+      console.log(' [AUDIT] Performance data analysis completed successfully', result.analysis);
+      res.json({
+        success: true,
+        analysis: result.analysis,
+        generatedAt: result.generatedAt
+      });
+      return;
+    }
+
+    // If we have reviews, use the original review-based analysis
     if (!reviews || !reviews.length) {
-      console.error(' [AUDIT] No reviews provided');
+      console.error(' [AUDIT] No reviews provided and no performance data analysis available');
       return res.status(400).json({
         success: false,
-        error: 'No reviews provided for analysis'
+        error: 'Either reviews or performance data must be provided for analysis'
       });
     }
 
@@ -712,4 +758,155 @@ export {
   calculateEngagementScore,
   calculateProfileCompletionScore,
   calculateSeoScore
+};
+
+// New function to generate audit analysis from performance data
+export const generateAuditAnalysisFromPerformanceData = async (
+  performanceData, 
+  scores, 
+  totals, 
+  businessName,
+  businessInfo = {}
+) => {
+  console.log(' [AUDIT] Starting AI-powered performance data analysis...');
+  
+  try {
+    // Prepare performance data for analysis
+    const performanceSummary = {
+      scores: scores || performanceData?.scores || {},
+      totals: totals || performanceData?.totals || {},
+      lastUpdated: performanceData?.lastUpdated || new Date().toISOString()
+    };
+
+    const prompt = `Analyze this business performance data for ${businessName} and provide a comprehensive audit analysis.
+    
+    Business Information:
+    - Name: ${businessInfo.businessName || businessName}
+    - Category: ${businessInfo.category || 'Not specified'}
+    - Location: ${businessInfo.location || 'Not specified'}
+    - Website: ${businessInfo.website || 'Not provided'}
+    - Phone: ${businessInfo.phone || 'Not provided'}
+    - Address: ${businessInfo.address || 'Not provided'}
+
+    The analysis should include:
+    1. Overall performance assessment based on scores
+    2. Key performance indicators and metrics
+    3. Strengths and areas for improvement based on metrics
+    4. Actionable recommendations to improve performance
+    5. Assessment of customer engagement and visibility
+    
+    Performance Data:
+    - Scores: ${JSON.stringify(performanceSummary.scores, null, 2)}
+    - Totals: ${JSON.stringify(performanceSummary.totals, null, 2)}
+    - Last Updated: ${performanceSummary.lastUpdated}
+    
+    Please respond **ONLY** with a valid JSON object, and do not include any explanatory text or markdown formatting (e.g., no \`\`\`json\`). The JSON format must be strictly:
+    {
+      "overallScore": 0-100,
+      "summary": "Brief summary of the performance analysis",
+      "sentimentAnalysis": {"positive": number, "neutral": number, "negative": number},
+      "strengths": ["strength1", "strength2", ...],
+      "weaknesses": ["weakness1", "weakness2", ...],
+      "keyTopics": ["topic1", "topic2", ...],
+      "trendAnalysis": "Analysis of performance trends",
+      "priorityActions": ["action1", "action2", ...],
+      "recommendations": ["recommendation1", "recommendation2", ...]
+    }`;
+
+    console.log(' [AUDIT] Sending performance data request to Gemini API...');
+
+    const apiUrl = `${API_BASE_URL}/models/${GEMINI_MODEL}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+    
+    const requestBody = {
+      contents: [{
+        role: 'user',
+        parts: [{ text: prompt }]
+      }],
+      generationConfig: {
+        temperature: 0.2,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 4096  // Increased to handle larger responses
+      }
+    };
+
+    console.log('Sending performance analysis request to Gemini API with max tokens:', requestBody.generationConfig.maxOutputTokens);
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error details:', errorText);
+      throw new Error(`Gemini API error: ${response.status} - ${response.statusText}`);
+    }
+
+    const responseData = await response.json();
+    console.log('Gemini API response received, checking for content...');
+    
+    let analysisText = responseData.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!analysisText) {
+      console.error('No analysis content in response. Full response:', JSON.stringify(responseData, null, 2));
+      throw new Error('No analysis content in response from Gemini API');
+    }
+    
+    // Log first 500 chars of response for debugging
+    console.log('Raw AI response preview:', analysisText.substring(0, 500) + (analysisText.length > 500 ? '...' : ''));
+
+    let analysis;
+    try {
+      let jsonString = analysisText.trim();
+      
+      jsonString = jsonString.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
+
+      jsonString = jsonString.replace(/,(\s*])|,(?=\s*})/g, '$1').trim();
+
+      analysis = JSON.parse(jsonString);
+      
+    } catch (parseError) {
+      console.error('Error parsing AI response:', parseError);
+      console.error('Raw response text:', analysisText);
+      // Re-throw the error with better context
+      throw new Error(`Failed to parse AI analysis response: ${parseError.message}`);
+    }
+
+    const requiredFields = [
+      'overallScore', 'summary', 'sentimentAnalysis', 
+      'strengths', 'weaknesses',
+      'keyTopics', 'trendAnalysis', 'priorityActions', 'recommendations'
+    ];
+    
+    for (const field of requiredFields) {
+      if (analysis[field] === undefined) {
+        console.warn(`[AUDIT] Missing field in AI response: ${field}`);
+        if (field === 'sentimentAnalysis') analysis[field] = {positive: 0, neutral: 0, negative: 0};
+        else if (Array.isArray(analysis[field])) analysis[field] = []; 
+        else analysis[field] = `No ${field} provided`;
+      }
+    }
+    
+    analysis.performedAt = new Date().toISOString();
+    analysis.businessName = businessName;
+    
+    console.log(' [AUDIT] Successfully generated performance data analysis');
+    
+    return {
+      success: true,
+      analysis,
+      generatedAt: new Date().toISOString()
+    };
+    
+  } catch (error) {
+    console.error(' [AUDIT] Error in generateAuditAnalysisFromPerformanceData:', error.message);
+    console.error('Error stack:', error.stack);
+    return {
+      success: false,
+      error: error.message,
+      analysis: null
+    };
+  }
 };
