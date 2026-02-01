@@ -618,11 +618,19 @@ export const GoogleBusinessProvider = ({ children }) => {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        let errorMessage = 'Failed to fetch performance metrics';
+        
         if (response.status === 401) {
-          // Handle expired or invalid token
-          setPerformanceError('Your session has expired. Please reconnect your Google account.');
+          errorMessage = 'Your session has expired. Please reconnect your Google account.';
+        } else if (response.status === 403) {
+          errorMessage = 'Permission denied. Please check your Google Business Profile API access and permissions.';
+          console.error('API Error Details:', errorData);
+        } else if (errorData.error) {
+          errorMessage = errorData.error.message || errorData.error;
         }
-        throw new Error(errorData.error || 'Failed to fetch performance metrics');
+        
+        setPerformanceError(errorMessage);
+        throw new Error(errorMessage);
       }
       
       const dataF = await response.json();
@@ -640,8 +648,9 @@ export const GoogleBusinessProvider = ({ children }) => {
       return fullPerformanceData;
     } catch (error) {
       console.error('Error fetching performance metrics:', error);
-      setPerformanceError(error.message);
-      toast.error('Failed to load performance data');
+      const errorMessage = error.message || 'Failed to load performance data';
+      setPerformanceError(errorMessage);
+      toast.error(errorMessage);
       return null;
     } finally {
       setPerformanceLoading(false);
