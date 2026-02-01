@@ -568,6 +568,8 @@ export const GoogleBusinessProvider = ({ children }) => {
         locationId: targetLocationId,
         selectedBusiness: selectedBusiness, // Explicitly use selectedBusiness from state
         accessToken,
+        refresh_token: googleOAuth?.refresh_token, // Add refresh token to request body
+        expiry_date: googleOAuth?.expiry_date, // Add expiry date
         startDate: {
           year: startDate.getFullYear(),
           month: startDate.getMonth() + 1, // JavaScript months are 0-indexed
@@ -582,15 +584,37 @@ export const GoogleBusinessProvider = ({ children }) => {
         accountId: targetAccountId
       };
 
-      const response = await fetch(`${BACKEND_URL}/api/audit/performance`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
-          ...authHeaders()
-        },
-        body: JSON.stringify(requestBody)
-      });
+      let response;
+      try {
+        response = await fetch(`${BACKEND_URL}/api/audit/performance`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+            ...authHeaders()
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        // Check for new access token in response headers
+        const newAccessToken = response.headers.get('x-new-access-token');
+        const newRefreshToken = response.headers.get('x-new-refresh-token');
+        const newExpiryDate = response.headers.get('x-token-expiry');
+
+        // Update tokens if new ones are provided
+        if (newAccessToken || newRefreshToken) {
+          const updatedTokens = {
+            ...googleOAuth,
+            access_token: newAccessToken || googleOAuth.access_token,
+            refresh_token: newRefreshToken || googleOAuth.refresh_token,
+            expiry_date: newExpiryDate ? parseInt(newExpiryDate) : googleOAuth.expiry_date
+          };
+          setGoogleOAuthTokens(updatedTokens);
+        }
+      } catch (error) {
+        console.error('Network error during performance metrics fetch:', error);
+        throw new Error('Network error while fetching performance data');
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
