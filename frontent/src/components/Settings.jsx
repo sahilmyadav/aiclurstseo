@@ -170,10 +170,10 @@ const SettingsPage = () => {
                     }
                   }}
                   disabled={loadingMedia}
-                  className={`px-3 py-1 text-sm rounded-md font-medium transition-colors ${
+                  className={`px-3 py-1 text-sm rounded-md font-medium transition-colors cursor-pointer ${
                     theme === 'dark'
-                      ? 'bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50'
-                      : 'bg-purple-500 hover:bg-purple-600 text-white disabled:opacity-50'
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white disabled:opacity-50'
+                      : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white disabled:opacity-50'
                   }`}
                 >
                   {loadingMedia ? 'Loading...' : 'Refresh'}

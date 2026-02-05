@@ -325,7 +325,7 @@ const SimpleReviews = () => {
     }`}>
       <div className="mb-8">
         <h1 className={`text-3xl font-bold mb-6 ${
-          theme === 'dark' ? 'text-white' : 'text-purple-900'
+          theme === 'dark' ? 'text-white' : 'text-black'
         }`}>
           Reviews Management
         </h1>
@@ -334,12 +334,12 @@ const SimpleReviews = () => {
         <div className={`rounded-2xl p-6 shadow-lg mb-6 ${
           theme === 'dark' 
             ? 'bg-gray-800 border-gray-700' 
-            : 'bg-white hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] border border-gray-200 shadow-sm'
+            : 'bg-white hover:bg-[radial-gradient(at_40%_20%,hsl(250,91%,97%)_0px,transparent_50%),radial-gradient(at_80%_0%,hsl(340,82%,97%)_0px,transparent_50%),radial-gradient(at_0%_50%,hsl(160,84%,97%)_0px,transparent_50%)] bg-blue-200 backdrop-blur-sm border border-gray-200 shadow-sm'
         }`}>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
               <h3 className={`font-bold text-lg ${
-                theme === 'dark' ? 'text-white' : 'text-purple-900'
+                theme === 'dark' ? 'text-white' : 'text-black'
               }`}>
                 Auto Reply System
               </h3>
@@ -350,11 +350,11 @@ const SimpleReviews = () => {
               </p>
               {/* Timer display when auto-reply is on */}
               {isAutoReplyOn && nextCheckTime && (
-                <div className="mt-3 space-y-2">
+                <div className={`mt-4 p-4 rounded-xl ${theme === 'dark' ? 'bg-gradient-to-br from-gray-800 to-gray-900' : 'bg-gradient-to-br from-blue-50 to-purple-50'} shadow-inner`}>
                   {/* Last run time */}
                   {lastRunTime && (
-                    <div className="flex items-center text-sm">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-green-500 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <div className="flex items-center text-sm mb-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-green-500 mr-2 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
                       </svg>
                       <span className={theme === 'dark' ? 'text-green-400' : 'text-green-700'}>
@@ -363,31 +363,32 @@ const SimpleReviews = () => {
                     </div>
                   )}
                   {/* Next check time */}
-                  <div className="flex items-center text-sm">
-                    <Clock className="w-4 h-4 text-blue-500 mr-2" />
-                    <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-700'}>
+                  <div className="flex items-center text-sm mb-4">
+                    <Clock className="w-4 h-4 text-blue-500 mr-2 flex-shrink-0" />
+                    <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-800 font-medium'}>
                       Next check at {formatTime(nextCheckTime)}
                     </span>
                   </div>
-                  {/* Countdown timer */}
-                  <div className="flex items-center text-sm">
-                    <div className={`flex items-center px-2 py-1 rounded-md ${
-                      theme === 'dark' ? 'bg-blue-900/30' : 'bg-blue-100'
-                    }`}>
-                      <span className={`font-mono ${
-                        theme === 'dark' ? 'text-blue-300' : 'text-blue-800'
-                      }`}>
-                        {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
-                      </span>
-                      <span className={theme === 'dark' ? 'text-blue-400' : 'text-blue-600 ml-1'}>
-                        min
-                      </span>
+                  {/* Countdown timer - Larger and more prominent */}
+                  <div className="flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800/50">
+                    <div className="flex items-center">
+                      <div className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900/30 mr-3">
+                        <Clock className="w-5 h-5 text-blue-500 dark:text-blue-400" />
+                      </div>
+                      <div>
+                        <div className={`text-xs font-medium ${theme === 'dark' ? 'text-gray-400' : 'text-red-600'}`}>Time until next check</div>
+                        <div className="flex items-baseline">
+                          <span className={`text-2xl font-bold font-mono ${
+                            theme === 'dark' ? 'text-blue-300' : 'text-blue-600'
+                          }`}>
+                            {String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
+                          </span>
+                          <span className={`ml-1 text-sm ${theme === 'dark' ? 'text-blue-400' : 'text-blue-700'}`}>
+                            min
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <span className={`ml-2 ${
-                      theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
-                    }`}>
-                      until next check
-                    </span>
                   </div>
                 </div>
               )}
@@ -423,8 +424,8 @@ const SimpleReviews = () => {
               className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'all'
                   ? (theme === 'dark'
-                      ? 'bg-purple-600 text-white shadow-lg'
-                      : 'bg-purple-600 text-white shadow-lg')
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                      : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg')
                   : (theme === 'dark'
                       ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-purple-700')
@@ -444,8 +445,8 @@ const SimpleReviews = () => {
               className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'replied'
                   ? (theme === 'dark'
-                      ? 'bg-green-600 text-white shadow-lg'
-                      : 'bg-green-600 text-white shadow-lg')
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                      : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg')
                   : (theme === 'dark'
                       ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-green-700')
@@ -465,8 +466,8 @@ const SimpleReviews = () => {
               className={`flex-1 py-3 px-4 rounded-xl text-sm font-medium transition-all ${
                 activeTab === 'needReply'
                   ? (theme === 'dark'
-                      ? 'bg-orange-600 text-white shadow-lg'
-                      : 'bg-orange-600 text-white shadow-lg')
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg'
+                      : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg')
                   : (theme === 'dark'
                       ? 'text-gray-300 hover:bg-gray-700 hover:text-white'
                       : 'text-gray-600 hover:bg-gray-100 hover:text-orange-700')

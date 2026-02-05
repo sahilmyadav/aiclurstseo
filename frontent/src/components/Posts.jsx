@@ -780,7 +780,7 @@ const Posts = () => {
                       });
                       setShowEditor(true);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
                     disabled={!isGoogleConnected}
                   >
                     <FaPlus /> New Post
@@ -789,7 +789,7 @@ const Posts = () => {
                 <div>
                   <button
                     onClick={() => navigate('/dashboard/schedule-post')}
-                    className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-colors disabled:bg-gray-500 disabled:cursor-not-allowed w-full sm:w-auto justify-center"
                     disabled={!isGoogleConnected}
                   >
                     <FaCalendarAlt /> Schedule Post
@@ -814,13 +814,13 @@ const Posts = () => {
             ? 'border-white/10 bg-[#1a1b2e]/50' 
             : 'border-gray-200 bg-white'}`}>
             <div className="flex overflow-x-auto scrollbar-hide px-2 py-2">
-              {['published', 'scheduled', 'drafts'].map((tab) => (
+              {['published', 'scheduled', ].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`px-4 py-2 text-sm font-medium whitespace-nowrap flex-shrink-0 rounded-lg mx-1 transition-all duration-200 ${
                     activeTab === tab
-                      ? 'text-white bg-blue-600 shadow-lg'
+                      ? 'text-white bg-gradient-to-r from-blue-500 to-purple-500 shadow-lg'
                       : theme === 'dark' 
                         ? 'text-white/70 hover:text-white hover:bg-white/10' 
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -942,29 +942,44 @@ const Posts = () => {
 
         {showEditor && (
           <div className="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50">
-            <div className="bg-[#121324] rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <div className={`rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto ${
+              theme === 'dark' ? 'bg-[#121324]' : 'bg-white shadow-xl'
+            }`}>
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className={`text-xl font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  <h2 className={`text-xl font-bold ${
+                    theme === 'dark' ? 'text-white' : 'text-gray-900'
+                  }`}>
                     {currentPost.id ? 'Edit Post' : 'Create New Post'}
                   </h2>
                   <button 
                     onClick={() => setShowEditor(false)}
-                    className={`${
-                      theme === 'dark' ? 'text-white/60 hover:text-white' : 'text-gray-500 hover:text-gray-900'
+                    className={`text-2xl ${
+                      theme === 'dark' 
+                        ? 'text-white/60 hover:text-white' 
+                        : 'text-gray-500 hover:text-gray-900'
                     }`}
                   >
-                    ✕
+                    &times;
                   </button>
                 </div>
                 <form onSubmit={handleSavePost}>
                   <div className="mb-6">
                     <div className="flex justify-between items-center mb-2">
-                      <label className={`block text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Post Content</label>                      <button
+                      <label className={`block text-sm font-medium ${
+                        theme === 'dark' ? 'text-white' : 'text-gray-900'
+                      }`}>
+                        Post Content
+                      </label>
+                      <button
                         type="button"
                         onClick={generateAIPostContent}
                         disabled={isGeneratingAI || !selectedBusiness || currentPost.keywordsArray.length === 0}
-                        className="text-xs flex items-center gap-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                        className={`text-xs flex items-center gap-1 px-2 py-1 rounded transition-colors ${
+                          theme === 'dark'
+                            ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white'
+                            : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white'
+                        } disabled:opacity-50 disabled:cursor-not-allowed`}
                       >
                         <FaRobot className="text-xs" />
                         {isGeneratingAI ? 'Generating...' : 'Generate with AI'}
@@ -973,11 +988,17 @@ const Posts = () => {
                     <textarea
                       value={currentPost.content}
                       onChange={(e) => setCurrentPost({...currentPost, content: e.target.value})}
-                      className="w-full bg-[#1a1a2e] border border-white/10 rounded-lg p-3 text-white/90 h-40 resize-none"
+                      className={`w-full border rounded-lg p-3 h-40 resize-none ${
+                        theme === 'dark'
+                          ? 'bg-[#1a1a2e] border-white/10 text-white/90'
+                          : 'bg-white border-gray-300 text-gray-900'
+                      }`}
                       placeholder="What would you like to post?"
                       required={currentPost.keywordsArray.length === 0}
                     />
-                    <div className="text-xs text-white/50 mt-1">
+                    <div className={`text-xs mt-1 ${
+                      theme === 'dark' ? 'text-white/60' : 'text-gray-500'
+                    }`}>
                       {currentPost.content.length}/1500 characters
                     </div>
                     
@@ -991,7 +1012,15 @@ const Posts = () => {
                           return (
                             <div 
                               key={index} 
-                              className={`${isAutoKeyword ? 'bg-purple-600/30 text-purple-200' : 'bg-blue-600/20 text-blue-300'} text-xs px-2 py-1 rounded-full flex items-center gap-1`}
+                              className={`text-xs px-2 py-1 rounded-full flex items-center gap-1 ${
+                                isAutoKeyword 
+                                  ? theme === 'dark' 
+                                    ? 'bg-purple-600/30 text-purple-100' 
+                                    : 'bg-purple-100 text-purple-800' 
+                                  : theme === 'dark' 
+                                    ? 'bg-blue-500/20 text-blue-100' 
+                                    : 'bg-blue-100 text-blue-800' 
+                              }`}
                             >
                               {keyword}
                               {isAutoKeyword ? (
@@ -1000,7 +1029,7 @@ const Posts = () => {
                                 <button 
                                   type="button" 
                                   onClick={() => removeKeyword(keyword)}
-                                  className="text-white/60 hover:text-white"
+                                  className="text-black hover:text-black"
                                 >
                                   &times;
                                 </button>
@@ -1015,23 +1044,37 @@ const Posts = () => {
                           value={currentPost.keywords}
                           onChange={handleKeywordChange}
                           onKeyDown={handleKeywordKeyPress}
-                          className="w-full bg-[#1a1a2e] border border-white/10 rounded-lg px-3 py-2 text-white/90 pr-8"
+                          className={`w-full border rounded-lg px-3 py-2  pr-8 ${
+                            theme === 'dark'
+                              ? 'bg-[#1a1a2e] border-white/10'
+                              : 'bg-white border-gray-300 text-black'
+                          }`}
                           placeholder="Add keywords and press Enter"
                         />
-                        <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-white/50">
+                        <span className={`absolute right-2 top-1/2 transform -translate-y-1/2 text-xs ${
+                          theme === 'dark' ? 'text-white/60' : 'text-black'
+                        }`}>
                           Press Enter to add
                         </span>
                       </div>
                     </div>
                   </div>
-
+{/* 
                   <div className="mb-6">
-                    <label className="block text-sm font-medium mb-2">Add Media (Optional)</label>
-                    <div className="border-2 border-dashed border-white/20 rounded-lg p-8 text-center cursor-pointer hover:bg-white/5 transition-colors">
+                    <label className={`block text-sm font-medium ${
+                      theme === 'dark' ? 'text-white' : 'text-gray-900'
+                    }`}>Add Media (Optional)</label>
+                    <div className={`border-2 border-dashed border-white/20 rounded-lg p-8 text-center cursor-pointer hover:bg-white/5 transition-colors ${
+                      theme === 'dark' ? 'bg-[#1a1a2e]' : 'bg-white'
+                    }`}>
                       <div className="flex flex-col items-center">
                         <FaPlus className="text-2xl mb-2 opacity-60" />
-                        <p className="text-sm">Click to upload or drag and drop</p>
-                        <p className="text-xs text-white/50 mt-1">JPG, PNG up to 10MB</p>
+                        <p className={`text-sm ${
+                          theme === 'dark' ? 'text-white/60' : 'text-gray-600'
+                        }`}>Click to upload or drag and drop</p>
+                        <p className={`text-xs ${
+                          theme === 'dark' ? 'text-white/60' : 'text-gray-500'
+                        }`}>JPG, PNG up to 10MB</p>
                       </div>
                       <input 
                         type="file" 
@@ -1044,17 +1087,21 @@ const Posts = () => {
                         }}
                       />
                     </div>
-                  </div>
+                  </div> */}
 
                   <div className="mb-6">
                     {currentPost.scheduledFor && (
                       <div className="pl-6 space-y-4">
                         <div>
-                          <label className="block text-sm font-medium mb-2">Date & Time</label>
+                          <label className={`block text-sm font-medium mb-2 ${
+                            theme === 'dark' ? 'text-white' : 'text-gray-900'
+                          }`}>Date & Time</label>
                           <div className="flex gap-4">
                             <div className="flex-1 relative">
                               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <FaCalendarAlt className="text-white/50" />
+                                <FaCalendarAlt className={`text-white/50 ${
+                                  theme === 'dark' ? 'text-white/50' : 'text-gray-500'
+                                }`} />
                               </div>
                               <DatePicker
                                 selected={currentPost.scheduledFor}
@@ -1063,7 +1110,11 @@ const Posts = () => {
                                 timeFormat="HH:mm"
                                 timeIntervals={15}
                                 dateFormat="MMMM d, yyyy h:mm aa"
-                                className="w-full bg-[#1a1a2e] border border-white/10 rounded-lg pl-10 pr-3 py-2 text-white/90"
+                                className={`w-full border rounded-lg pl-10 pr-3 py-2 ${
+                                  theme === 'dark'
+                                    ? 'bg-[#1a1a2e] border-white/10 text-white/90'
+                                    : 'bg-white border-gray-300 text-gray-900'
+                                }`}
                                 minDate={new Date()}
                               />
                             </div>
@@ -1083,17 +1134,25 @@ const Posts = () => {
                               }}
                               className="rounded border-white/20"
                             />
-                            <span className="text-sm font-medium">Repeat post</span>
+                            <span className={`text-sm font-medium ${
+                              theme === 'dark' ? 'text-white' : 'text-gray-900'
+                            }`}>Repeat post</span>
                           </label>
 
                           {currentPost.isRecurring && (
                             <div className="pl-6 space-y-3">
                               <div>
-                                <label className="block text-sm font-medium mb-1">Frequency</label>
+                                <label className={`block text-sm font-medium mb-1 ${
+                                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                }`}>Frequency</label>
                                 <select
                                   value={currentPost.frequency}
                                   onChange={(e) => setCurrentPost({...currentPost, frequency: e.target.value})}
-                                  className="w-full bg-[#1a1a2e] border border-white/10 rounded-lg px-3 py-2 text-white/90"
+                                  className={`w-full border rounded-lg px-3 py-2 ${
+                                    theme === 'dark'
+                                      ? 'bg-[#1a1a2e] border-white/10 text-white/90'
+                                      : 'bg-white border-gray-300 text-gray-900'
+                                  }`}
                                 >
                                   <option value="daily">Daily</option>
                                   <option value="weekly">Weekly</option>
@@ -1102,23 +1161,33 @@ const Posts = () => {
                               </div>
 
                               <div>
-                                <label className="block text-sm font-medium mb-1">Time</label>
+                                <label className={`block text-sm font-medium mb-1 ${
+                                  theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                }`}>Time</label>
                                 <div className="relative">
                                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <FaClock className="text-white/50" />
+                                    <FaClock className={`text-white/50 ${
+                                      theme === 'dark' ? 'text-white/50' : 'text-gray-500'
+                                    }`} />
                                   </div>
                                   <input
                                     type="time"
                                     value={currentPost.time}
                                     onChange={(e) => setCurrentPost({...currentPost, time: e.target.value})}
-                                    className="w-full bg-[#1a1a2e] border border-white/10 rounded-lg pl-10 pr-3 py-2 text-white/90"
+                                    className={`w-full border rounded-lg pl-10 pr-3 py-2 ${
+                                      theme === 'dark'
+                                        ? 'bg-[#1a1a2e] border-white/10 text-white/90'
+                                        : 'bg-white border-gray-300 text-gray-900'
+                                    }`}
                                   />
                                 </div>
                               </div>
 
                               {currentPost.frequency === 'weekly' && (
                                 <div>
-                                  <label className="block text-sm font-medium mb-1">Days of the week</label>
+                                  <label className={`block text-sm font-medium mb-1 ${
+                                    theme === 'dark' ? 'text-white' : 'text-gray-900'
+                                  }`}>Days of the week</label>
                                   <div className="flex flex-wrap gap-2">
                                     {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day, index) => (
                                       <button
@@ -1158,18 +1227,28 @@ const Posts = () => {
                     )}
                   </div>
 
-                  <div className="flex justify-end gap-3 pt-4 border-t border-white/10">
+                  <div className={`flex justify-end gap-3 pt-4 ${
+                    theme === 'dark' ? 'border-t border-white/10' : 'border-t border-gray-200'
+                  }`}>
                     <button
                       type="button"
                       onClick={() => setShowEditor(false)}
-                      className="px-4 py-2 rounded-lg border border-white/20 text-sm font-medium hover:bg-white/5 transition-colors"
+                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        theme === 'dark'
+                          ? 'border border-white/20 text-white/90 hover:bg-white/5'
+                          : 'border border-gray-300 text-gray-700 hover:bg-gray-100'
+                      }`}
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
                       disabled={isCreatingPost || (currentPost.keywordsArray.length === 0 && !currentPost.content)}
-                      className="px-6 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                      className={`px-6 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                        theme === 'dark'
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white'
+                          : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white'
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
                     >
                       {isCreatingPost && <FaSpinner className="animate-spin" />}
                       {isCreatingPost 

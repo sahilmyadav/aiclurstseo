@@ -97,7 +97,9 @@ const AuditInsights = ({ performanceData, selectedBusiness, onInsightsGenerated,
             <button
               onClick={generateInsights}
               disabled={loading || cooldown > 0}
-              className={`ml-auto text-sm ${theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'} hover:underline disabled:opacity-50`}
+              className={`ml-auto text-sm font-medium px-4 py-2 rounded-md transition-all duration-300 ${loading || cooldown > 0 ? 'opacity-70' : 'hover:opacity-90'} ${theme === 'dark'
+                ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'
+                : 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'}`}
             >
               {cooldown ? `Wait ${cooldown}s` : 'Generate'}
             </button>
@@ -158,7 +160,8 @@ const AuditInsights = ({ performanceData, selectedBusiness, onInsightsGenerated,
               <button
                 onClick={generateInsights}
                 disabled={loading}
-                className="mt-5 px-6 py-2.5 rounded-lg bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium flex items-center gap-2 mx-auto"
+                className={`mt-5 px-6 py-2.5 rounded-lg text-white text-sm font-medium flex items-center gap-2 mx-auto transition-all duration-300 ${loading ? 'opacity-70' : 'hover:opacity-90'
+                  } bg-gradient-to-r from-blue-500 to-purple-500 shadow-md`}
               >
                 {loading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 Generate AI Insights
@@ -169,8 +172,8 @@ const AuditInsights = ({ performanceData, selectedBusiness, onInsightsGenerated,
       </div>
 
       {/* ================= BUSINESS INSIGHTS (ALWAYS VISIBLE) ================= */}
-      <div className={`rounded-2xl border p-6 ${theme === 'dark' 
-        ? 'bg-gray-800/50 border-gray-700' 
+      <div className={`rounded-2xl border p-6 ${theme === 'dark'
+        ? 'bg-gray-800/50 border-gray-700'
         : 'bg-white border-gray-200'}`}>
         <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
           Business Insights
@@ -189,6 +192,7 @@ const AuditInsights = ({ performanceData, selectedBusiness, onInsightsGenerated,
             border={theme === 'dark' ? 'border-blue-600' : 'border-blue-400'}
             footerColor={theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
             theme={theme}
+            imageUrl="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
           />
 
           <InsightCard
@@ -200,6 +204,7 @@ const AuditInsights = ({ performanceData, selectedBusiness, onInsightsGenerated,
             border={theme === 'dark' ? 'border-green-600' : 'border-green-400'}
             footerColor={theme === 'dark' ? 'text-green-400' : 'text-green-600'}
             theme={theme}
+            imageUrl="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=500&q=80"
           />
 
           <InsightCard
@@ -227,17 +232,36 @@ const AuditInsights = ({ performanceData, selectedBusiness, onInsightsGenerated,
       </div>
 
       {/* ================= QUICK WINS (ALWAYS VISIBLE) ================= */}
-      <div className={`rounded-2xl border p-6 ${theme === 'dark' 
-        ? 'bg-gray-800/50 border-gray-700' 
-        : 'bg-white border-gray-200'}`}>
-        <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-          Quick Win Recommendations
-        </h3>
+      <div className={`p-1 rounded-2xl ${theme === 'dark'
+        ? 'bg-gradient-to-r from-purple-900/50 via-indigo-900/50 to-purple-900/50'
+        : 'bg-gradient-to-r from-purple-100 via-indigo-100 to-purple-100'}`}>
+        <div className={`rounded-2xl p-6 ${theme === 'dark'
+          ? 'bg-gray-800/90 backdrop-blur-sm'
+          : 'bg-white/90'}`}>
+          <h3 className={`text-lg font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+            Quick Win Recommendations
+          </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <QuickWin text="Post 2–3 times weekly" theme={theme} />
-          <QuickWin text="Respond to all reviews" theme={theme} />
-          <QuickWin text="Add 5+ photos monthly" theme={theme} />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <QuickWin text="Post 2–3 times weekly" theme={theme} />
+            <QuickWin text="Respond to all reviews" theme={theme} />
+            <QuickWin text="Add 5+ photos monthly" theme={theme} />
+          </div>
+
+          {/* Audit Complete Section */}
+          <div className={`mt-6 p-4 rounded-xl text-center ${theme === 'dark'
+            ? 'bg-gradient-to-r from-green-900/30 to-emerald-900/30 border border-green-800/50'
+            : 'bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200'}`}>
+            <div className="flex flex-col items-center">
+              <CheckCircle2 className={`w-8 h-8 mb-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
+              <h4 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                Audit Complete
+              </h4>
+              <p className={`text-xs ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
+                Real-time performance metrics updated.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -247,53 +271,73 @@ const AuditInsights = ({ performanceData, selectedBusiness, onInsightsGenerated,
 /* ================= REUSABLE COMPONENTS ================= */
 
 const Section = ({ title, children, theme = 'light' }) => (
-  <div className={`rounded-xl border p-4 ${theme === 'dark' 
-    ? 'bg-gray-800/50 border-gray-700' 
+  <div className={`rounded-xl border p-4 ${theme === 'dark'
+    ? 'bg-gray-800/50 border-gray-700'
     : 'bg-white border-gray-200'}`}>
-    <h4 className={`text-sm font-semibold mb-2 ${theme === 'dark' 
-      ? 'text-purple-400' 
+    <h4 className={`text-sm font-semibold mb-2 ${theme === 'dark'
+      ? 'text-purple-400'
       : 'text-purple-600'}`}>
       {title}
     </h4>
-    <div className={`text-sm ${theme === 'dark' 
-      ? 'text-gray-300' 
+    <div className={`text-sm ${theme === 'dark'
+      ? 'text-gray-300'
       : 'text-gray-700'}`}>
       {children}
     </div>
   </div>
 );
 
-const InsightCard = ({ icon, title, desc, footer, gradient, border, footerColor, theme }) => (
-  <div className={`rounded-xl p-4 ${gradient} ${border}`}>
-    <div className="flex items-center gap-2">
-      {icon}
-      <h4 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-        {title}
-      </h4>
+const InsightCard = ({ icon, title, desc, footer, gradient, border, footerColor, theme, imageUrl }) => (
+  <div className={`rounded-xl overflow-hidden border ${border} bg-gradient-to-br ${gradient} ${theme === 'dark' ? 'border-opacity-30' : 'border-opacity-50'}`}>
+    <div className="flex">
+      <div className="p-4 flex-1">
+        <div className="flex items-center gap-3 mb-2">
+          <div className={`p-2 rounded-lg ${theme === 'dark' ? 'bg-gray-700/50' : 'bg-white'} ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+            {icon}
+          </div>
+          <h4 className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{title}</h4>
+        </div>
+        <p className={`text-xs mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>{desc}</p>
+        {footer && (
+          <p className={`text-xs font-medium ${footerColor} flex items-center`}>
+            {footer}
+          </p>
+        )}
+      </div>
+      {imageUrl && (
+        <div className="w-24 h-full bg-cover bg-center" style={{ backgroundImage: `url(${imageUrl})` }} />
+      )}
     </div>
-    <p className={`text-sm mb-2 ${theme === 'dark' ? 'text-gray-200' : 'text-gray-700'}`}>
-      {desc}
-    </p>
-    {footer && (
-      <p className={`text-xs font-medium ${footerColor} ${theme === 'dark' ? 'opacity-90' : ''}`}>
-        {footer}
-      </p>
-    )}
   </div>
 );
 
-const QuickWin = ({ text, theme = 'light' }) => (
-  <div className={`rounded-xl border px-4 py-3 flex items-center gap-2 ${
-    theme === 'dark' 
-      ? 'bg-gray-800/50 border-gray-700' 
-      : 'bg-white border-gray-200'}`}>
-    <CheckCircle2 className={`w-5 h-5 ${
-      theme === 'dark' ? 'text-green-400' : 'text-green-500'}`} />
-    <span className={`text-sm font-medium ${
-      theme === 'dark' ? 'text-gray-200' : 'text-gray-800'}`}>
-      {text}
-    </span>
-  </div>
-);
+const QuickWin = ({ text, theme = 'light' }) => {
+  // Generate a random gradient class for variety
+  const gradients = [
+    'from-blue-500 to-purple-500',
+    'from-pink-500 to-rose-500',
+    'from-emerald-500 to-teal-500'
+  ];
+  const randomGradient = gradients[Math.floor(Math.random() * gradients.length)];
+
+  return (
+    <div className={`relative rounded-xl overflow-hidden group`}>
+      <div className={`absolute inset-0 bg-gradient-to-r ${randomGradient} opacity-90 group-hover:opacity-100 transition-opacity`}></div>
+      <div className="relative p-px">
+        <div className={`rounded-xl p-3 flex items-center gap-2 ${theme === 'dark'
+            ? 'bg-gray-900/80 group-hover:bg-gray-900/60'
+            : 'bg-white/90 group-hover:bg-white/80'}`}>
+          <CheckCircle2 className={`w-5 h-5 ${theme === 'dark'
+              ? 'text-white'
+              : randomGradient.includes('blue') ? 'text-blue-500' :
+                randomGradient.includes('pink') ? 'text-pink-500' : 'text-emerald-500'}`} />
+          <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+            {text}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default AuditInsights;

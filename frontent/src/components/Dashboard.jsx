@@ -147,29 +147,94 @@ const Dashboard = () => {
           <div className="flex flex-col lg:flex-row gap-1 pt-3 sm:pt-6 h-[calc(100vh-120px)] overflow-hidden">
             <main className="flex-1 space-y-4 sm:space-y-6 pl-1 sm:pl-2 pr-1 sm:pr-4 overflow-y-auto max-h-full" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 w-full">
-                {[
-                  { title: "AVERAGE RATING", value: reviewStats?.averageRating ? `${reviewStats.averageRating.toFixed(1)}` : '0.0' },
-                  { title: "TOTAL REVIEWS", value: reviewStats?.totalReviews?.toString() ?? '0' },
-                  { title: "RECENT REVIEWS (30d)", value: reviewStats?.recentReviews?.length?.toString() ?? '0' },
-                  { title: "GOOGLE BUSINESS", value: isConnected ? 'Connected' : 'Not Connected' },
+                {[ 
+                  { 
+                    title: "AVERAGE RATING", 
+                    value: reviewStats?.averageRating ? `${reviewStats.averageRating.toFixed(1)}` : '0.0',
+                    icon: (
+                      <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27z" />
+                      </svg>
+                    ),
+                    color: 'purple',
+                    bgColor: 'bg-purple-50',
+                    borderColor: 'border-purple-100',
+                    textColor: 'text-purple-700',
+                    hoverBg: 'hover:bg-purple-50/80',
+                    iconColor: 'text-yellow-500'
+                  },
+                  { 
+                    title: "TOTAL REVIEWS", 
+                    value: reviewStats?.totalReviews?.toString() ?? '0',
+                    icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    ),
+                    color: 'blue',
+                    bgColor: 'bg-blue-50',
+                    borderColor: 'border-blue-100',
+                    textColor: 'text-blue-700',
+                    hoverBg: 'hover:bg-blue-50/80',
+                    iconColor: 'text-blue-500'
+                  },
+                  { 
+                    title: "RECENT REVIEWS (30d)", 
+                    value: reviewStats?.recentReviews?.length?.toString() ?? '0',
+                    icon: (
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    ),
+                    color: 'green',
+                    bgColor: 'bg-green-50',
+                    borderColor: 'border-green-100',
+                    textColor: 'text-green-700',
+                    hoverBg: 'hover:bg-green-50/80',
+                    iconColor: 'text-green-500'
+                  },
+                  { 
+                    title: "GOOGLE BUSINESS", 
+                    value: isConnected ? 'Connected' : 'Not Connected',
+                    icon: (
+                      <svg className="w-5 h-5" fill={isConnected ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        {isConnected ? (
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        ) : (
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        )}
+                      </svg>
+                    ),
+                    color: isConnected ? 'green' : 'red',
+                    bgColor: isConnected ? 'bg-green-50' : 'bg-red-50',
+                    borderColor: isConnected ? 'border-green-100' : 'border-red-100',
+                    textColor: isConnected ? 'text-green-700' : 'text-red-700',
+                    hoverBg: isConnected ? 'hover:bg-green-50/80' : 'hover:bg-red-50/80',
+                    iconColor: isConnected ? 'text-green-500' : 'text-red-500'
+                  },
                 ].map((stat, i) => (
-                  <div key={i} className={`rounded-xl p-4 flex flex-col justify-between min-w-0 transition-all duration-300 transform hover:scale-[1.02] ${
+                  <div key={i} className={`rounded-xl border transition-all duration-300 transform hover:scale-[1.01] ${
                     theme === 'dark' 
-                      ? 'glass-card hover:bg-gray-800/70' 
-                      : 'bg-white shadow-lg hover:shadow-xl border border-gray-100 hover:border-gray-200'
+                      ? 'bg-gray-800/50 border-gray-700 hover:bg-gray-800/70' 
+                      : `${stat.bgColor} ${stat.borderColor} ${stat.hoverBg} hover:shadow-sm`
                   }`}>
-                    <div className="flex items-start justify-between">
-                      <div className={`text-xs font-medium tracking-wide ${
-                        theme === 'dark' ? 'text-blue-400' : 'text-gray-600'
-                      }`}>
-                        {stat.title}
+                    <div className="p-4 flex flex-col justify-between min-h-[120px]">
+                      <div className="flex items-start justify-between">
+                        <div className={`text-xs font-medium tracking-wide ${
+                          theme === 'dark' ? 'text-white/70' : stat.textColor
+                        }`}>
+                          {stat.title}
+                        </div>
+                        <span className={`${stat.iconColor || (theme === 'dark' ? 'text-white/90' : stat.textColor)}`}>
+                          {stat.icon}
+                        </span>
                       </div>
-                    </div>
-                    <div className="flex items-end justify-between">
-                      <div className={`text-2xl font-bold ${
-                        theme === 'dark' ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        {loading ? '...' : stat.value}
+                      <div className="flex items-end justify-between mt-2">
+                        <div className={`text-2xl font-bold ${
+                          theme === 'dark' ? 'text-white' : 'text-gray-900'
+                        }`}>
+                          {loading ? '...' : stat.value}
+                        </div>
                       </div>
                     </div>
                   </div>

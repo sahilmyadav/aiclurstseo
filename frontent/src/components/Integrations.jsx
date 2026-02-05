@@ -179,7 +179,7 @@ const Integrations = () => {
               </p>
               <button 
                 onClick={handleConnect} 
-                className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center space-x-2 mx-auto"
+                className="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-500 hover:bg-blue-700 text-white font-medium rounded-lg shadow-sm transition-colors flex items-center space-x-2 mx-auto"
               >
                 <FaGoogle className="w-5 h-5" />
                 <span>Connect with Google</span>

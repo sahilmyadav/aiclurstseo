@@ -241,8 +241,8 @@ const BusinessDetails = () => {
                     disabled={loadingMedia}
                     className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                       theme === 'dark'
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50'
-                        : 'bg-blue-500 hover:bg-blue-600 text-white disabled:opacity-50'
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 hover:bg-blue-700 text-white disabled:opacity-50'
+                        : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:bg-blue-600 text-white disabled:opacity-50'
                     }`}
                   >
                     {loadingMedia ? 'Refreshing...' : 'Refresh'}

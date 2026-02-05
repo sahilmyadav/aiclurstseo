@@ -79,13 +79,13 @@ const AuditTool = () => {
           </p>
 
           {selectedBusiness && (
-            <div
-              className={`p-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.01] ${
-                theme === 'dark'
-                  ? 'bg-gray-800/80 border border-gray-700 hover:border-gray-600 shadow-lg'
-                  : 'bg-white shadow-sm hover:shadow-md border border-gray-100 hover:border-gray-200'
-              }`}
-            >
+          <div
+  className={`p-6 rounded-2xl transition-all duration-300 transform hover:scale-[1.01] ${
+    theme === 'dark'
+      ? 'bg-gray-800/80 border border-gray-700 hover:border-gray-600 shadow-lg'
+      : 'bg-green-50/60 backdrop-blur-sm shadow-sm hover:shadow-md border border-green-100 hover:border-green-200'
+  }`}
+>
               <div className="flex justify-between items-center">
                 <span className={`text-sm font-medium ${
                   theme === 'dark' ? 'text-white' : 'text-gray-900'
@@ -118,13 +118,13 @@ const AuditTool = () => {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition
+                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-300
                     ${
                       activeTab === tab
-                        ? 'bg-purple-600 text-white'
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'
                         : theme === 'dark'
-                        ? 'text-white/60 hover:text-white'
-                        : 'text-gray-600 hover:text-gray-900'
+                        ? 'text-white/60 hover:text-white hover:bg-gray-700/50'
+                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                 >
                   {tab.charAt(0).toUpperCase() + tab.slice(1)}

@@ -144,11 +144,11 @@ const EmailComponent = () => {
     theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-white text-gray-900 border border-gray-300'
   }`;
 
-  const buttonClasses = `w-full flex items-center justify-center px-6 py-3 ${
+  const buttonClasses = `w-full flex items-center justify-center px-6 py-3 rounded-lg text-white font-medium transition-all duration-300 ${
     theme === 'dark' 
-      ? 'bg-indigo-600 hover:bg-indigo-700' 
-      : 'bg-purple-600 hover:bg-purple-700'
-  } text-white font-medium rounded-md`;
+      ? 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:opacity-90' 
+      : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90'
+  } shadow-md`;
 
   return (
     <div className={mainContainerClasses}>
@@ -166,11 +166,11 @@ const EmailComponent = () => {
           </h3>
           <button
             onClick={() => setShowBulkUpload(!showBulkUpload)}
-            className={`flex items-center px-4 py-2 ${
+            className={`flex items-center px-4 py-2.5 rounded-lg text-white text-sm font-medium transition-all duration-300 shadow-md ${
               theme === 'dark' 
-                ? 'bg-indigo-600 hover:bg-indigo-700' 
-                : 'bg-purple-600 hover:bg-purple-700'
-            } text-white rounded-md text-sm font-medium transition-colors`}
+                ? 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:opacity-90' 
+                : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:opacity-90'
+            }`}
           >
             {showBulkUpload ? (
               <>

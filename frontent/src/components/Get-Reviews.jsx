@@ -29,36 +29,36 @@ const GetReviews = () => {
           <div className="flex justify-center gap-1 sm:gap-4 mb-2 sm:mb-6">
             <button 
               onClick={() => setActiveTab('sms')}
-              className={`px-2 sm:px-6 py-1 sm:py-2 rounded-lg transition-colors text-xs sm:text-base ${
+              className={`px-2 sm:px-6 py-1 sm:py-2 rounded-lg transition-all duration-300 text-xs sm:text-base font-medium shadow-md ${
                 activeTab === 'sms' 
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90' 
                   : theme === 'dark' 
                     ? 'bg-[#1a1433] hover:bg-[#241b4d] text-white' 
-                    : 'bg-white hover:bg-gray-100 text-purple-900 border border-purple-200'
+                    : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 hover:border-gray-300'
               }`}
             >
               SMS
             </button>
             <button 
               onClick={() => setActiveTab('email')}
-              className={`px-2 sm:px-6 py-1 sm:py-2 rounded-lg transition-colors text-xs sm:text-base ${
+              className={`px-2 sm:px-6 py-1 sm:py-2 rounded-lg transition-all duration-300 text-xs sm:text-base font-medium shadow-md ${
                 activeTab === 'email' 
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90' 
                   : theme === 'dark' 
                     ? 'bg-[#1a1433] hover:bg-[#241b4d] text-white' 
-                    : 'bg-white hover:bg-gray-100 text-purple-900 border border-purple-200'
+                    : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 hover:border-gray-300'
               }`}
             >
               EMAIL
             </button>
             <button 
               onClick={() => setActiveTab('qrcode')}
-              className={`px-2 sm:px-6 py-1 sm:py-2 rounded-lg transition-colors text-xs sm:text-base ${
+              className={`px-2 sm:px-6 py-1 sm:py-2 rounded-lg transition-all duration-300 text-xs sm:text-base font-medium shadow-md ${
                 activeTab === 'qrcode' 
-                  ? 'bg-purple-600 hover:bg-purple-700 text-white' 
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:opacity-90' 
                   : theme === 'dark' 
                     ? 'bg-[#1a1433] hover:bg-[#241b4d] text-white' 
-                    : 'bg-white hover:bg-gray-100 text-purple-900 border border-purple-200'
+                    : 'bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 hover:border-gray-300'
               }`}
             >
               QR CODE
