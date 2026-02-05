@@ -339,71 +339,88 @@ const Posts = () => {
     }
   }, [selectedBusiness]);
 
-  // Function to get auto keywords from selected business
-  const getAutoKeywords = () => {
-    const autoKeywords = [];
-    
-    if (!selectedBusiness) return autoKeywords;
+ // In Posts.jsx, update the getAutoKeywords function to include the address
+// In Posts.jsx, update the getAutoKeywords function
+const getAutoKeywords = () => {
+  const autoKeywords = [];
+  
+  if (!selectedBusiness) return autoKeywords;
 
-    // Add business name as a keyword - handle different possible properties
-    let businessName = '';
+  // Add business name as a keyword
+  if (selectedBusiness.title) {
+    const cleanName = selectedBusiness.title
+      .replace(/[^\w\s-]/g, '') // Keep hyphens
+      .replace(/\s+/g, ' ')
+      .trim();
     
-    // Get business name (only the main name, not variations)
-    if (selectedBusiness.locationName) {
-      businessName = selectedBusiness.locationName;
-    } else if (selectedBusiness.title) {
-      businessName = typeof selectedBusiness.title === 'string' 
-        ? selectedBusiness.title 
-        : selectedBusiness.title?.name || selectedBusiness.title?.displayName || '';
-    } else if (selectedBusiness.name) {
-      businessName = selectedBusiness.name.split('/').pop() || '';
+    if (cleanName) {
+      autoKeywords.push(cleanName);
     }
+  }
+
+  // Add primary category
+  if (selectedBusiness.categories?.primaryCategory?.displayName) {
+    const cleanCategory = selectedBusiness.categories.primaryCategory.displayName
+      .replace(/[^\w\s-]/g, '') // Keep hyphens
+      .replace(/\s+/g, ' ')
+      .trim();
     
-    // Clean up and add business name if found
-    if (businessName) {
-      const cleanName = businessName
-        .replace(/[^\w\s-]/g, '') // Keep hyphens
-        .replace(/\s+/g, ' ')
+    if (cleanCategory && !autoKeywords.includes(cleanCategory)) {
+      autoKeywords.push(cleanCategory);
+    }
+  }
+
+  // Add address from storefrontAddress
+  if (selectedBusiness.storefrontAddress) {
+    const address = selectedBusiness.storefrontAddress;
+    const addressComponents = [];
+    
+    // Add street address if available
+    if (address.addressLines && address.addressLines.length > 0) {
+      const streetAddress = address.addressLines[0]
+        .replace(/[^\w\s-]/g, '') // Keep hyphens and spaces
         .trim();
       
-      if (cleanName) {
-        autoKeywords.push(cleanName);
+      if (streetAddress) {
+        addressComponents.push(streetAddress);
       }
     }
+    
+    // Add city if available
+    if (address.locality) {
+      addressComponents.push(address.locality);
+    }
+    
+    // Add state if available
+    if (address.administrativeArea) {
+      addressComponents.push(address.administrativeArea);
+    }
+    
+    // Join the address components and add as a keyword
+    if (addressComponents.length > 0) {
+      const fullAddress = addressComponents.join(', ');
+      if (fullAddress && !autoKeywords.includes(fullAddress)) {
+        autoKeywords.push(fullAddress);
+      }
+    }
+  }
+  
+  return autoKeywords;
+};
 
-    // Add primary category - only add the main category, not individual words
-    let categoryName = '';
+// Add this useEffect right after the getAutoKeywords function
+useEffect(() => {
+  if (selectedBusiness) {
+    console.log('selectedBusiness:', selectedBusiness);
+    console.log('selectedBusiness.location:', selectedBusiness.location);
+    console.log('selectedBusiness.address:', selectedBusiness.address);
+    console.log('selectedBusiness.categories:', selectedBusiness.categories);
     
-    if (selectedBusiness.primaryCategory) {
-      categoryName = typeof selectedBusiness.primaryCategory === 'string'
-        ? selectedBusiness.primaryCategory
-        : selectedBusiness.primaryCategory.displayName || selectedBusiness.primaryCategory.name || '';
-    } else if (selectedBusiness.categories?.primaryCategory) {
-      const category = selectedBusiness.categories.primaryCategory;
-      categoryName = typeof category === 'string'
-        ? category
-        : category.displayName || category.name || '';
-      
-      if (typeof categoryName === 'object' && categoryName !== null) {
-        categoryName = categoryName.name || categoryName.displayName || '';
-      }
-    }
-    
-    // Clean up and add category if found
-    if (categoryName) {
-      const cleanCategory = categoryName
-        .replace(/[^\w\s-]/g, '') // Keep hyphens
-        .replace(/\s+/g, ' ')
-        .trim();
-      
-      if (cleanCategory && !autoKeywords.includes(cleanCategory)) {
-        autoKeywords.push(cleanCategory);
-      }
-    }
-    
-    return autoKeywords;
-  };
-
+    // Test the getAutoKeywords function
+    const keywords = getAutoKeywords();
+    console.log('Auto-generated keywords:', keywords);
+  }
+}, [selectedBusiness]);
   const handleKeywordChange = (e) => {
     const value = e.target.value;
     setCurrentPost(prev => ({
