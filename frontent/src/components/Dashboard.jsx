@@ -306,12 +306,17 @@ const Dashboard = () => {
                     Rating Distribution
                   </div>
                   <div className="flex flex-col sm:flex-row items-center gap-4">
-                    <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-purple-700 to-indigo-600 flex items-center justify-center">
+                    <div className={`w-20 h-20 sm:w-28 sm:h-28 rounded-full ${theme === 'dark' 
+                      ? 'border-2 border-blue-400 bg-gradient-to-br from-blue-900/80 to-indigo-900/80 shadow-lg shadow-blue-500/20' 
+                      : 'border-2 border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-100 shadow-md shadow-blue-200'}
+                      flex items-center justify-center`}>
                       <div className="text-center">
-                        <div className="text-xl sm:text-3xl font-extrabold">
+                        <div className={`text-xl sm:text-3xl font-extrabold ${theme === 'dark' ? 'text-white' : 'text-blue-800'}`}>
                           {loading ? '...' : (reviewStats?.averageRating ? reviewStats.averageRating.toFixed(1) : 'N/A')}
                         </div>
-                        <div className="text-[10px] sm:text-[11px] text-white/70">{loading ? '...' : `${reviewStats?.totalReviews ?? 0} Reviews`}</div>
+                        <div className={`text-[10px] sm:text-[11px] ${theme === 'dark' ? 'text-blue-200/90' : 'text-blue-700/90'}`}>
+                          {loading ? '...' : `${reviewStats?.totalReviews ?? 0} Reviews`}
+                        </div>
                       </div>
                     </div>
                     <div className="flex-1 w-full">

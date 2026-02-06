@@ -143,7 +143,7 @@ const AuditTool = () => {
             </h3>
             <button
               onClick={() => navigate('/dashboard/integrations')}
-              className="px-6 py-3 bg-purple-600 text-white rounded-lg"
+              className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg"
             >
               Go to Integrations
             </button>
