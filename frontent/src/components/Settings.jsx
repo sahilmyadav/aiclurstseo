@@ -18,13 +18,7 @@ const SettingsPage = () => {
 
   const [isLoading, setIsLoading] = useState(true);
 
-  // Handle save changes
-  const handleSaveChanges = () => {
-    // Here you can add your save logic
-    console.log('Saving changes:', formData);
-    alert('Changes saved successfully!');
-  };
-
+ 
   // Fetch media when Settings page is visited
   useEffect(() => {
     if (isConnected && selectedBusiness) {
@@ -34,10 +28,10 @@ const SettingsPage = () => {
       if (accountId && locationId) {
         // Only fetch if no media exists
         if (media.length === 0) {
-          console.log('No cached media found, fetching from API...');
+          // console.log('No cached media found, fetching from API...');
           fetchMedia(accountId, locationId);
         } else {
-          console.log('Using cached media:', media.length, 'items');
+          // console.log('Using cached media:', media.length, 'items');
         }
       }
     }

@@ -24,7 +24,7 @@ const ThemeToggle = () => {
   }
 
   const handleToggle = () => {
-    console.log('Toggling theme from', theme, 'to', theme === 'dark' ? 'light' : 'dark');
+    // console.log('Toggling theme from', theme, 'to', theme === 'dark' ? 'light' : 'dark');
     toggleTheme();
   };
 

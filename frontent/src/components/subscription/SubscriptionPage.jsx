@@ -29,7 +29,7 @@ const SubscriptionPage = () => {
 
   const { theme } = useTheme(); // Added theme hook
 
-  console.log("TOKEN",token,"User",user)
+  // console.log("TOKEN",token,"User",user)
   
   const [profiles, setProfiles] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -196,7 +196,7 @@ const SubscriptionPage = () => {
         profiles: Number(profiles)
       };
 
-      console.log('Sending request to create checkout session:', { planType, profiles });
+      // console.log('Sending request to create checkout session:', { planType, profiles });
 
       const response = await axios.post(
         `${import.meta.env.VITE_API_BASE}/api/subscription/create-checkout-session`,
@@ -209,7 +209,7 @@ const SubscriptionPage = () => {
         }
       );
 
-      console.log('Checkout session created:', response.data);
+      // console.log('Checkout session created:', response.data);
       
       if (!response.data.url) {
         throw new Error('No checkout URL received from server');
@@ -245,7 +245,7 @@ const SubscriptionPage = () => {
       const result = await activateTrial();
       console.log(result)
       if (result) {
-        console.log('Trial started successfully');
+        // console.log('Trial started successfully');
         // Refresh subscription data
         await checkSubscriptionStatus(user?._id || user?.id, token);
       } else {

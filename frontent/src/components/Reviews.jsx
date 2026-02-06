@@ -34,7 +34,7 @@ const Reviews = () => {
     const [activeFilter, setActiveFilter] = useState('all');
     const { reviews, selectedBusiness, businesses, loading, selectBusiness, tokenDetails } = useGoogleBusiness();
     const { user: authUser, toggleAutoReply } = useAuth();
-console.log("AUTHUSER",authUser)
+// console.log("AUTHUSER",authUser)
  const BACKEND_URL = (import.meta.env.VITE_API_BASE ).replace(/\/$/, '');
     // State for auto-reply processing
     const [isAutoReplying, setIsAutoReplying] = useState(false);

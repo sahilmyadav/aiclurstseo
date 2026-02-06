@@ -17,7 +17,7 @@ const ScheduledPosts = ({ scheduledPosts, loadingScheduled, onDelete, deletingPo
   const [postToDelete, setPostToDelete] = useState(null);
 
 
-  console.log("scheduled posts",scheduledPosts)
+  // console.log("scheduled posts",scheduledPosts)
   const handleDeleteClick = (postId) => {
     setPostToDelete(postId);
     setShowDeleteModal(true);

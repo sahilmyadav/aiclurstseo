@@ -85,7 +85,7 @@ const Integrations = () => {
     selectMultipleBusinesses,
     fetchBusinesses,     // use this instead of status
   } = useGoogleBusiness();
-  console.log("Reviews Alll",reviews)
+  // console.log("Reviews Alll",reviews)
   
   const [selectedLocation, setSelectedLocation] = useState(null);
 

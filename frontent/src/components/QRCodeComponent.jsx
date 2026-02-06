@@ -105,7 +105,7 @@ const QRCodeComponent = () => {
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [manualReviewUri, setManualReviewUri] = useState('');
 
-  console.log("selectedBusiness", selectedBusiness);
+  // console.log("selectedBusiness", selectedBusiness);
   
   // Set initial manualReviewUri when business is selected or contextReviewUri changes
   useEffect(() => {

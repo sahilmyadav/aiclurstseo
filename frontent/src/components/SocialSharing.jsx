@@ -185,7 +185,7 @@ const SocialSharing = () => {
       // Get the authentication token and user data from localStorage
       const authData = JSON.parse(localStorage.getItem('auth')) || {};
       const token = authData.token || localStorage.getItem('token');
-   console.log(authData?.user)
+  //  console.log(authData?.user)
     
       
       if (!token ) {
@@ -245,7 +245,7 @@ const SocialSharing = () => {
         },
         businessData: selectedBusiness 
       };
-      console.log("postData",postData)
+      // console.log("postData",postData)
       
       // Make the API call
       const response = await axios.post(

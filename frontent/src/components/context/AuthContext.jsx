@@ -34,7 +34,7 @@ export const AuthContextProvider = ({ children }) => {
   const [plansError, setPlansError] = useState(null)
 
   const API_BASE = import.meta.env.VITE_API_BASE
-  console.log("Backend API Base", API_BASE)
+  // console.log("Backend API Base", API_BASE)
 
   // axios instance
   const api = axios.create({
@@ -126,7 +126,7 @@ export const AuthContextProvider = ({ children }) => {
             }
           } else {
             // No subscription found
-            console.log('No subscription data found');
+            // console.log('No subscription data found');
             setSubscriptionData({
               active: false,
               planType: null,
@@ -179,7 +179,7 @@ export const AuthContextProvider = ({ children }) => {
 
     try {
       setSubscriptionLoading(true);
-      console.log('Sending trial activation request...', { userId });
+      // console.log('Sending trial activation request...', { userId });
       
       const response = await axios.post(
         `${API_BASE}/api/subscription/start-trial`, 
@@ -266,7 +266,7 @@ export const AuthContextProvider = ({ children }) => {
         }
       );
 
-      console.log('Transactions response:', response.data);
+      // console.log('Transactions response:', response.data);
       setTransactions(response.data || []);
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -357,7 +357,7 @@ export const AuthContextProvider = ({ children }) => {
     // setIsLoading(true)
     try {
       const { data } = await api.post('/api/auth/register', { name: username, email, password, phone })
-      console.log(data)
+      // console.log(data)
       setUser(data.user)
       setToken(data.token)
       setIsAuthenticated(true)

@@ -67,7 +67,7 @@ const SMSComponent = () => {
   };
 
   const handleSendSMS = async (e) => {
-    console.log("handleSendSMS triggered");
+    // console.log("handleSendSMS triggered");
     e.preventDefault();
 
     if (!formData.businessId) {

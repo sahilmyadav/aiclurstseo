@@ -17,7 +17,7 @@ const SubscriptionSuccess = () => {
       const sessionId = searchParams.get('sessionId');
       const verify = searchParams.get('verify');
       
-      console.log('URL Params:', { sessionId, verify }); // Debug log
+      // console.log('URL Params:', { sessionId, verify }); // Debug log
       
       if (sessionId && verify === 'true') {
         try {
@@ -35,7 +35,7 @@ const SubscriptionSuccess = () => {
             `${import.meta.env.VITE_API_BASE}/api/subscription/verify?${params.toString()}`,
             { withCredentials: true }
           );
-          console.log("Sucess message",response)
+          // console.log("Sucess message",response)
           if (response.data.active) {
             // Set the subscription data from the nested subscription object
             setSubscription(response.data.subscription);

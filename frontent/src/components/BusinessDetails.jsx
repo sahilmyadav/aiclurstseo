@@ -38,7 +38,7 @@ const BusinessDetails = () => {
           console.log('BusinessDetails: No cached media found, fetching from API...');
           fetchMedia(accountId, locationId);
         } else {
-          console.log('BusinessDetails: Using cached media from context:', media.length, 'items');
+          // console.log('BusinessDetails: Using cached media from context:', media.length, 'items');
         }
       }
     }
@@ -233,7 +233,7 @@ const BusinessDetails = () => {
                         const accountId = selectedBusiness.accountId;
                         const locationId = selectedBusiness.name?.split('/')[1];
                         if (accountId && locationId) {
-                          console.log('BusinessDetails: Refreshing media...');
+                          // console.log('BusinessDetails: Refreshing media...');
                           fetchMedia(accountId, locationId, true); // Force refresh
                         }
                       }
@@ -282,7 +282,7 @@ const BusinessDetails = () => {
                               e.target.src = 'https://via.placeholder.com/300x300/800080/FFFFFF?text=No+Image';
                             }}
                             onLoad={(e) => {
-                              console.log('Business image loaded successfully:', e.target.src);
+                              // console.log('Business image loaded successfully:', e.target.src);
                             }}
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-end p-3">

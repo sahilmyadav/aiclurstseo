@@ -18,7 +18,7 @@ const UserSubscriptionDetails = () => {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  console.log("transactions>>>>>>>>>>>>>>>..",subscriptionData)
+  // console.log("transactions>>>>>>>>>>>>>>>..",subscriptionData)
   useEffect(() => {
     // Redirect if not authenticated
     if (!isAuthenticated) {
@@ -74,7 +74,7 @@ const UserSubscriptionDetails = () => {
               }
             }
           );
-          console.log("subscriptiondata", subscriptionResponse.data);
+          // console.log("subscriptiondata", subscriptionResponse.data);
           // Update to handle nested subscription data
           const responseData = subscriptionResponse.data;
           if (responseData.success && responseData.subscription) {
@@ -112,7 +112,7 @@ const UserSubscriptionDetails = () => {
             }
           );
           
-          console.log('Raw transactions data>>>>>>>>>>>>>>>>>>>:', transactionsResponse.data);
+          // console.log('Raw transactions data>>>>>>>>>>>>>>>>>>>:', transactionsResponse.data);
           
           // Validate and process transactions data
           let processedTransactions = [];
@@ -130,7 +130,7 @@ const UserSubscriptionDetails = () => {
             });
           }
           
-          console.log('Processed transactions data:', processedTransactions);
+          // console.log('Processed transactions data:', processedTransactions);
           setTransactions(processedTransactions);
         } catch (transactionError) {
           console.warn('Could not fetch transaction data:', transactionError);

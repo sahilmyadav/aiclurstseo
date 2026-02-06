@@ -40,7 +40,7 @@ export const AdminProvider = ({ children }) => {
       const usersData = res.data?.data || [];
       
       // Update pagination info
-      console.log(res.data);
+      // console.log(res.data);
       if (res.data?.pagination) {
         setPagination(res.data.pagination);
       }

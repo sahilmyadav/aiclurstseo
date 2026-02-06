@@ -123,7 +123,7 @@ function MakeReview() {
       }
 
       const result = await response.json();
-      console.log('Feedback saved successfully:', result);
+      // console.log('Feedback saved successfully:', result);
       setSubmitted(true);
     } catch (error) {
       console.error('Error submitting feedback:', error);
@@ -142,7 +142,7 @@ function MakeReview() {
     }
 
     try {
-      console.log('Opening review URL:', reviewUri);
+      // console.log('Opening review URL:', reviewUri);
       
       // Open the review URL in a new tab
       const reviewWindow = window.open(reviewUri, '_blank', 'noopener,noreferrer');

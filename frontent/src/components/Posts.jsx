@@ -222,7 +222,7 @@ const Posts = () => {
       
       const url = `${baseUrl}/auth/google/accounts/${accountId}/locations/${locationId}/localPosts?${params}`;
       
-      console.log(`🔄 Fetching posts from:`, url);
+      // console.log(`🔄 Fetching posts from:`, url);
       
       const postsResponse = await fetch(url, {
         method: 'GET',
@@ -245,7 +245,7 @@ const Posts = () => {
       }
       
       const responseData = await postsResponse.json();
-      console.log('✅ Posts fetched successfully:', responseData);
+      // console.log('✅ Posts fetched successfully:', responseData);
       
       // Get business details from the context
       const business = selectedBusiness || (businesses && businesses[0]);
@@ -303,7 +303,7 @@ const Posts = () => {
         setPosts(formattedPosts);
       }
       
-      console.log(`📊 ${loadMore ? 'Added' : 'Loaded'} ${formattedPosts.length} posts`);
+      // console.log(`📊 ${loadMore ? 'Added' : 'Loaded'} ${formattedPosts.length} posts`);
       return formattedPosts;
     } catch (error) {
       console.error("❌ Error fetching posts:", error);
@@ -329,7 +329,7 @@ const Posts = () => {
   useEffect(() => {
     if (selectedBusiness) {
       const autoKeywords = getAutoKeywords();
-      console.log('Auto keywords for selected business:', autoKeywords);
+      // console.log('Auto keywords for selected business:', autoKeywords);
       
       setCurrentPost(prev => ({
         ...prev,
@@ -411,14 +411,14 @@ const getAutoKeywords = () => {
 // Add this useEffect right after the getAutoKeywords function
 useEffect(() => {
   if (selectedBusiness) {
-    console.log('selectedBusiness:', selectedBusiness);
-    console.log('selectedBusiness.location:', selectedBusiness.location);
-    console.log('selectedBusiness.address:', selectedBusiness.address);
-    console.log('selectedBusiness.categories:', selectedBusiness.categories);
+    // console.log('selectedBusiness:', selectedBusiness);
+    // console.log('selectedBusiness.location:', selectedBusiness.location);
+    // console.log('selectedBusiness.address:', selectedBusiness.address);
+    // console.log('selectedBusiness.categories:', selectedBusiness.categories);
     
     // Test the getAutoKeywords function
     const keywords = getAutoKeywords();
-    console.log('Auto-generated keywords:', keywords);
+    // console.log('Auto-generated keywords:', keywords);
   }
 }, [selectedBusiness]);
   const handleKeywordChange = (e) => {
@@ -535,11 +535,11 @@ useEffect(() => {
         postData.createTime = currentPost.scheduledFor.toISOString();
       }
 
-      console.log('🔄 Creating new post...', { 
-        accountId: businessDetails.accountId, 
-        locationId,
-        postData 
-      });
+      // console.log('🔄 Creating new post...', { 
+      //   accountId: businessDetails.accountId, 
+      //   locationId,
+      //   postData 
+      // });
 
       // Ensure BACKEND_URL is defined and doesn't end with a slash
       if (!BACKEND_URL) {
@@ -560,7 +560,7 @@ useEffect(() => {
       
       const url = `${baseUrl}/auth/google/accounts/${businessDetails.accountId}/locations/${locationId}/localPosts?${params}`;
       
-      console.log(' Sending request to:', url);
+      // console.log(' Sending request to:', url);
 
       const response = await fetch(url, {
         method: 'POST',
@@ -594,7 +594,7 @@ useEffect(() => {
         throw new Error(errorMessage);
       }
 
-      console.log(' Post created successfully:', responseData);
+      // console.log(' Post created successfully:', responseData);
       
       // Create the new post object from the response
       const newPost = {

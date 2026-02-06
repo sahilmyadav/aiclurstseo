@@ -132,7 +132,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   const setScheduledPosts = useCallback((v) => updateState({ scheduledPosts: v }), [updateState]);
   const setLoadingScheduled = useCallback((v) => updateState({ loadingScheduled: v }), [updateState]);
   const setReviewStats = useCallback((v) => updateState({ reviewStats: v }), [updateState]);
-    console.log("Seleted Business ",selectedBusiness)
+    // console.log("Seleted Business ",selectedBusiness)
   // ==============================
   // RESET ON USER CHANGE
   // ==============================
@@ -253,7 +253,7 @@ export const GoogleBusinessProvider = ({ children }) => {
       
       // If not active and token exists (meaning user was connected), disconnect
       if (!isSubscriptionActive && (googleOAuth?.access_token || tokenDetails?.accessToken)) {
-        console.log('No active subscription - disconnecting Google Business Profile');
+        // console.log('No active subscription - disconnecting Google Business Profile');
         disconnectGoogle(true).then(() => {
           toast.warning('Your subscription has ended. Google Business Profile has been disconnected.');
         });
@@ -425,18 +425,18 @@ export const GoogleBusinessProvider = ({ children }) => {
   // SELECT BUSINESS
   // ==============================
   const selectBusiness = async (b) => {
-    console.log('selectBusiness called with business:', b?.id, b?.name);
+    // console.log('selectBusiness called with business:', b?.id, b?.name);
     
     // Update the selected business in state
     setSelectedBusiness(b);
     
     if (b?.metadata?.newReviewUri) {
-      console.log('Setting review URI:', b.metadata.newReviewUri);
+      // console.log('Setting review URI:', b.metadata.newReviewUri);
       setReviewUri(b.metadata.newReviewUri);
     }
 
     try {
-      console.log('Starting to fetch reviews...');
+      // console.log('Starting to fetch reviews...');
       
       // Fetch reviews and local reviews in parallel
       await Promise.all([
@@ -444,7 +444,7 @@ export const GoogleBusinessProvider = ({ children }) => {
         fetchLocalReviews(b.name.split("/")[1])
       ]);
       
-      console.log('Reviews fetched successfully');
+      // console.log('Reviews fetched successfully');
 
       // After reviews are loaded, fetch performance metrics
       if (b) {
@@ -452,18 +452,18 @@ export const GoogleBusinessProvider = ({ children }) => {
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
         const today = new Date();
         
-        console.log('Fetching performance metrics...', {
-          startDate: thirtyDaysAgo,
-          endDate: today,
-          locationId: b.name.split("/")[1]
-        });
+        // console.log('Fetching performance metrics...', {
+        //   startDate: thirtyDaysAgo,
+        //   endDate: today,
+        //   locationId: b.name.split("/")[1]
+        // });
         
         try {
           await fetchPerformanceMetrics({
             startDate: thirtyDaysAgo,
             endDate: today
           });
-          console.log('Performance metrics fetched successfully');
+          // console.log('Performance metrics fetched successfully');
         } catch (error) {
           console.error('Error in fetchPerformanceMetrics:', error);
           toast.error('Failed to load performance data');
@@ -542,7 +542,7 @@ export const GoogleBusinessProvider = ({ children }) => {
 
     // If using cached data and it's provided
     if (useCache && cachedData) {
-      console.log('Using cached performance data');
+      // console.log('Using cached performance data');
       setPerformanceData(cachedData.totals);
       return cachedData;
     }
@@ -557,12 +557,6 @@ export const GoogleBusinessProvider = ({ children }) => {
         throw new Error('No access token available. Please reconnect your Google account.');
       }
       
-      // Log the business data being sent
-      console.log('Sending business data to backend:', {
-        name: selectedBusiness?.name,
-        title: selectedBusiness?.title,
-        hasAccountId: !!selectedBusiness?.accountId
-      });
       
       const requestBody = {
         locationId: targetLocationId,
@@ -636,11 +630,9 @@ export const GoogleBusinessProvider = ({ children }) => {
       const dataF = await response.json();
       const data = dataF.data;
 
-      console.log("Performance data fetched:", data);
       
-      // Store all performance data including daily, monthly, scores and totals
       const fullPerformanceData = {
-        ...data,  // includes totals, daily, monthly, and scores
+        ...data,  
         lastUpdated: new Date().toISOString()
       };
       
@@ -694,11 +686,11 @@ export const GoogleBusinessProvider = ({ children }) => {
     // 1. Force refresh is requested OR
     // 2. No media exists
     if (!force && media.length > 0) {
-      console.log('Using cached media, skipping API call');
+      // console.log('Using cached media, skipping API call');
       return; // Already have media, don't fetch again
     }
 
-    console.log('Fetching GMB media for:', accountId, locationId);
+    // console.log('Fetching GMB media for:', accountId, locationId);
     updateMediaState({ loadingMedia: true, mediaError: null });
 
     try {
@@ -721,11 +713,11 @@ export const GoogleBusinessProvider = ({ children }) => {
       });
       
       const data = await response.json();
-      console.log('Media API response:', data);
+      // console.log('Media API response:', data);
       
       if (response.ok) {
         const mediaItems = data.mediaItems || [];
-        console.log(`Fetched ${mediaItems.length} media items`);
+        // console.log(`Fetched ${mediaItems.length} media items`);
         updateMediaState({ 
           media: mediaItems, 
           loadingMedia: false, 

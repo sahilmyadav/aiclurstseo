@@ -727,7 +727,6 @@ const verifySubscription = async (req, res) => {
 
     // If sessionId is provided, verify using Stripe session
     if (sessionId) {
-      console.log('Verifying session ID:', sessionId);
       try {
         // Expand the payment intent and include all necessary details
         const session = await stripe.checkout.sessions.retrieve(sessionId, {
@@ -739,33 +738,6 @@ const verifySubscription = async (req, res) => {
           ]
         });
         
-        console.log('Retrieved session with details:', {
-          id: session.id,
-          payment_status: session.payment_status,
-          amount_total: session.amount_total,
-          amount_subtotal: session.amount_subtotal,
-          total_details: session.total_details,
-          line_items: session.line_items?.data?.map(item => ({
-            amount_subtotal: item.amount_subtotal,
-            amount_total: item.amount_total,
-            description: item.description,
-            discounts: item.discounts
-          })),
-          discounts: session.discounts
-        });
-        
-        console.log('Retrieved session:', {
-          id: session.id,
-          payment_status: session.payment_status,
-          status: session.status,
-          payment_intent: session.payment_intent ? {
-            id: session.payment_intent.id,
-            status: session.payment_intent.status,
-            amount: session.payment_intent.amount,
-            currency: session.payment_intent.currency
-          } : 'No payment intent',
-          metadata: session.metadata
-        });
         
         if (session.payment_status === 'paid') {
           // Get or create subscription
@@ -974,7 +946,6 @@ const verifySubscription = async (req, res) => {
         });
       }
     }
-    
     // If only userId is provided, check for active subscription
     if (userId) {
       const user = await User.findById(userId)
