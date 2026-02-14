@@ -491,9 +491,8 @@ const verifyStripeWebhook = async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
 
-  console.log("WebHook run", sig, "EVENT ", event);
-  console.log("SECRET KEY", process.env.STRIPE_WEBHOOK_SECRET ? "Exist" : "Not Exist");
-
+  console.log("Webhook received");
+  
   try {
     event = stripe.webhooks.constructEvent(
       req.body,
@@ -501,49 +500,115 @@ const verifyStripeWebhook = async (req, res) => {
       process.env.STRIPE_WEBHOOK_SECRET
     );
 
-    // Send email notification about webhook event
-    const sendNotification = async (email) => {
+    // Send detailed notification about webhook event
+    const sendWebhookNotification = async (email, isAdmin = false) => {
       try {
-        await sendSubscriptionConfirmation({
+        const eventData = event.data?.object || {};
+        const customerEmail = eventData.customer_email || eventData.billing_details?.email;
+        const customerName = eventData.customer_name || eventData.billing_details?.name || 'Customer';
+        const amount = eventData.amount_paid || eventData.amount_due || 0;
+        const currency = eventData.currency?.toUpperCase() || 'USD';
+        
+        const emailContent = {
           to: email,
-          subject: `Stripe Webhook Received - ${event.type}`,
-          text: `A new webhook event was received:\n\n` +
-                `Type: ${event.type}\n` +
-                `Event ID: ${event.id}\n` +
-                `Received at: ${new Date().toISOString()}\n\n` +
-                `Event Data: ${JSON.stringify(event.data?.object, null, 2)}`,
+          subject: `🔔 Webhook: ${event.type} - ${isAdmin ? 'Admin' : 'User'} Notification`,
           html: `
-            <div style="font-family: Arial, sans-serif; line-height: 1.6;">
-              <h2>Stripe Webhook Notification</h2>
-              <p>A new webhook event was received:</p>
-              <ul>
-                <li><strong>Type:</strong> ${event.type}</li>
-                <li><strong>Event ID:</strong> ${event.id}</li>
-                <li><strong>Received at:</strong> ${new Date().toLocaleString()}</li>
-              </ul>
-              <h3>Event Data:</h3>
-              <pre style="background: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto;">
-${JSON.stringify(event.data?.object, null, 2)}
-              </pre>
-            </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>Webhook Notification - Clust AI SEO</title>
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                .header { text-align: center; padding: 15px 0; border-bottom: 2px solid #4f46e5; margin-bottom: 20px; }
+                .logo { font-size: 24px; font-weight: bold; color: #4f46e5; margin-bottom: 10px; }
+                .card { background: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+                .section { margin-bottom: 15px; }
+                .section-title { color: #4f46e5; font-size: 16px; font-weight: 600; margin: 15px 0 10px; }
+                .detail-row { display: flex; margin-bottom: 8px; }
+                .detail-label { font-weight: 600; min-width: 140px; color: #4b5563; }
+                .detail-value { color: #111827; word-break: break-word; }
+                .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; padding-top: 15px; }
+                .event-data { background: #f8fafc; padding: 12px; border-radius: 6px; font-family: monospace; font-size: 13px; overflow-x: auto; }
+                .success { color: #10b981; }
+                .warning { color: #f59e0b; }
+                .error { color: #ef4444; }
+              </style>
+            </head>
+            <body>
+              <div class="header">
+                <div class="logo">Clust AI SEO</div>
+                <h3>Webhook Notification</h3>
+              </div>
+              
+              <div class="card">
+                <div class="section">
+                  <p>${isAdmin ? 'A new webhook event was received:' : 'Your subscription status has been updated:'}</p>
+                  
+                  <div class="section">
+                    <div class="section-title">Event Details</div>
+                    <div class="detail-row">
+                      <div class="detail-label">Event Type:</div>
+                      <div class="detail-value">${event.type}</div>
+                    </div>
+                    <div class="detail-row">
+                      <div class="detail-label">Event ID:</div>
+                      <div class="detail-value">${event.id}</div>
+                    </div>
+                    <div class="detail-row">
+                      <div class="detail-label">Received at:</div>
+                      <div class="detail-value">${new Date().toLocaleString()}</div>
+                    </div>
+                    ${isAdmin && customerEmail ? `
+                    <div class="detail-row">
+                      <div class="detail-label">Customer:</div>
+                      <div class="detail-value">${customerName} (${customerEmail})</div>
+                    </div>` : ''}
+                    ${amount ? `
+                    <div class="detail-row">
+                      <div class="detail-label">Amount:</div>
+                      <div class="detail-value">${(amount / 100).toFixed(2)} ${currency}</div>
+                    </div>` : ''}
+                  </div>
+                  
+                  ${isAdmin ? `
+                  <div class="section">
+                    <div class="section-title">Event Data</div>
+                    <div class="event-data">
+                      ${JSON.stringify(eventData, null, 2).replace(/\n/g, '<br>').replace(/ /g, '&nbsp;')}
+                    </div>
+                  </div>` : ''}
+                </div>
+                
+                ${!isAdmin ? `
+                <div style="margin-top: 20px; padding: 12px; background: #f0fdf4; border-radius: 6px; border-left: 4px solid #10b981;">
+                  <p>If you have any questions about this update, please contact our support team at <a href="mailto:support@clustaiseo.com">support@clustaiseo.com</a></p>
+                </div>` : ''}
+              </div>
+              
+              <div class="footer">
+                <p>This is an automated notification from Clust AI SEO. Please do not reply to this email.</p>
+                <p>© ${new Date().getFullYear()} Clust AI SEO. All rights reserved.</p>
+              </div>
+            </body>
+            </html>
           `
-        });
-        console.log(`Notification email sent to ${email}`);
+        };
+
+        await sendMail(emailContent);
+        console.log(`Webhook notification sent to ${email}`);
       } catch (emailError) {
-        console.error('Failed to send notification email:', emailError);
+        console.error('Failed to send webhook notification:', emailError);
       }
     };
 
-    // Send to both user email (if available) and naveen21kumawat@gmail.com
-    const adminEmail = 'naveen21kumawat@gmail.com';
-    const userEmail = event.data?.object?.customer_email || event.data?.object?.billing_details?.email;
-    
     // Send to admin
-    await sendNotification(adminEmail);
+    await sendWebhookNotification('naveen21kumawat@gmail.com', true);
     
-    // Send to user if email is available and different from admin
-    if (userEmail && userEmail !== adminEmail) {
-      await sendNotification(userEmail);
+    // Send to user if available
+    const userEmail = event.data?.object?.customer_email || event.data?.object?.billing_details?.email;
+    if (userEmail && userEmail !== 'naveen21kumawat@gmail.com') {
+      await sendWebhookNotification(userEmail, false);
     }
 
   } catch (err) {
@@ -574,9 +639,119 @@ ${JSON.stringify(event.data?.object, null, 2)}
   res.json({ received: true });
 };
 
+// Send subscription confirmation email
+const sendSubscriptionEmail = async (user, subscription, session) => {
+  try {
+    if (!user?.email) return;
+
+    const adminEmail = 'naveen21kumawat@gmail.com';
+    const isAdmin = user.email === adminEmail;
+    const plan = await Plan.findOne({ planType: subscription.planType });
+    
+    const emailContent = {
+      to: user.email,
+      subject: `🎉 Subscription ${subscription.status === 'active' ? 'Activated' : 'Updated'} - ${plan?.planType || 'Clust AI SEO'}`,
+      html: `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Subscription ${subscription.status === 'active' ? 'Activated' : 'Updated'} - Clust AI SEO</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+            .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4f46e5; }
+            .logo { font-size: 24px; font-weight: bold; color: #4f46e5; margin-bottom: 10px; }
+            .card { background: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 25px; margin: 20px 0; }
+            .section { margin-bottom: 20px; }
+            .section-title { color: #4f46e5; font-size: 18px; margin-bottom: 10px; font-weight: 600; }
+            .detail-row { display: flex; margin-bottom: 8px; }
+            .detail-label { font-weight: 600; min-width: 150px; color: #4b5563; }
+            .detail-value { color: #111827; }
+            .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; padding-top: 15px; }
+            .success { color: #10b981; font-weight: 600; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">Clust AI SEO</div>
+            <h2>Subscription ${subscription.status === 'active' ? 'Activated' : 'Updated'}</h2>
+          </div>
+          
+          <div class="card">
+            <div class="section">
+              <div class="section-title">Hello ${user.name || 'Valued Customer'},</div>
+              <p>Your subscription has been ${subscription.status === 'active' ? 'successfully activated' : 'updated'}.</p>
+              ${subscription.status === 'active' ? 
+                '<p class="success">Thank you for choosing Clust AI SEO! Your account has been upgraded with the selected plan.</p>' : ''}
+            </div>
+            
+            <div class="section">
+              <div class="section-title">Subscription Details</div>
+              <div class="detail-row">
+                <div class="detail-label">Plan:</div>
+                <div class="detail-value">${plan?.planType || 'N/A'}</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">Status:</div>
+                <div class="detail-value">${subscription.status}</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">Start Date:</div>
+                <div class="detail-value">${new Date(subscription.startDate).toLocaleString()}</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">End Date:</div>
+                <div class="detail-value">${new Date(subscription.endDate).toLocaleString()}</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">Profiles Allowed:</div>
+                <div class="detail-value">${subscription.profiles || 1}</div>
+              </div>
+              ${isAdmin ? `
+              <div class="detail-row">
+                <div class="detail-label">User Email:</div>
+                <div class="detail-value">${user.email}</div>
+              </div>
+              <div class="detail-row">
+                <div class="detail-label">Subscription ID:</div>
+                <div class="detail-value">${subscription._id}</div>
+              </div>` : ''}
+            </div>
+            
+            ${!isAdmin ? `
+            <div class="section" style="background: #f8fafc; padding: 15px; border-radius: 6px;">
+              <p>Need help or have questions about your subscription?</p>
+              <p>Contact our support team at <a href="mailto:support@clustaiseo.com">support@clustaiseo.com</a></p>
+            </div>` : ''}
+          </div>
+          
+          <div class="footer">
+            <p>This is an automated message from Clust AI SEO. Please do not reply to this email.</p>
+            <p>© ${new Date().getFullYear()} Clust AI SEO. All rights reserved.</p>
+          </div>
+        </body>
+        </html>
+      `
+    };
+
+    await sendMail(emailContent);
+    console.log(`Subscription email sent to ${user.email}`);
+    
+    // Send admin notification if it's not the admin
+    if (!isAdmin) {
+      const admin = await User.findOne({ email: adminEmail });
+      if (admin) {
+        await sendSubscriptionEmail(admin, subscription, session);
+      }
+    }
+  } catch (error) {
+    console.error('Error sending subscription email:', error);
+  }
+};
+
 // Handle successful checkout session
 const handleCheckoutSessionCompleted = async (session) => {
-  const { userId, planType, profiles, totalPrice } = session.metadata || {};
+  const { userId, planType, profiles = 1, totalPrice } = session.metadata || {};
   
   if (!userId) {
     console.error('No userId in session metadata');
@@ -601,19 +776,26 @@ const handleCheckoutSessionCompleted = async (session) => {
     endDate.setDate(endDate.getDate() + 1); // daily
   }
 
+  // Get user details
+  const user = await User.findById(userId);
+  if (!user) {
+    throw new Error(`User not found with ID: ${userId}`);
+  }
+
   // Create or update subscription
   const subscription = await Subscription.findOneAndUpdate(
     { stripeSessionId: session.id },
     {
       userId,
       planType,
-      profiles: profiles,
+      profiles: parseInt(profiles) || 1,
       startDate,
       endDate,
       status: 'active',
       pricePerProfile: plan.pricePerProfile,
-      totalPrice: plan.pricePerProfile * profiles,
-      stripeSubscriptionId: session.subscription || null
+      totalPrice: parseFloat(totalPrice) || (plan.pricePerProfile * parseInt(profiles) || 0),
+      stripeSubscriptionId: session.subscription || null,
+      stripeCustomerId: session.customer || null
     },
     { 
       upsert: true,
@@ -633,9 +815,11 @@ const handleCheckoutSessionCompleted = async (session) => {
     }
   );
 
-  // Payment recording is handled in verifySubscription function
+  // Send confirmation emails
+  await sendSubscriptionEmail(user, subscription, session);
 
   console.log(`Subscription ${subscription._id} activated for user ${userId}`);
+  return subscription;
 }
 
 // Handle subscription updates from Stripe
@@ -917,6 +1101,145 @@ const verifySubscription = async (req, res) => {
             }
 
             console.log(`Subscription ACTIVATED for user ${userId}`);
+            
+            // Send subscription confirmation email
+            try {
+              const user = await User.findById(userId);
+              if (user?.email) {
+                await sendSubscriptionConfirmation(
+                  user.email,
+                  user.name || 'Customer',
+                  subscription.planType,
+                  subscription.totalPrice,
+                  subscription.endDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })
+                );
+                console.log(`Subscription confirmation email sent to ${user.email}`);
+                
+                // Send admin notification with payment details
+                const adminEmail = 'naveen21kumawat@gmail.com';
+                if (user.email !== adminEmail) {
+                  const subject = `💰 New Subscription - ${user.email} - ${subscription.planType}`;
+                  
+                  await sendMail({
+                    to: adminEmail,
+                    subject,
+                    html: `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                      <meta charset="UTF-8">
+                      <title>New Subscription - Clust AI SEO</title>
+                      <style>
+                        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { text-align: center; padding: 20px 0; border-bottom: 2px solid #4f46e5; }
+                        .logo { font-size: 24px; font-weight: bold; color: #4f46e5; margin-bottom: 10px; }
+                        .card { background: #ffffff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); padding: 25px; margin: 20px 0; }
+                        .section { margin-bottom: 20px; }
+                        .section-title { color: #4f46e5; font-size: 18px; margin-bottom: 10px; font-weight: 600; }
+                        .detail-row { display: flex; margin-bottom: 8px; }
+                        .detail-label { font-weight: 600; min-width: 150px; color: #4b5563; }
+                        .detail-value { color: #111827; }
+                        .payment-card { background: #f8fafc; border-left: 4px solid #4f46e5; padding: 15px; margin: 15px 0; }
+                        .footer { text-align: center; margin-top: 30px; color: #6b7280; font-size: 12px; border-top: 1px solid #e5e7eb; padding-top: 15px; }
+                        .badge { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; background: #e0e7ff; color: #4f46e5; }
+                      </style>
+                    </head>
+                    <body>
+                      <div class="header">
+                        <div class="logo">Clust AI SEO</div>
+                        <div>New Subscription Activated</div>
+                      </div>
+                      
+                      <div class="card">
+                        <div class="section">
+                          <div class="section-title">Subscription Details</div>
+                          <div class="detail-row">
+                            <div class="detail-label">Plan:</div>
+                            <div class="detail-value">${subscription.planType} <span class="badge">${subscription.status}</span></div>
+                          </div>
+                          <div class="detail-row">
+                            <div class="detail-label">User:</div>
+                            <div class="detail-value">${user.name || 'N/A'} (${user.email})</div>
+                          </div>
+                          <div class="detail-row">
+                            <div class="detail-label">Subscription ID:</div>
+                            <div class="detail-value">${subscription._id}</div>
+                          </div>
+                          <div class="detail-row">
+                            <div class="detail-label">Profiles Allowed:</div>
+                            <div class="detail-value">${subscription.profiles}</div>
+                          </div>
+                        </div>
+                        
+                        <div class="section">
+                          <div class="section-title">Subscription Period</div>
+                          <div class="detail-row">
+                            <div class="detail-label">Start Date:</div>
+                            <div class="detail-value">${subscription.startDate.toLocaleString()}</div>
+                          </div>
+                          <div class="detail-row">
+                            <div class="detail-label">End Date:</div>
+                            <div class="detail-value">${subscription.endDate.toLocaleString()}</div>
+                          </div>
+                        </div>
+                        
+                        <div class="payment-card">
+                          <div class="section-title">Payment Details</div>
+                          <div class="detail-row">
+                            <div class="detail-label">Subtotal:</div>
+                            <div class="detail-value">${(subscription.totalPrice * 2).toFixed(2)} ${session.currency?.toUpperCase() || 'USD'}</div>
+                          </div>
+                          <div class="detail-row">
+                            <div class="detail-label">Discount (${paymentData?.metadata?.discountPercent || '0'}%):</div>
+                            <div class="detail-value">-${(subscription.totalPrice).toFixed(2)} ${session.currency?.toUpperCase() || 'USD'}</div>
+                          </div>
+                          <div class="detail-row" style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e5e7eb;">
+                            <div class="detail-label" style="font-size: 16px;">Total Paid:</div>
+                            <div class="detail-value" style="font-size: 16px; font-weight: 700; color: #10b981;">
+                              ${subscription.totalPrice.toFixed(2)} ${session.currency?.toUpperCase() || 'USD'}
+                            </div>
+                          </div>
+                          ${paymentData?.metadata?.coupon ? `
+                          <div class="detail-row" style="margin-top: 5px;">
+                            <div class="detail-label">Coupon Applied:</div>
+                            <div class="detail-value">${paymentData.metadata.coupon}</div>
+                          </div>` : ''}
+                        </div>
+                        
+                        <div class="section">
+                          <div class="section-title">Session Details</div>
+                          <div class="detail-row">
+                            <div class="detail-label">Session ID:</div>
+                            <div class="detail-value" style="font-family: monospace; font-size: 12px;">${sessionId}</div>
+                          </div>
+                          <div class="detail-row">
+                            <div class="detail-label">Payment Method:</div>
+                            <div class="detail-value">${session.payment_method_types?.[0] || 'card'}</div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="footer">
+                        <p>This is an automated notification from Clust AI SEO. Please do not reply to this email.</p>
+                        <p>© ${new Date().getFullYear()} Clust AI SEO. All rights reserved.</p>
+                      </div>
+                    </body>
+                    </html>
+                    `
+                  });
+                  console.log(`Admin notification sent to ${adminEmail}`);
+                }
+              }
+            } catch (emailError) {
+              console.error('Failed to send subscription email:', emailError);
+              // Don't fail the request if email sending fails
+            }
           }
 
           return res.json({
