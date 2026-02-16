@@ -29,10 +29,12 @@ const SocialSharing = () => {
 
   // Function to get auto keywords from selected business
   const getAutoKeywords = () => {
+    if (!selectedBusiness) return [];
+    
     const autoKeywords = [];
     
     // Add business name as a keyword
-    if (selectedBusiness && selectedBusiness.title) {
+    if (selectedBusiness.title) {
       let businessName = '';
       if (typeof selectedBusiness.title === 'string') {
         businessName = selectedBusiness.title;
@@ -45,7 +47,7 @@ const SocialSharing = () => {
     }
     
     // Add category as a keyword
-    if (selectedBusiness && selectedBusiness.categories && selectedBusiness.categories.primaryCategory) {
+    if (selectedBusiness.categories?.primaryCategory) {
       const category = selectedBusiness.categories.primaryCategory;
       let categoryName = '';
       if (typeof category === 'string') {
@@ -62,7 +64,65 @@ const SocialSharing = () => {
       }
     }
     
-    return autoKeywords;
+    // Add address from storefrontAddress or location using the same pattern as BusinessDetails.jsx
+    const extractValue = (obj, ...keys) => {
+      if (!obj) return '';
+      if (typeof obj === 'string' || typeof obj === 'number') return String(obj);
+      for (const key of keys) {
+        if (obj[key] !== undefined && obj[key] !== null) {
+          return String(obj[key]);
+        }
+      }
+      return '';
+    };
+
+    // Try to get address from storefrontAddress first, then location, then address
+    const addressSource = selectedBusiness.storefrontAddress || selectedBusiness.location || selectedBusiness.address;
+    if (addressSource) {
+      const addressComponents = [];
+      
+      // Get address lines (handle both array and single string)
+      const addressLines = [];
+      if (addressSource.addressLines) {
+        if (Array.isArray(addressSource.addressLines)) {
+          addressLines.push(...addressSource.addressLines);
+        } else {
+          addressLines.push(addressSource.addressLines);
+        }
+      }
+      
+      // Add street address (first line) if available
+      if (addressLines.length > 0) {
+        const streetAddress = addressLines[0].replace(/[^\w\s-.,#]/g, ' ').replace(/\s+/g, ' ').trim();
+        if (streetAddress) {
+          addressComponents.push(streetAddress);
+        }
+      }
+      
+      // Add locality (city), administrativeArea (state), and postalCode
+      const locality = extractValue(addressSource, 'locality', 'city');
+      const adminArea = extractValue(addressSource, 'administrativeArea', 'state', 'province');
+      const postalCode = extractValue(addressSource, 'postalCode', 'zip');
+      
+      // Combine city, state, and zip
+      const cityStateZip = [locality, adminArea, postalCode].filter(Boolean).join(', ');
+      if (cityStateZip) {
+        addressComponents.push(cityStateZip);
+      }
+      
+      // Add the complete address as a keyword if we have any components
+      if (addressComponents.length > 0) {
+        const fullAddress = addressComponents.join(' '); // Changed from \n to space
+        if (fullAddress && !autoKeywords.includes(fullAddress)) {
+          autoKeywords.push(fullAddress);
+        }
+      }
+    }
+    
+    // Only include string values in the keywords array and remove duplicates
+    return [...new Set(autoKeywords.filter(keyword => 
+      typeof keyword === 'string' && keyword.trim() !== ''
+    ))];
   };
 
   const [formData, setFormData] = useState({
@@ -119,13 +179,37 @@ const SocialSharing = () => {
 
     // Auto-fill based on CTA type
     setFormData(prev => {
-      // Get current keywords that are not CTA type
+      // Get current keywords that are not CTA related
       const nonCtaKeywords = Array.isArray(prev.keywordsArray) 
-        ? prev.keywordsArray.filter(kw => typeof kw === 'string' || kw.type !== 'cta')
+        ? prev.keywordsArray.filter(kw => {
+            if (typeof kw === 'string') return true;
+            return kw.type !== 'cta' && kw.type !== 'cta_value';
+          })
         : [];
       
-      // Get new CTA keywords
-      const ctaKeywords = type !== 'NONE' ? [getCtaLabel(type)] : [];
+      // Create CTA keyword objects
+      const ctaKeywords = [];
+      if (type !== 'NONE') {
+        // Add CTA type as a keyword
+        ctaKeywords.push({
+          type: 'cta',
+          value: getCtaLabel(type),
+          auto: true
+        });
+        
+        // Add CTA value (URL or phone) as a keyword if available
+        const ctaValue = type === 'CALL' 
+          ? (prev.cta?.phone || phoneNumber || '')
+          : (prev.cta?.url || websiteUri || '');
+          
+        if (ctaValue) {
+          ctaKeywords.push({
+            type: 'cta_value',
+            value: ctaValue,
+            auto: true
+          });
+        }
+      }
       
       return {
         ...prev,
@@ -141,23 +225,69 @@ const SocialSharing = () => {
   };
 
   const handleCtaUrlChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      cta: {
+    const newUrl = e.target.value;
+    setFormData(prev => {
+      // Update CTA URL
+      const updatedCta = {
         ...prev.cta,
-        url: e.target.value
-      }
-    }));
+        url: newUrl
+      };
+      
+      // Get current keywords that are not CTA value
+      const nonCtaValueKeywords = Array.isArray(prev.keywordsArray) 
+        ? prev.keywordsArray.filter(kw => {
+            if (typeof kw === 'string') return true;
+            return kw.type !== 'cta_value' || kw.ctaType !== prev.cta.type;
+          })
+        : [];
+      
+      // Add new CTA value as a keyword if URL is not empty
+      const ctaValueKeywords = newUrl ? [{
+        type: 'cta_value',
+        value: newUrl,
+        ctaType: prev.cta.type,
+        auto: true
+      }] : [];
+      
+      return {
+        ...prev,
+        cta: updatedCta,
+        keywordsArray: [...nonCtaValueKeywords, ...ctaValueKeywords].filter(Boolean)
+      };
+    });
   };
 
   const handleCtaPhoneChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      cta: {
+    const newPhone = e.target.value;
+    setFormData(prev => {
+      // Update CTA phone
+      const updatedCta = {
         ...prev.cta,
-        phone: e.target.value
-      }
-    }));
+        phone: newPhone
+      };
+      
+      // Get current keywords that are not CTA value
+      const nonCtaValueKeywords = Array.isArray(prev.keywordsArray) 
+        ? prev.keywordsArray.filter(kw => {
+            if (typeof kw === 'string') return true;
+            return kw.type !== 'cta_value' || kw.ctaType !== 'CALL';
+          })
+        : [];
+      
+      // Add new CTA value as a keyword if phone is not empty
+      const ctaValueKeywords = newPhone ? [{
+        type: 'cta_value',
+        value: newPhone,
+        ctaType: 'CALL',
+        auto: true
+      }] : [];
+      
+      return {
+        ...prev,
+        cta: updatedCta,
+        keywordsArray: [...nonCtaValueKeywords, ...ctaValueKeywords].filter(Boolean)
+      };
+    });
   };
 
   // Helper function to get CTA keywords
@@ -235,7 +365,18 @@ const SocialSharing = () => {
     
     setFormData(prev => ({
       ...prev,
-      keywordsArray: prev.keywordsArray.filter(keyword => keyword !== keywordToRemove)
+      keywordsArray: prev.keywordsArray.filter(keyword => {
+        // If both are strings, compare directly
+        if (typeof keyword === 'string' && typeof keywordToRemove === 'string') {
+          return keyword !== keywordToRemove;
+        }
+        // If both are objects, compare their values
+        if (typeof keyword === 'object' && typeof keywordToRemove === 'object') {
+          return JSON.stringify(keyword) !== JSON.stringify(keywordToRemove);
+        }
+        // If one is string and the other is object, keep both
+        return true;
+      })
     }));
   };
 
@@ -245,15 +386,41 @@ const SocialSharing = () => {
       return;
     }
 
-    if (formData.keywordsArray.length === 0) {
-      toast.error('At least one keyword is required for AI generation');
+    // Get only the keywords that are explicitly selected (not auto-added)
+    const selectedKeywords = formData.keywordsArray
+      .filter(kw => {
+        // Include if it's a direct string, a CTA value, or not marked as auto: true
+        if (typeof kw === 'string') return true;
+        // Include CTA values even if they're auto-generated
+        if (kw.type === 'cta' || kw.type === 'cta_value') return true;
+        // Exclude other auto-generated keywords
+        return !kw.auto;
+      })
+      .map(kw => {
+        // Convert objects to their string values
+        if (typeof kw === 'string') return kw;
+        return kw.value || '';
+      })
+      .filter(Boolean); // Remove any empty strings
+
+    if (selectedKeywords.length === 0) {
+      toast.error('Please add at least one keyword for AI generation');
       return;
     }
 
     setIsGeneratingAI(true);
     try {
       const postType = formData.scheduleType === 'later' ? 'promotional' : 'engagement';
-      const aiContent = await generateAIPost(selectedBusiness, formData.keywordsArray, postType);
+      
+      // Create context with only the essential business info
+      const enhancedContext = {
+        name: selectedBusiness.title || selectedBusiness.name || '',
+        category: selectedBusiness.categories?.primaryCategory || '',
+        // No automatic address or contact info unless explicitly in keywords
+      };
+
+      // Only pass the explicitly selected keywords
+      const aiContent = await generateAIPost(enhancedContext, selectedKeywords, postType);
       
       setFormData(prev => ({
         ...prev,
@@ -365,7 +532,10 @@ const SocialSharing = () => {
       // Prepare the data for the API
       const postData = {
         content: formData.postText,
-        keywords: formData.keywordsArray,
+        // Filter keywords to only include string values or extract value from objects
+        keywords: formData.keywordsArray
+          .filter(item => typeof item === 'string' || (item && typeof item === 'object' && item.value))
+          .map(item => typeof item === 'string' ? item : item.value),
         isScheduled: formData.scheduleType === 'later',
         scheduledFor: formData.scheduleType === 'later' ? `${formData.scheduleDate}T${formData.scheduleTime}:00` : null,
         isRecurring: formData.repeat,
@@ -549,20 +719,34 @@ const SocialSharing = () => {
             {formData.keywordsArray.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-3">
                 {formData.keywordsArray.map((keyword, index) => {
-                  // Check if this is an auto keyword
+                  // Check if this is a keyword object or a string
+                  const isKeywordObject = typeof keyword === 'object' && keyword !== null;
+                  const keywordValue = isKeywordObject ? keyword.value : keyword;
+                  
+                  // Check if this is an auto keyword (either from autoKeywords or marked as auto)
                   const autoKeywords = getAutoKeywords();
-                  const isAutoKeyword = autoKeywords.includes(keyword);
+                  const isAutoKeyword = isKeywordObject 
+                    ? keyword.auto === true 
+                    : autoKeywords.includes(keyword);
+                  
+                  // Determine if this is a CTA keyword
+                  const isCtaKeyword = isKeywordObject && keyword.type === 'cta';
+                  const isCtaValue = isKeywordObject && keyword.type === 'cta_value';
                   
                   return (
                     <span
                       key={index}
                       className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${
                         isAutoKeyword 
-                          ? 'bg-purple-600 text-white' 
+                          ? isCtaKeyword 
+                            ? 'bg-green-600 text-white' 
+                            : 'bg-purple-600 text-white'
                           : 'bg-blue-600 text-white'
                       }`}
                     >
-                      {keyword}
+                      {isCtaKeyword ? `[${keywordValue}]` : keywordValue}
+                      
+                      {/* Show remove button only for non-auto keywords */}
                       {!isAutoKeyword && (
                         <button
                           type="button"
@@ -572,8 +756,12 @@ const SocialSharing = () => {
                           <FaTimes className="w-3 h-3" />
                         </button>
                       )}
+                      
+                      {/* Show auto indicator for auto-generated keywords */}
                       {isAutoKeyword && (
-                        <span className="ml-2 text-xs opacity-75">(auto)</span>
+                        <span className="ml-2 text-xs opacity-75">
+                          {isCtaKeyword ? '(CTA)' : isCtaValue ? '(CTA Value)' : '(auto)'}
+                        </span>
                       )}
                     </span>
                   );
@@ -655,8 +843,8 @@ const SocialSharing = () => {
                         : 'bg-white border-gray-300 text-black placeholder-gray-500'
                     } border`}
                     required
-                    pattern="[+]{0,1}[0-9\s-()]{10,}"
-                    title="Please enter a valid phone number (e.g., +1234567890)"
+                    pattern="[0-9+\-() ]{10,}"
+                    title="Please enter a valid phone number (e.g., +1234567890 or 123-456-7890)"
                   />
                 </div>
               )}
