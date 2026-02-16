@@ -42,8 +42,7 @@ function MakeReview() {
   const [submitted, setSubmitted] = useState(false);
 
   const handleClose = () => {
-    // Navigate back or to home
-    navigate(-1);
+    navigate('/dashboard/reviews');
   };
 
   const handleStarClick = async (rating) => {
@@ -188,7 +187,7 @@ function MakeReview() {
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
-      <div className="w-full max-w-4xl bg-white rounded-lg shadow-sm border border-gray-100 relative overflow-hidden">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm border border-gray-100 relative overflow-hidden p-6">
         {/* Close Button */}
         <button 
           onClick={handleClose}
@@ -197,82 +196,54 @@ function MakeReview() {
           <FiX className="w-5 h-5" />
         </button>
         
-        <div className="md:flex">
-          {/* Left Column - Header */}
-          <div className="hidden md:flex flex-col justify-center items-center p-8 bg-gray-50 w-full md:w-1/3 lg:w-2/5">
-            <div className="text-center">
-              {/* Google Logo */}
-              <div className="mb-6">
-                <img 
-                  src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" 
-                  alt="Google" 
-                  className="h-8 mx-auto"
-                />
-              </div>
-              
-              <h1 className="text-2xl font-medium text-gray-900 mb-2">
-                We Value Your Feedback
-              </h1>
-              <p className="text-gray-500 text-sm">
-                How was your experience with us?
-              </p>
-              
-              {/* Powered By */}
-              <div className="mt-8">
-                <div className="text-center">
-                  <div className="text-xs font-medium text-gray-400 mb-2">POWERED BY</div>
-                  <div className="flex justify-center">
-                    <img 
-                      src="/clurst transparent logo 2 for white baground.png" 
-                      alt="Clurst Logo"
-                      className="h-32 w-auto object-contain" 
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Right Column - Form */}
-          <div className="w-full md:w-2/3 lg:w-3/5 md:p-6">
-            {/* Mobile Header - Only shown on small screens */}
-            <div className="md:hidden text-center mb-6">
-              <div className="mb-4">
-                <img 
-                  src="https://www.google.com/images/branding/googlelogo/1x/googlelogo_color_272x92dp.png" 
-                  alt="Google" 
-                  className="h-6 mx-auto"
-                />
-              </div>
-              <h1 className="text-xl font-medium text-gray-900 mb-1">
-                We Value Your Feedback
-              </h1>
-              <p className="text-gray-500 text-sm mb-4">
-                How was your experience with us?
-              </p>
-            </div>
-
-            {/* Star Rating */}
-            <div className="flex justify-center my-6">
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              type="button"
-              onClick={() => handleStarClick(star)}
-              onMouseEnter={() => setHoveredRating(star)}
-              onMouseLeave={() => setHoveredRating(0)}
-              className="focus:outline-none mx-1"
-            >
-              <svg
-                className={`w-12 h-12 ${(hoveredRating || selectedRating) >= star ? 'text-yellow-400' : 'text-gray-300'}`}
-                fill="currentColor"
-                viewBox="0 0 20 20"
+        {/* Centered Content */}
+        <div className="text-center py-6">
+          {/* Blue Star */}
+          <div className="flex justify-center mb-4">
+            <div className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+              <svg 
+                className="w-6 h-6 text-white" 
+                fill="currentColor" 
+                viewBox="0 0 20 20" 
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
-            </button>
-          ))}
+            </div>
+          </div>
+          
+          {/* Main Heading */}
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            How was your experience?
+          </h1>
+          
+          {/* Subheading */}
+          <p className="text-gray-600 mb-6">
+            We'd love to hear your feedback
+          </p>
+          
+          {/* Star Rating */}
+          <div className="flex justify-center my-6">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => handleStarClick(star)}
+                onMouseEnter={() => setHoveredRating(star)}
+                onMouseLeave={() => setHoveredRating(0)}
+                className="focus:outline-none mx-1"
+              >
+                <svg
+                  className={`w-12 h-12 ${(hoveredRating || selectedRating) >= star ? 'text-yellow-400' : 'text-gray-300'}`}
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              </button>
+            ))}
+          </div>
         </div>
         
         {/* Rating Labels */}
@@ -297,9 +268,9 @@ function MakeReview() {
         {/* Feedback Form (for 1-3 stars) */}
         {showForm && (
           <div className="animate-fadeIn">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
+            {/* <h3 className="text-lg font-semibold text-gray-800 mb-4">
               We'd love to hear your feedback
-            </h3>
+            </h3> */}
             <form onSubmit={handleSubmitFeedback} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -450,6 +421,7 @@ function MakeReview() {
                 Maybe later
               </button>
             </div>
+            
           </div>
         )}
 
@@ -459,7 +431,10 @@ function MakeReview() {
             <p>Please select a rating to continue</p>
           </div>
         )}
-          </div>
+        
+        {/* Powered By */}
+        <div className="text-center mt-8 pt-4 border-t border-gray-100">
+          <p className="text-xs text-gray-500">Powered by Clurst</p>
         </div>
       </div>
     </div>
