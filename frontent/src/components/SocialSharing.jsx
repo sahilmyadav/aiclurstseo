@@ -6,6 +6,7 @@ import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import { generateAIPost } from '../utils/suggestion';
 import { useTheme } from '../context/ThemeContext';
 import BusinessProfileDropdown from './common/BusinessProfileDropdown';
+import MyScheduledPosts from './MyScheduledPosts';
 
 const SocialSharing = () => {
   const { 
@@ -994,8 +995,22 @@ const SocialSharing = () => {
             </button>
           </div>
         </form>
+        
+        {/* Scheduled Posts Section */}
+        <div className="mt-12">
+          <h2 className={`text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>
+            My Scheduled Posts
+          </h2>
+          {selectedBusiness ? (
+            <MyScheduledPosts businessId={selectedBusiness.name} />
+          ) : (
+            <div className={`text-center py-4 ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`}>
+              Please select a business to view scheduled posts
+            </div>
+          )}
         </div>
       </div>
+    </div>
     </div>
   );
 };
