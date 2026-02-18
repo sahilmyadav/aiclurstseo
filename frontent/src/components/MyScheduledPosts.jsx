@@ -273,7 +273,7 @@ const MyScheduledPosts = () => {
         {posts.map((post) => (
           <div 
             key={post._id || post.id} 
-            className={`rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 h-full flex flex-col ${
+            className={`rounded-xl p-2 shadow-lg hover:shadow-xl transition-all duration-300 h-full flex flex-col ${
               theme === 'dark' 
                 ? 'bg-gradient-to-br from-[#1a1b2e] to-[#121324] border border-white/5 hover:border-blue-500/30' 
                 : 'bg-white border border-gray-200 hover:border-purple-500/30'

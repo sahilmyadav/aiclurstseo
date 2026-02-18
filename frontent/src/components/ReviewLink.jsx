@@ -63,32 +63,32 @@ export default function ReviewPage() {
         {
           id: 1,
           name: "Abhishek Thakur",
-          text: "Effortlessly boost your online reputation and search rankings with AI-powered reviews and SEO recommendations. This tool makes it super easy to collect reviews and reply instantly with AI.",
-          stars: 5,
+          text: "The platform has potential but needs improvement in response time. The AI suggestions are helpful but could be more accurate.",
+          stars: 3,
         },
         {
           id: 2,
           name: "Riya Mehta",
-          text: "Great platform! It helped me manage my customer feedback more effectively. The AI-generated responses are a lifesaver.",
-          stars: 4,
+          text: "It's an okay platform for basic review management. The interface is clean but sometimes lags. Customer support is responsive though.",
+          stars: 3,
         },
         {
           id: 3,
           name: "Arjun Kapoor",
-          text: "Amazing dashboard and very clean UI. Tracking reviews and ratings has never been easier for my business.",
-          stars: 5,
+          text: "The dashboard is decent but could use more features. I expected better analytics for the price point. The review collection works fine.",
+          stars: 2,
         },
         {
           id: 4,
           name: "Sneha Patel",
-          text: "It's good overall, but I would love to see more customization options for the reports.",
-          stars: 3,
+          text: "It's an average tool. The AI responses are hit or miss, and the customization options are limited. Works for basic needs but don't expect too much.",
+          stars: 2,
         },
         {
           id: 5,
           name: "Vikram Singh",
-          text: "This platform has simplified review collection and response management for us. Highly recommend it!",
-          stars: 5,
+          text: "The platform is functional but has some bugs. The mobile experience could be better. I'm keeping it for now but looking at alternatives.",
+          stars: 3,
         },
       ];
 
@@ -117,7 +117,7 @@ export default function ReviewPage() {
   // Determine which URL to display
   const displayUrl = isConnected && reviewUri 
     ? reviewUri 
-    : "https://reviewlink.com";
+    : "https://www.google.com/";
 
   // Function to copy URL to clipboard
   const copyToClipboard = () => {
@@ -170,7 +170,9 @@ export default function ReviewPage() {
                       theme === 'dark' ? 'border-gray-700/50' : 'border-gray-100 hover:border-gray-200'
                     } shadow-sm hover:shadow-md transition-shadow`}>
                       <CardContent className="flex items-start gap-3 sm:gap-4 p-3 sm:p-4">
-                        <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-gray-500 flex-shrink-0"></div>
+                        <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-full bg-purple-600 flex-shrink-0 flex items-center justify-center text-white font-semibold text-sm sm:text-base">
+                          {review.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between">
                             <h3 className={`font-semibold text-sm sm:text-base truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{review.name}</h3>

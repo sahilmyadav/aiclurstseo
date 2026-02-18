@@ -621,7 +621,7 @@ const SocialSharing = () => {
 
   return (
     <div className={`w-full px-4 py-6 min-h-screen ${theme === 'dark' ? 'bg-gray-900' : 'bg-gray-50'}`}>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-8xl mx-auto">
         {/* Business Profile Section */}
         <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm border p-6 mb-2 transition-colors duration-200`}>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -634,9 +634,9 @@ const SocialSharing = () => {
                   <p className={`text-sm ${theme === 'dark' ? 'text-gray-300' : 'text-black'}`}>
                     {selectedBusiness.title?.name || selectedBusiness.title || 'Business Name'}
                   </p>
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
+                  {/* <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border border-green-200 dark:border-green-800">
                     Active
-                  </span>
+                  </span> */}
                 </div>
               ) : (
                 <p className={`text-sm ${theme === 'dark' ? 'text-gray-400' : 'text-gray-800'}`}>No business selected</p>
