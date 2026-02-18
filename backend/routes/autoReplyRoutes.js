@@ -36,7 +36,6 @@ router.get('/last-run/:userId', protect, async (req, res) => {
   }
 });
 
-// Toggle auto-reply for user
 router.post('/toggle/:userId', protect, async (req, res) => {
   try {
     const { userId } = req.params;
@@ -49,15 +48,12 @@ router.post('/toggle/:userId', protect, async (req, res) => {
       });
     }
 
-    // Toggle auto-reply status
     user.autoReply = !user.autoReply;
     
-    // If disabling auto-reply, clear timing info
     if (!user.autoReply) {
       user.autoReplyLastRun = null;
       user.autoReplyNextRun = null;
     } else {
-      // If enabling auto-reply, set next run time to 5 minutes from now
       const now = new Date();
       user.autoReplyLastRun = null; // No last run yet
       user.autoReplyNextRun = new Date(now.getTime() + 5 * 60000); // 5 minutes from now

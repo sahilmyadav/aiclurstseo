@@ -10,7 +10,6 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    // Only allow CSV files
     if (file.mimetype === 'text/csv' || file.originalname.endsWith('.csv')) {
       cb(null, true);
     } else {
@@ -19,23 +18,16 @@ const upload = multer({
   }
 });
 
-
-// POST /api/invitations/email
 router.post("/email", sendInvitationEmail);
 
-// POST /api/invitations/email/bulk
 router.post("/email/bulk", sendBulkEmailInvitations);
 
-// POST /api/invitations/email/upload
 router.post("/email/upload", upload.single('file'), handleBulkEmailUpload);
 
-// POST /api/invitations/sms
 router.post("/sms", sendSmsInvitation);
 
-// POST /api/invitations/sms/bulk
 router.post("/sms/bulk", sendBulkSmsInvitations);
 
-// POST /api/invitations/sms/upload
 router.post("/sms/upload", upload.single('file'), handleBulkSmsUpload);
 
 export default router;
