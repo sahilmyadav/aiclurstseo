@@ -5,6 +5,7 @@ import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import BusinessProfileDropdown from './common/BusinessProfileDropdown';
 import PerformanceGraph from './PerformanceGraph';
 import AuditInsights from './AuditInsights';
+import CompetitorDetails from './CompetitorDetails';
 
 import {
   Brain,
@@ -17,7 +18,8 @@ import {
   MousePointer,
   Phone,
   MapPin,
-  MessageSquare
+  MessageSquare,
+  Users
 } from 'lucide-react';
 
 const AuditTool = () => {
@@ -107,29 +109,31 @@ const AuditTool = () => {
 
           {/* ================= Tabs ================= */}
           {selectedBusiness && (
-            <div
-              className={`flex gap-2 mt-4 p-1 rounded-xl w-fit transition-all duration-300 ${
-                theme === 'dark'
-                  ? 'bg-gray-800/70 border border-white/10'
-                  : 'bg-white/80 border border-gray-100 shadow-sm'
-              }`}
-            >
-              {['overview', 'performance', 'insights'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-4 py-2 text-sm font-medium rounded-md transition-all duration-300
-                    ${
-                      activeTab === tab
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'
-                        : theme === 'dark'
-                        ? 'text-white/60 hover:text-white hover:bg-gray-700/50'
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                    }`}
-                >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
-                </button>
-              ))}
+            <div className="mt-4">
+              <div
+                className={`grid grid-cols-2 gap-2 p-1 rounded-xl transition-all duration-300 ${
+                  theme === 'dark'
+                    ? 'bg-gray-800/70 border border-white/10'
+                    : 'bg-white/80 border border-gray-100 shadow-sm'
+                }`}
+              >
+                {['overview', 'performance', 'insights', 'competitors'].map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`px-3 sm:px-4 py-2 text-sm font-medium rounded-md transition-all duration-300
+                      ${
+                        activeTab === tab
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md'
+                          : theme === 'dark'
+                          ? 'text-white/60 hover:text-white hover:bg-gray-700/50'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                      }`}
+                  >
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
@@ -252,6 +256,22 @@ const AuditTool = () => {
                 performanceData={performanceData}
                 theme={theme}
                 selectedBusiness={selectedBusiness}
+              />
+            )}
+
+            {/* ================= COMPETITORS ================= */}
+            {activeTab === 'competitors' && (
+              <CompetitorDetails
+                accountId={selectedBusiness?.accountId}
+                locationId={selectedBusiness?.name?.split('/')[1]}
+                businessName={selectedBusiness?.title || selectedBusiness?.locationName}
+                businessCategory={selectedBusiness?.categories?.primaryCategory ?
+                  selectedBusiness.categories.primaryCategory.displayName ||
+                  selectedBusiness.categories.primaryCategory.name : 'business'}
+                businessLat={selectedBusiness?.latlng?.latitude ? 
+                  parseFloat(selectedBusiness.latlng.latitude.value || selectedBusiness.latlng.latitude.lat || selectedBusiness.latlng.latitude) : null}
+                businessLng={selectedBusiness?.latlng?.longitude ? 
+                  parseFloat(selectedBusiness.latlng.longitude.value || selectedBusiness.latlng.longitude.lng || selectedBusiness.latlng.longitude) : null}
               />
             )}
           </>

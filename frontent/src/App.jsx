@@ -35,6 +35,7 @@ import BusinessDetails from './components/BusinessDetails'
 import UserSubscriptionDetails from './components/subscription/UserSubsriptionDetails'
 import SimpleReviews from './components/SimpleReviews'
 import AuditTool from './components/AuditTool'
+import CompetitorDetails from './components/CompetitorDetails'
 
 const AppContent = () => {
   const location = useLocation()

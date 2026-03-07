@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
@@ -17,7 +17,10 @@ import {
   Info,
   CheckCircle2,
   XCircle,
-  Image
+  Image,
+  Users,
+  Search,
+  Loader2
 } from 'lucide-react';
 import Report from './Report';
 
@@ -25,6 +28,14 @@ const BusinessDetails = () => {
   const { theme } = useTheme();
   const { selectedBusiness, loading, media, loadingMedia, mediaError, fetchMedia } = useGoogleBusiness();
   const navigate = useNavigate();
+
+  // Competitor finder state
+  const [competitors, setCompetitors] = useState([]);
+  const [loadingCompetitors, setLoadingCompetitors] = useState(false);
+  const [competitorError, setCompetitorError] = useState(null);
+  const [userLocation, setUserLocation] = useState(null);
+  const [searchType, setSearchType] = useState('business'); // 'user' or 'business'
+  const [isCached, setIsCached] = useState(false);
 
   // Fetch media when component mounts and business is selected
   useEffect(() => {
@@ -156,6 +167,109 @@ const BusinessDetails = () => {
       return parts.length > 1 ? parts[1] : selectedBusiness.name;
     }
     return 'N/A';
+  };
+
+  // Competitor finder functions
+  const getUserLocation = () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation is not supported by this browser'));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const location = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          setUserLocation(location);
+          resolve(location);
+        },
+        (error) => {
+          reject(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000 // 5 minutes
+        }
+      );
+    });
+  };
+
+  const fetchCompetitors = async () => {
+    try {
+      setLoadingCompetitors(true);
+      setCompetitorError(null);
+
+      let searchLocation;
+      let keyword = '';
+
+      if (searchType === 'user') {
+        // Use user's current location
+        if (!userLocation) {
+          await getUserLocation();
+        }
+        searchLocation = userLocation;
+      } else {
+        // Use business location
+        const businessLat = extractValue(selectedBusiness.latlng?.latitude, 'value', 'lat');
+        const businessLng = extractValue(selectedBusiness.latlng?.longitude, 'value', 'lng');
+        
+        if (businessLat === 'N/A' || businessLng === 'N/A') {
+          throw new Error('Business location not available');
+        }
+        
+        searchLocation = {
+          lat: parseFloat(businessLat),
+          lng: parseFloat(businessLng)
+        };
+      }
+
+      // Get business category for keyword search
+      if (selectedBusiness.categories?.primaryCategory) {
+        const categoryName = extractValue(selectedBusiness.categories.primaryCategory, 'displayName', 'name');
+        if (categoryName !== 'N/A') {
+          keyword = categoryName.toLowerCase();
+        }
+      }
+
+      const accountId = extractValue(selectedBusiness.accountId);
+      const locationId = getLocationId();
+
+      const response = await fetch(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/competitors/nearby?` +
+        new URLSearchParams({
+          lat: searchLocation.lat,
+          lng: searchLocation.lng,
+          keyword: keyword,
+          radius: '5000',
+          type: 'establishment',
+          accountId: accountId,
+          locationId: locationId,
+          searchType: searchType
+        })
+      );
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch competitors');
+      }
+
+      setCompetitors(data.data.competitors || []);
+      setIsCached(data.data.cached || false);
+    } catch (error) {
+      console.error('Error fetching competitors:', error);
+      setCompetitorError(error.message);
+    } finally {
+      setLoadingCompetitors(false);
+    }
+  };
+
+  const handleSearchCompetitors = () => {
+    fetchCompetitors();
   };
 
   const locationId = getLocationId();
@@ -433,23 +547,31 @@ const BusinessDetails = () => {
                     </a>
                   )}
                   {selectedBusiness.latlng?.latitude && selectedBusiness.latlng?.longitude && (
-                    <div className={`mt-4 rounded-lg overflow-hidden ${theme === 'dark' ? 'border border-white/10' : 'border border-gray-200'}`}>
-                      <iframe
-                        width="100%"
-                        height="300"
-                        style={{ border: 0 }}
-                        loading="lazy"
-                        allowFullScreen
-                        referrerPolicy="no-referrer-when-downgrade"
-                        src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}&q=${extractValue(selectedBusiness.latlng?.latitude, 'value', 'lat')},${extractValue(selectedBusiness.latlng?.longitude, 'value', 'lng')}`}
-                      ></iframe>
+                    <div className={`mt-4 p-4 rounded-lg ${theme === 'dark'
+                      ? 'bg-blue-500/10 border border-blue-500/20'
+                      : 'bg-blue-50 border border-blue-200'}`}>
+                      <p className={`text-sm font-medium mb-2 ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>
+                        📍 Business Location Coordinates
+                      </p>
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className={`font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Latitude:</span>
+                          <span className={`ml-2 font-mono ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            {extractValue(selectedBusiness.latlng?.latitude, 'value', 'lat')}
+                          </span>
+                        </div>
+                        <div>
+                          <span className={`font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Longitude:</span>
+                          <span className={`ml-2 font-mono ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                            {extractValue(selectedBusiness.latlng?.longitude, 'value', 'lng')}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
               </div>
             )}
-
-            {/* Business Hours */}
             {selectedBusiness.regularHours?.periods && selectedBusiness.regularHours.periods.length > 0 && (
               <div className={`rounded-xl p-6 ${theme === 'dark' 
                 ? 'bg-[#1a1b2e]/90 border border-white/10' 
@@ -585,6 +707,126 @@ const BusinessDetails = () => {
                     <span className={theme === 'dark' ? 'text-blue-300 font-medium' : 'text-blue-700 font-medium'}>Visit Website</span>
                     <ExternalLink className={`w-4 h-4 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
                   </a>
+                )}
+              </div>
+            </div>
+
+            {/* Competitor Finder */}
+            <div className={`rounded-xl p-6 ${theme === 'dark'
+              ? 'bg-[#1a1b2e]/90 border border-white/10'
+              : 'bg-white border border-gray-200 shadow-sm'}`}>
+              <div className="flex items-center mb-4">
+                <Users className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-700'}`} />
+                <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Competitor Finder</h2>
+              </div>
+
+              <div className="space-y-4">
+                {/* Search Type Selector */}
+                <div>
+                  <label className={`text-sm font-medium mb-2 block ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>Search Location</label>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setSearchType('business')}
+                      className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                        searchType === 'business'
+                          ? theme === 'dark'
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                            : 'bg-purple-100 text-purple-700 border border-purple-200'
+                          : theme === 'dark'
+                            ? 'bg-gray-700/50 text-white/60 border border-white/10'
+                            : 'bg-gray-100 text-gray-600 border border-gray-200'
+                      }`}
+                    >
+                      Business Location
+                    </button>
+                  </div>
+                </div>
+
+                {/* Search Button */}
+                <button
+                  onClick={handleSearchCompetitors}
+                  disabled={loadingCompetitors}
+                  className={`w-full flex items-center justify-center px-4 py-2 rounded-lg font-medium transition ${
+                    theme === 'dark'
+                      ? 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white disabled:opacity-50'
+                      : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white disabled:opacity-50'
+                  }`}
+                >
+                  {loadingCompetitors ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Searching...
+                    </>
+                  ) : (
+                    <>
+                      <Search className="w-4 h-4 mr-2" />
+                      Find Competitors
+                    </>
+                  )}
+                </button>
+
+                {/* Error Message */}
+                {competitorError && (
+                  <div className={`p-3 rounded-lg ${theme === 'dark'
+                    ? 'bg-red-500/10 border border-red-500/20'
+                    : 'bg-red-50 border border-red-200'}`}>
+                    <p className={`text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-600'}`}>
+                      {competitorError}
+                    </p>
+                  </div>
+                )}
+
+                {/* Competitors List */}
+                {competitors.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h3 className={`text-sm font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+                        Nearby Competitors ({competitors.length}) {isCached && <span className={`ml-2 text-xs px-2 py-1 rounded-full ${
+                          theme === 'dark'
+                            ? 'bg-green-500/20 text-green-400'
+                            : 'bg-green-100 text-green-700'
+                        }`}>
+                          <CheckCircle2 className="w-3 h-3 inline mr-1" />
+                          Cached
+                        </span>}
+                      </h3>
+                    </div>
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {competitors.map((competitor, index) => (
+                        <div
+                          key={index}
+                          className={`p-3 rounded-lg border transition ${
+                            theme === 'dark'
+                              ? 'bg-gray-800/50 border-white/10 hover:bg-gray-700/50'
+                              : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className={`font-medium text-sm ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                                {index + 1}. {competitor.name}
+                              </h4>
+                              <p className={`text-xs mt-1 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
+                                {competitor.address}
+                              </p>
+                            </div>
+                            {competitor.rating && competitor.rating !== 'N/A' && (
+                              <div className={`flex items-center text-sm font-medium ${
+                                theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'
+                              }`}>
+                                ⭐ {competitor.rating}
+                                {competitor.totalRatings && (
+                                  <span className={`ml-1 text-xs ${theme === 'dark' ? 'text-white/40' : 'text-gray-500'}`}>
+                                    ({competitor.totalRatings})
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
