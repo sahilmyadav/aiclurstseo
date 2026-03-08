@@ -299,7 +299,7 @@ const BusinessDetails = () => {
             <h1 className={`text-3xl font-bold mb-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{businessTitle}</h1>
             <p className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Complete business information and settings</p>
           </div>
-          <Report buttonText="Download Report" className="mt-2" />
+          <Report buttonText="Download Report" className="mt-2 mr-10 sm:mr-20" />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

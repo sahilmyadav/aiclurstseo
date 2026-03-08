@@ -113,7 +113,13 @@ const Dashboard = () => {
       <div className={`flex-1 p-3 sm:p-6 transition-all duration-300 ease-in-out w-full`}>
         <div className="h-screen overflow-hidden">
           <div className="pb-0">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <BusinessProfileDropdown 
+                onSelect={handleBusinessSelect}
+                className="w-64"
+                showLabel={false}
+                multiple={selectedBusinesses && selectedBusinesses.length > 1}
+              />
               <div className="space-y-3">
                 {/* <h1 className={`text-xl sm:text-2xl md:text-3xl font-extrabold tracking-tight ${
                   theme === 'dark' ? 'text-white' : 'text-purple-900'
@@ -132,15 +138,6 @@ const Dashboard = () => {
                     {selectedBusinesses.length} business profiles selected
                   </p>
                 )}
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <BusinessProfileDropdown 
-                  onSelect={handleBusinessSelect}
-                  className="w-64"
-                  showLabel={false}
-                  multiple={selectedBusinesses && selectedBusinesses.length > 1}
-                />
               </div>
             </div>
           </div>

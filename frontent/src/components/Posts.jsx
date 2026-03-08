@@ -776,7 +776,7 @@ const Posts = () => {
                   multiple={selectedBusinesses && selectedBusinesses.length > 1}
                 />
               </div>
-              <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3">
+              <div className="flex-shrink-0 flex flex-col sm:flex-row gap-3 pr-10 sm:pr-20">
                 <div>
                   <button
                     onClick={() => {
