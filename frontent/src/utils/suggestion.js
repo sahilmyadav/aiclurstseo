@@ -149,15 +149,25 @@ Example format (from customer perspective):
     // Extract JSON array from the response
     try {
       const jsonMatch = textResponse.match(/\[.*\]/s);
+      let suggestions = [];
       if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
+        suggestions = JSON.parse(jsonMatch[0]);
       }
       // Fallback to splitting by lines if JSON parsing fails
-      return textResponse
-        .split('\n')
-        .map(line => line.replace(/^[0-9]+\.\s*["']?|["']?$/g, '').trim())
-        .filter(line => line.length > 10 && line.length < 150)
-        .slice(0, 3);
+      if (!suggestions || suggestions.length === 0) {
+        suggestions = textResponse
+          .split('\n')
+          .map(line => line.replace(/^[0-9]+\.\s*["']?|["']?$/g, '').trim())
+          .filter(line => line.length > 10 && line.length < 150)
+          .slice(0, 3);
+      }
+      // If still empty, use fallback suggestions
+      if (!suggestions || suggestions.length === 0) {
+        const { name, primaryCategory, categories } = businessData || {};
+        const category = primaryCategory || categories?.primaryCategory?.name || 'business';
+        return getFallbackSuggestions(rating, name, category);
+      }
+      return suggestions;
     } catch (e) {
       console.error('Error parsing AI response:', e);
       const { name, primaryCategory, categories } = businessData || {};
