@@ -85,7 +85,7 @@ app.use((req, res, next) => {
 app.use("/api/subscription", subscriptionRoutes);
 app.use("/api/admin/plans", planRoutes);
 app.use("/api/auto-reply", autoReplyRoutes);
-app.use("/auth/google", googleRoutes);
+app.use("/api/auth/google", googleRoutes);
 app.use("/api/auth/google/media", googleMediaRoutes);
 app.use("/api/audit", auditRoutes);
 // rate limit auth endpoints

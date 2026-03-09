@@ -220,7 +220,7 @@ const Posts = () => {
         ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date })
       });
 
-      const url = `${baseUrl}/auth/google/accounts/${accountId}/locations/${locationId}/localPosts?${params}`;
+      const url = `${baseUrl}/api/auth/google/accounts/${accountId}/locations/${locationId}/localPosts?${params}`;
 
       // console.log(`🔄 Fetching posts from:`, url);
 
@@ -558,7 +558,7 @@ const Posts = () => {
         ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date })
       });
 
-      const url = `${baseUrl}/auth/google/accounts/${businessDetails.accountId}/locations/${locationId}/localPosts?${params}`;
+      const url = `${baseUrl}/api/auth/google/accounts/${businessDetails.accountId}/locations/${locationId}/localPosts?${params}`;
 
       // console.log(' Sending request to:', url);
 

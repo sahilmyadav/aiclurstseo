@@ -189,7 +189,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   // CONNECT GOOGLE
   // ==============================
   const connectGoogle = () => {
-    window.location.href = `${BACKEND_URL}/auth/google/login`;
+    window.location.href = `${BACKEND_URL}/api/auth/google/login`;
   };
  
   // ==============================
@@ -268,7 +268,7 @@ export const GoogleBusinessProvider = ({ children }) => {
     if (!googleOAuth.access_token) return;
     try {
       setLoading(true);
-      const res = await fetch(`${BACKEND_URL}/auth/google/businesses?${googleParams()}`, {
+      const res = await fetch(`${BACKEND_URL}/api/auth/google/businesses?${googleParams()}`, {
         headers: authHeaders(),
       });
 
@@ -303,7 +303,7 @@ export const GoogleBusinessProvider = ({ children }) => {
   const fetchReviews = async (accountId, locationId) => {
     try {
       setLoading(true);
-      const res = await fetch(`${BACKEND_URL}/auth/google/reviews/${accountId}/${locationId}?${googleParams()}`, {
+      const res = await fetch(`${BACKEND_URL}/api/auth/google/reviews/${accountId}/${locationId}?${googleParams()}`, {
         headers: authHeaders(),
       });
 

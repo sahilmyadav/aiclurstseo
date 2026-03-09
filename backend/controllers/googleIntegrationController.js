@@ -7,7 +7,7 @@ dotenv.config();
 const oauth2Client = new OAuth2Client(
   process.env.GOOGLE_CLIENT_ID,
   process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI || "http://localhost:8000/auth/google/google-callback"
+  process.env.GOOGLE_REDIRECT_URI || "http://localhost:8000/api/auth/google/google-callback"
 );
 
 // ⚡️ Refresh token helper
