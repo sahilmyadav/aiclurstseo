@@ -30,6 +30,8 @@ import { AdminProvider } from './context/AdminContext'
 import SubscriptionPage from './components/subscription/SubscriptionPage'
 import SubscriptionSuccess from './components/subscription/SubscriptionSuccess'
 import About from './pages/About'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfService from './pages/TermsOfService'
 import Billing from './components/subscription/Billing'
 import BusinessDetails from './components/BusinessDetails'
 import UserSubscriptionDetails from './components/subscription/UserSubsriptionDetails'
@@ -70,6 +72,8 @@ const AppContent = () => {
         } />
         }
         <Route path="/about" element={<About />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/login" element={!isAuthenticated ? <Login /> : <Navigate to="/dashboard" />} />
         <Route path="/signup" element={!isAuthenticated ? <Signup /> : <Navigate to="/dashboard" />} />
         <Route path="/forgot-password" element={ <ForgotPassword /> } />

@@ -65,6 +65,20 @@ const Navbar = () => {
             >
               About
             </Link>
+            <Link 
+              to="/privacy-policy" 
+              className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
+              activeClassName="text-purple-700 bg-purple-50"
+            >
+              Privacy Policy
+            </Link>
+            <Link 
+              to="/terms-of-service" 
+              className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
+              activeClassName="text-purple-700 bg-purple-50"
+            >
+              Terms of Service
+            </Link>
             {isAuthenticated && (
               <>
                 <Link 
@@ -157,6 +171,8 @@ const Navbar = () => {
             {[
               { name: 'Home', path: '/' },
               { name: 'About', path: '/about' },
+              { name: 'Privacy Policy', path: '/privacy-policy' },
+              { name: 'Terms of Service', path: '/terms-of-service' },
               ...(isAuthenticated ? [
                 { name: 'Dashboard', path: user?.role === 'admin' ? '/ad-dashboard' : '/dashboard' },
                 { name: 'Reviews', path: '/reviews' },
