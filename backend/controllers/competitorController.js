@@ -98,25 +98,146 @@ export const getCompetitors = async (req, res) => {
       });
     }
 
-    // Transform the response to a cleaner format
-    const competitors = response.data.results.map(place => ({
-      name: place.name,
-      rating: place.rating || null,
-      address: place.vicinity || place.formatted_address || 'Address not available',
-      placeId: place.place_id,
-      types: place.types || [],
-      priceLevel: place.price_level,
-      totalRatings: place.user_ratings_total,
-      location: {
-        lat: place.geometry?.location?.lat,
-        lng: place.geometry?.location?.lng
-      },
-      photos: place.photos?.map(photo => ({
-        photoReference: photo.photo_reference,
-        width: photo.width,
-        height: photo.height
-      })) || []
-    }));
+    // Fetch detailed info for each competitor using Place Details API
+    console.log(`Fetching details for ${response.data.results.length} competitors...`);
+    
+    const detailsPromises = response.data.results.map(async (place) => {
+      try {
+        // Fetch place details using legacy API
+        const detailsResponse = await axios.get('https://maps.googleapis.com/maps/api/place/details/json', {
+          params: {
+            place_id: place.place_id,
+            fields: 'name,rating,formatted_address,formatted_phone_number,website,opening_hours,types,photos,business_status,price_level,user_ratings_total,geometry,reviews',
+            key: apiKey
+          }
+        });
+
+        const details = detailsResponse.data.result || {};
+        
+        // Try to get total photo count from New Places API
+        let totalPhotosCount = (details.photos || place.photos || []).length;
+        try {
+          const newApiResponse = await axios.get(`https://places.googleapis.com/v1/places/${place.place_id}`, {
+            headers: {
+              'X-Goog-Api-Key': apiKey,
+              'X-Goog-FieldMask': 'photos'
+            }
+          });
+          if (newApiResponse.data.photos) {
+            totalPhotosCount = newApiResponse.data.photos.length;
+          }
+        } catch (newApiError) {
+          console.log(`New API failed for ${place.name}, using legacy count`);
+        }
+        
+        // Extract primary category from types (filter out generic ones)
+        const genericTypes = ['point_of_interest', 'establishment', 'food', 'store', 'health', 'finance', 'place_of_worship', 'premise'];
+        const types = details.types || place.types || [];
+        const primaryCategory = types.find(t => !genericTypes.includes(t)) || types[0] || null;
+
+        return {
+          name: details.name || place.name,
+          rating: details.rating || place.rating || null,
+          address: details.formatted_address || place.vicinity || 'Address not available',
+          placeId: place.place_id,
+          types,
+          primaryCategory,
+          categories: {
+            primaryCategory: primaryCategory ? {
+              displayName: primaryCategory.replace(/_/g, ' '),
+              name: primaryCategory
+            } : null,
+            additionalCategories: types
+              .filter(t => !genericTypes.includes(t) && t !== primaryCategory)
+              .map(t => ({ displayName: t.replace(/_/g, ' '), name: t }))
+          },
+          phoneNumbers: {
+            primaryPhone: details.formatted_phone_number || null
+          },
+          websiteUri: details.website || null,
+          regularHours: details.opening_hours?.periods ? {
+            periods: details.opening_hours.periods.map(p => ({
+              openDay: ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'][p.open?.day ?? 0],
+              openTime: { 
+                hours: parseInt((p.open?.time || '0000').slice(0, 2)), 
+                minutes: parseInt((p.open?.time || '0000').slice(2)) 
+              },
+              closeDay: ['SUNDAY','MONDAY','TUESDAY','WEDNESDAY','THURSDAY','FRIDAY','SATURDAY'][p.close?.day ?? p.open?.day ?? 0],
+              closeTime: { 
+                hours: parseInt((p.close?.time || '0000').slice(0, 2)), 
+                minutes: parseInt((p.close?.time || '0000').slice(2)) 
+              }
+            })),
+            weekdayText: details.opening_hours.weekday_text || []
+          } : null,
+          businessStatus: details.business_status || null,
+          priceLevel: details.price_level ?? place.price_level,
+          totalRatings: details.user_ratings_total || place.user_ratings_total,
+          location: {
+            lat: details.geometry?.location?.lat ?? place.geometry?.location?.lat,
+            lng: details.geometry?.location?.lng ?? place.geometry?.location?.lng
+          },
+          photos: (details.photos || place.photos || []).slice(0, 10).map(photo => ({
+            photoReference: photo.photo_reference,
+            width: photo.width,
+            height: photo.height
+          })),
+          totalPhotos: totalPhotosCount,
+          reviews: (details.reviews || []).slice(0, 5).map(review => ({
+            authorName: review.author_name,
+            rating: review.rating,
+            text: review.text,
+            time: review.time,
+            relativeTimeDescription: review.relative_time_description,
+            profilePhotoUrl: review.profile_photo_url
+          })),
+          totalReviews: details.user_ratings_total || place.user_ratings_total || 0
+        };
+      } catch (detailError) {
+        console.error(`Error fetching details for ${place.name}:`, detailError.message);
+        // Fallback to basic data if details fetch fails
+        const types = place.types || [];
+        const genericTypes = ['point_of_interest', 'establishment', 'food', 'store', 'health', 'finance', 'place_of_worship', 'premise'];
+        const primaryCategory = types.find(t => !genericTypes.includes(t)) || types[0] || null;
+        
+        return {
+          name: place.name,
+          rating: place.rating || null,
+          address: place.vicinity || 'Address not available',
+          placeId: place.place_id,
+          types,
+          primaryCategory,
+          categories: {
+            primaryCategory: primaryCategory ? {
+              displayName: primaryCategory.replace(/_/g, ' '),
+              name: primaryCategory
+            } : null,
+            additionalCategories: []
+          },
+          phoneNumbers: { primaryPhone: null },
+          websiteUri: null,
+          regularHours: null,
+          businessStatus: null,
+          priceLevel: place.price_level,
+          totalRatings: place.user_ratings_total,
+          location: {
+            lat: place.geometry?.location?.lat,
+            lng: place.geometry?.location?.lng
+          },
+          photos: (place.photos || []).map(photo => ({
+            photoReference: photo.photo_reference,
+            width: photo.width,
+            height: photo.height
+          })),
+          totalPhotos: (place.photos || []).length,
+          reviews: [], // No reviews in fallback
+          totalReviews: place.user_ratings_total || 0
+        };
+      }
+    });
+
+    const competitors = await Promise.all(detailsPromises);
+    console.log(`Successfully fetched details for ${competitors.length} competitors`);
 
     // Save to cache
     const competitorCache = new Competitor({

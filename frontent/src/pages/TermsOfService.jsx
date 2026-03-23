@@ -4,11 +4,11 @@ import { useTheme } from '../context/ThemeContext';
 const sections = [
   {
     title: '1. Acceptance of Terms',
-    content: 'By accessing or using Google Ranker ("Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our Service. These terms apply to all users, including visitors, registered users, and business customers.'
+    content: 'By accessing or using Clurst ("Service"), you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our Service. These terms apply to all users, including visitors, registered users, and business customers.'
   },
   {
     title: '2. Description of Service',
-    content: 'Google Ranker provides AI-powered local SEO tools including Google Business Profile management, automated posting, review management, competitor analysis, and analytics. We reserve the right to modify, suspend, or discontinue any part of the Service at any time.'
+    content: 'Clurst provides AI-powered local SEO tools including Google Business Profile management, automated posting, review management, competitor analysis, and analytics. We reserve the right to modify, suspend, or discontinue any part of the Service at any time.'
   },
   {
     title: '3. Account Registration',
@@ -48,7 +48,7 @@ const sections = [
   {
     title: '7. Intellectual Property',
     subsections: [
-      { title: '7.1', content: 'All content, features, and functionality of the Service are owned by Google Ranker and are protected by intellectual property laws.' },
+      { title: '7.1', content: 'All content, features, and functionality of the Service are owned by Clurst and are protected by intellectual property laws.' },
       { title: '7.2', content: 'You retain ownership of all content you submit through the Service. By submitting content, you grant us a license to use it solely to provide the Service.' },
       { title: '7.3', content: 'You may not copy, modify, distribute, or create derivative works based on our Service without explicit written permission.' }
     ]
@@ -59,11 +59,11 @@ const sections = [
   },
   {
     title: '9. Limitation of Liability',
-    content: 'To the maximum extent permitted by law, Google Ranker shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or goodwill, arising from your use of or inability to use the Service. Our total liability shall not exceed the amount paid by you in the 12 months preceding the claim.'
+    content: 'To the maximum extent permitted by law, Clurst shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including loss of profits, data, or goodwill, arising from your use of or inability to use the Service. Our total liability shall not exceed the amount paid by you in the 12 months preceding the claim.'
   },
   {
     title: '10. Indemnification',
-    content: 'You agree to indemnify and hold harmless Google Ranker, its officers, directors, employees, and agents from any claims, damages, losses, or expenses (including legal fees) arising from your use of the Service, violation of these Terms, or infringement of any third-party rights.'
+    content: 'You agree to indemnify and hold harmless Clurst, its officers, directors, employees, and agents from any claims, damages, losses, or expenses (including legal fees) arising from your use of the Service, violation of these Terms, or infringement of any third-party rights.'
   },
   {
     title: '11. Termination',
@@ -83,7 +83,7 @@ const sections = [
   },
   {
     title: '14. Contact Us',
-    content: 'For questions about these Terms of Service, please contact us:\n\nEmail: legal@googleranker.io\nAddress: Google Ranker, Legal Department\nResponse Time: We aim to respond within 48 business hours.'
+    content: 'For questions about these Terms of Service, please contact us:\n\nEmail: hello@clurst.io\nAddress: Clurst, Legal Department\nResponse Time: We aim to respond within 48 business hours.'
   }
 ];
 
@@ -101,7 +101,7 @@ const TermsOfService = () => {
             Last Updated: March 19, 2026
           </p>
           <p className={`mt-4 text-sm leading-relaxed ${isDark ? 'text-white/70' : 'text-gray-600'}`}>
-            Please read these Terms of Service carefully before using Google Ranker. These terms govern your access to and use of our platform and services.
+            Please read these Terms of Service carefully before using Clurst. These terms govern your access to and use of our platform and services.
           </p>
         </div>
 

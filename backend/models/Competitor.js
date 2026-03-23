@@ -46,6 +46,37 @@ const CompetitorSchema = new mongoose.Schema(
       types: [{
         type: String
       }],
+      primaryCategory: String,
+      categories: {
+        primaryCategory: {
+          displayName: String,
+          name: String
+        },
+        additionalCategories: [{
+          displayName: String,
+          name: String
+        }]
+      },
+      phoneNumbers: {
+        primaryPhone: String
+      },
+      websiteUri: String,
+      regularHours: {
+        periods: [{
+          openDay: String,
+          openTime: {
+            hours: Number,
+            minutes: Number
+          },
+          closeDay: String,
+          closeTime: {
+            hours: Number,
+            minutes: Number
+          }
+        }],
+        weekdayText: [String]
+      },
+      businessStatus: String,
       priceLevel: Number,
       totalRatings: Number,
       location: {
@@ -56,7 +87,23 @@ const CompetitorSchema = new mongoose.Schema(
         photoReference: String,
         width: Number,
         height: Number
-      }]
+      }],
+      totalPhotos: {
+        type: Number,
+        default: 0
+      },
+      reviews: [{
+        authorName: String,
+        rating: Number,
+        text: String,
+        time: Number,
+        relativeTimeDescription: String,
+        profilePhotoUrl: String
+      }],
+      totalReviews: {
+        type: Number,
+        default: 0
+      }
     }],
     searchLocation: {
       lat: {
