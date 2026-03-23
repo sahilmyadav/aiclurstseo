@@ -538,14 +538,21 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
                     </div>
                   )}
 
-                  {/* Primary Category */}
+                  {/* Categories */}
                   {competitor.categories?.primaryCategory && (
-                    <div className="mb-2">
-                      <span className={`inline-block text-xs font-semibold px-2 py-1 rounded-full ${
+                    <div className="mb-2 flex flex-wrap gap-1">
+                      <span className={`inline-flex items-center text-xs font-semibold px-2 py-1 rounded-full ${
                         theme === 'dark' ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
                       }`}>
-                        {competitor.categories.primaryCategory.displayName}
+                        🏷️ {competitor.categories.primaryCategory.displayName}
                       </span>
+                      {competitor.categories.additionalCategories?.slice(0, 2).map((cat, i) => (
+                        <span key={i} className={`inline-block text-xs px-2 py-1 rounded-full ${
+                          theme === 'dark' ? 'bg-purple-500/10 text-purple-300' : 'bg-purple-50 text-purple-600'
+                        }`}>
+                          {cat.displayName}
+                        </span>
+                      ))}
                     </div>
                   )}
 
