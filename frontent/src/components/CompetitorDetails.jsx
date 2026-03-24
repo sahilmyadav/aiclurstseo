@@ -41,7 +41,7 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
     setActionPlanError(null);
     try {
       const res = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/competitors/action-plan`,
+        `${import.meta.env.VITE_API_BASE}/api/competitors/action-plan`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -86,7 +86,7 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
       }
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/competitors/nearby?` +
+        `${import.meta.env.VITE_API_BASE}/api/competitors/nearby?` +
         new URLSearchParams({
           lat: businessLat.toString(),
           lng: businessLng.toString(),
@@ -125,7 +125,7 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
   const fetchWithLargerRadius = async () => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/api/competitors/nearby?` +
+        `${import.meta.env.VITE_API_BASE}/api/competitors/nearby?` +
         new URLSearchParams({
           lat: businessLat.toString(),
           lng: businessLng.toString(),
@@ -935,10 +935,10 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
                 </div>
               )}
 
-              {/* Horizontal 3-Part Layout */}
-              <div className="flex flex-row min-h-[280px]">
-                {/* LEFT SIDE - Details (40% width) */}
-                <div className="w-[40%] p-4 border-r border-gray-200 dark:border-white/10 flex flex-col">
+              {/* Responsive Layout: stacked on mobile, 3-col on desktop */}
+              <div className="flex flex-col md:flex-row md:min-h-[280px]">
+                {/* Details */}
+                <div className="w-full md:w-[40%] p-4 border-b md:border-b-0 md:border-r border-gray-200 dark:border-white/10 flex flex-col">
                   {/* Rank Badge */}
                   <div className="flex items-start justify-between mb-3">
                     <div className={`text-xs font-bold px-3 py-1 rounded-full ${
@@ -1076,7 +1076,7 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
                 </div>
 
                 {/* MIDDLE - Images Gallery (30% width) */}
-                <div className={`w-[30%] p-3 border-r border-gray-200 dark:border-white/10 flex flex-col ${theme === 'dark' ? 'bg-gray-800/30' : 'bg-gray-50'}`}>
+                <div className={`w-full md:w-[30%] p-3 border-b md:border-b-0 md:border-r border-gray-200 dark:border-white/10 flex flex-col ${theme === 'dark' ? 'bg-gray-800/30' : 'bg-gray-50'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       Photos ({competitor.totalPhotos || competitor.photos?.length || 0})
@@ -1141,7 +1141,7 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
                 </div>
 
                 {/* RIGHT SIDE - Reviews (30% width) */}
-                <div className={`w-[30%] p-3 flex flex-col ${theme === 'dark' ? 'bg-gray-900/30' : 'bg-gray-100'}`}>
+                <div className={`w-full md:w-[30%] p-3 flex flex-col ${theme === 'dark' ? 'bg-gray-900/30' : 'bg-gray-100'}`}>
                   <div className="flex items-center justify-between mb-2">
                     <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
                       Reviews ({competitor.totalReviews ?? competitor.reviews?.length ?? 0})
