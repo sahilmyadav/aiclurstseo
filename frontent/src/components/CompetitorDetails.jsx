@@ -23,7 +23,7 @@ import {
   Zap,
 } from 'lucide-react';
 
-const CompetitorDetails = ({ accountId, locationId, businessName, businessCategory, businessLat, businessLng, businessRating, businessReviews, reviews = [] }) => {
+const CompetitorDetails = ({ accountId, locationId, businessName, businessCategory, businessLat, businessLng, businessRating, businessReviews, reviews = [], scheduledPosts = [], myPhotosCount = 0 }) => {
   const { theme } = useTheme();
   const [competitors, setCompetitors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -351,85 +351,77 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-lg">🏆</span>
                   <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Top Competitors</h3>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${theme === 'dark' ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-100 text-yellow-700'}`}>Top {top3Count}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${theme === 'dark' ? 'bg-yellow-500/20 text-yellow-300' : 'bg-yellow-100 text-yellow-700'}`}>Top {top3Count} Avg</span>
                 </div>
-                <p className={`text-xs mb-4 ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>What it takes to beat the best in your area</p>
+                <p className={`text-xs mb-4 ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>How you compare to the average of your top {top3Count} competitors</p>
                 <div className="space-y-3">
-                  {top3.map((c, i) => {
-                    const medals = ['🥇', '🥈', '🥉'];
-                    const maxReviews = Math.max(top3[0]?.totalRatings || 1, myReviews || 1);
-                    const cReviewPct = Math.min(((c.totalRatings || 0) / maxReviews) * 100, 100);
-                    const myReviewPct = Math.min(((myReviews || 0) / maxReviews) * 100, 100);
-                    const cRatingPct = ((c.rating || 0) / 5) * 100;
-                    const myRatingPct = ((myRating || 0) / 5) * 100;
-
-                    const reviewDiff = (myReviews || 0) - (c.totalRatings || 0);
-                    const ratingDiff = ((myRating || 0) - (c.rating || 0)).toFixed(1);
-                    const reviewAhead = reviewDiff >= 0;
-                    const ratingAhead = parseFloat(ratingDiff) >= 0;
-
+                  {/* Reviews row */}
+                  {(() => {
+                    const above = myReviews >= top3AvgReviews;
+                    const diff = myReviews - top3AvgReviews;
+                    const pct = top3AvgReviews > 0 ? Math.min((myReviews / top3AvgReviews) * 100, 100) : 0;
                     return (
-                      <div key={c.placeId || i} className={`p-3 rounded-xl border ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200'}`}>
-                        {/* Competitor name */}
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="text-base">{medals[i]}</span>
-                          <span className={`text-sm font-semibold truncate flex-1 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>{c.name}</span>
+                      <div className={`p-3 rounded-xl border ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Reviews</span>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${above
+                            ? theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'
+                            : theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'}`}>
+                            {above ? `↑ +${diff} ahead` : `↓ ${Math.abs(diff)} behind`}
+                          </span>
                         </div>
-
-                        {/* Reviews comparison */}
-                        <div className="mb-3">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className={`text-xs font-medium ${theme === 'dark' ? 'text-white/50' : 'text-gray-400'}`}>Reviews</span>
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${reviewAhead
-                              ? theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'
-                              : theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'}`}>
-                              {reviewAhead ? `+${reviewDiff} ahead` : `${reviewDiff} behind`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-xs w-16 text-right font-semibold ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>{(c.totalRatings || 0).toLocaleString()}</span>
-                            <div className={`flex-1 h-2 rounded-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                              <div className="h-full rounded-full bg-yellow-400" style={{ width: `${cReviewPct}%` }} />
-                            </div>
-                            <span className={`text-xs w-14 ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>{c.name.split(' ')[0]}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs w-16 text-right font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>{(myReviews || 0).toLocaleString()}</span>
-                            <div className={`flex-1 h-2 rounded-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                              <div className="h-full rounded-full bg-blue-500" style={{ width: `${myReviewPct}%` }} />
-                            </div>
-                            <span className={`text-xs w-14 ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>You</span>
-                          </div>
+                        <div className="flex items-center gap-2 mb-2 text-xs">
+                          <span className={`px-2 py-0.5 rounded font-semibold ${theme === 'dark' ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
+                            You: {myReviews}
+                          </span>
+                          <span className={theme === 'dark' ? 'text-white/40' : 'text-gray-400'}>vs</span>
+                          <span className={`px-2 py-0.5 rounded font-semibold ${theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>
+                            Avg: {top3AvgReviews}
+                          </span>
                         </div>
-
-                        {/* Rating comparison */}
-                        <div>
-                          <div className="flex items-center justify-between mb-1">
-                            <span className={`text-xs font-medium ${theme === 'dark' ? 'text-white/50' : 'text-gray-400'}`}>Rating</span>
-                            <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${ratingAhead
-                              ? theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'
-                              : theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'}`}>
-                              {ratingAhead ? `+${ratingDiff}★ ahead` : `${ratingDiff}★ behind`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className={`text-xs w-16 text-right font-semibold ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>{c.rating ? c.rating.toFixed(1) : 'N/A'} ★</span>
-                            <div className={`flex-1 h-2 rounded-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                              <div className="h-full rounded-full bg-yellow-400" style={{ width: `${cRatingPct}%` }} />
-                            </div>
-                            <span className={`text-xs w-14 ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>{c.name.split(' ')[0]}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs w-16 text-right font-semibold ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>{myRating ? myRating.toFixed(1) : 'N/A'} ★</span>
-                            <div className={`flex-1 h-2 rounded-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                              <div className="h-full rounded-full bg-blue-500" style={{ width: `${myRatingPct}%` }} />
-                            </div>
-                            <span className={`text-xs w-14 ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'}`}>You</span>
-                          </div>
+                        <div className={`h-2 rounded-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                          <div className={`h-full rounded-full ${above ? 'bg-blue-500' : 'bg-red-500'}`} style={{ width: `${pct}%` }} />
                         </div>
+                        <p className={`text-xs mt-1 ${above ? theme === 'dark' ? 'text-green-400' : 'text-green-600' : theme === 'dark' ? 'text-red-400' : 'text-red-500'}`}>
+                          You: {myReviews} — {above ? 'Above' : 'Below'} top {top3Count} average
+                        </p>
                       </div>
                     );
-                  })}
+                  })()}
+                  {/* Rating row */}
+                  {(() => {
+                    const top3AvgRatingFixed = parseFloat(top3AvgRating.toFixed(1));
+                    const above = myRating >= top3AvgRatingFixed;
+                    const diff = (myRating - top3AvgRatingFixed).toFixed(1);
+                    const pct = top3AvgRatingFixed > 0 ? Math.min((myRating / top3AvgRatingFixed) * 100, 100) : 0;
+                    return (
+                      <div className={`p-3 rounded-xl border ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200'}`}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-sm font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-800'}`}>Rating</span>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${above
+                            ? theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'
+                            : theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600'}`}>
+                            {above ? `↑ +${diff}★ ahead` : `↓ ${Math.abs(diff)}★ behind`}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mb-2 text-xs">
+                          <span className={`px-2 py-0.5 rounded font-semibold ${theme === 'dark' ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'}`}>
+                            You: {myRating ? myRating.toFixed(1) : 'N/A'}★
+                          </span>
+                          <span className={theme === 'dark' ? 'text-white/40' : 'text-gray-400'}>vs</span>
+                          <span className={`px-2 py-0.5 rounded font-semibold ${theme === 'dark' ? 'bg-gray-600 text-gray-300' : 'bg-gray-200 text-gray-600'}`}>
+                            Avg: {top3AvgRatingFixed}★
+                          </span>
+                        </div>
+                        <div className={`h-2 rounded-full ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
+                          <div className={`h-full rounded-full ${above ? 'bg-blue-500' : 'bg-red-500'}`} style={{ width: `${pct}%` }} />
+                        </div>
+                        <p className={`text-xs mt-1 ${above ? theme === 'dark' ? 'text-green-400' : 'text-green-600' : theme === 'dark' ? 'text-red-400' : 'text-red-500'}`}>
+                          You: {myRating ? myRating.toFixed(1) : 'N/A'}★ — {above ? 'Above' : 'Below'} top {top3Count} average
+                        </p>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -541,6 +533,12 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
           const topRating = top?.rating || 0;
           const maxRating = 5;
 
+          // Photos count from Google My Business media
+          const myPhotos = myPhotosCount || 0;
+          const marketAvgPhotos = 7; // industry benchmark
+          const topPhotos = 15;
+          const maxPhotos = Math.max(topPhotos, myPhotos, 1);
+
           const GapBar = ({ icon, label, mine, marketAvg, topVal, max, isRating }) => {
             const minePct = Math.min((mine / max) * 100, 100);
             const avgPct = Math.min((marketAvg / max) * 100, 100);
@@ -625,6 +623,14 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
                 max={maxRating}
                 isRating
               />
+              <GapBar
+                icon={<svg className={`w-4 h-4 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>}
+                label="Photos"
+                mine={myPhotos}
+                marketAvg={marketAvgPhotos}
+                topVal={topPhotos}
+                max={maxPhotos}
+              />
             </div>
           );
         })()}
@@ -636,6 +642,10 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
           const totalRev = reviews.length;
           const repliedRev = reviews.filter(r => r.reviewReply !== undefined).length;
           const replyRatePct = totalRev > 0 ? Math.round((repliedRev / totalRev) * 100) : 0;
+
+          // Photos from GMB media
+          const myPhotos = myPhotosCount || 0;
+          const benchmarkPhotos = 7; // industry avg
 
           const benchN = Math.min(competitors.length, 10);
           const bench = [...competitors].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, benchN);
@@ -675,11 +685,22 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
             insights.push({ icon: '💬', text: `Excellent reply rate (${replyRatePct}%) — you're responding well to customer feedback.`, type: 'positive' });
           }
 
+          // Photo insight
+          if (myPhotos === 0) {
+            insights.push({ icon: '📸', text: `You have no photos on your Google Business profile — businesses with photos get 42% more direction requests. Add photos today.`, type: 'critical' });
+          } else if (myPhotos < benchmarkPhotos) {
+            insights.push({ icon: '📸', text: `You have ${myPhotos} photos vs the recommended ${benchmarkPhotos}+ — more photos improve trust and visibility on Google Maps.`, type: 'warning' });
+          } else {
+            insights.push({ icon: '📸', text: `Good photo count (${myPhotos} photos) — keep adding fresh photos regularly to stay ahead.`, type: 'positive' });
+          }
+
           // Fastest growth tip
           if (myRev < avgReviews) {
             insights.push({ icon: '🚀', text: `Improving reviews will give the fastest growth — getting to ${avgReviews} reviews could boost your ranking significantly.`, type: 'info' });
           } else if (replyRatePct < 80) {
             insights.push({ icon: '🚀', text: `Improving your reply rate is your fastest win — reply to all ${totalRev - repliedRev} pending reviews today.`, type: 'info' });
+          } else if (myPhotos < benchmarkPhotos) {
+            insights.push({ icon: '🚀', text: `Adding more photos is your next growth lever — aim for at least ${benchmarkPhotos} photos on your profile.`, type: 'info' });
           } else {
             insights.push({ icon: '🚀', text: `You're performing well overall — focus on maintaining consistency and adding new photos to stay ahead.`, type: 'info' });
           }
@@ -762,6 +783,18 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
                 actions.push({ priority: 'Low', color: 'blue', icon: '📸', title: 'Add Fresh Photos & Stay Active',
                   steps: ['Upload 3-5 new photos this week (products, team, workspace)', 'Post a Google Business update at least once a week', 'Active profiles rank higher — consistency beats one-time effort'] });
 
+                // Photo action
+                if (myPhotos === 0) {
+                  actions.push({ priority: 'High', color: 'red', icon: '📸', title: 'Add Photos to Your Profile',
+                    steps: ['You have 0 photos — businesses with photos get 42% more direction requests', 'Upload at least 5 photos: storefront, interior, products, team', 'Go to Settings → Google My Business Photos to manage your photos'] });
+                } else if (myPhotos < benchmarkPhotos) {
+                  actions.push({ priority: 'Medium', color: 'yellow', icon: '📸', title: 'Add More Photos',
+                    steps: [`You have ${myPhotos} photos — aim for ${benchmarkPhotos}+ for best results`, 'Add photos of products, services, team, and your workspace', 'Fresh photos signal an active business to Google'] });
+                } else {
+                  actions.push({ priority: 'Low', color: 'green', icon: '📸', title: 'Keep Photos Fresh',
+                    steps: [`${myPhotos} photos — great profile presence`, 'Add new photos monthly to keep your profile active', 'Seasonal photos (offers, events) perform especially well'] });
+                }
+
                 const priorityBg = {
                   red: theme === 'dark' ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200',
                   yellow: theme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-50 border-yellow-200',
@@ -824,27 +857,111 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
             </span>
           </div>
         <div className="space-y-6">
-          {competitors.map((competitor, index) => (
+          {[...competitors].sort((a, b) => {
+            // Sort by combined score: rating weight 60% + review count weight 40%
+            const maxRatings = Math.max(...competitors.map(c => c.totalRatings || 0), 1);
+            const scoreA = ((a.rating || 0) / 5) * 0.6 + ((a.totalRatings || 0) / maxRatings) * 0.4;
+            const scoreB = ((b.rating || 0) / 5) * 0.6 + ((b.totalRatings || 0) / maxRatings) * 0.4;
+            return scoreB - scoreA;
+          }).map((competitor, index) => {
+            const maxRatings = Math.max(...competitors.map(c => c.totalRatings || 0), 1);
+            const ratingScore = Math.round(((competitor.rating || 0) / 5) * 0.6 * 100);
+            const reviewScore = Math.round(((competitor.totalRatings || 0) / maxRatings) * 0.4 * 100);
+            const totalScore = ratingScore + reviewScore;
+            const isTop3 = index < 3;
+            const medals = ['🥇', '🥈', '🥉'];
+            const top3BorderDark = ['border-yellow-400/60', 'border-gray-300/50', 'border-amber-600/50'];
+            const top3BorderLight = ['border-yellow-400', 'border-gray-400', 'border-amber-600'];
+            const top3GlowDark = ['shadow-yellow-500/20', 'shadow-gray-400/20', 'shadow-amber-600/20'];
+            const top3GlowLight = ['shadow-yellow-300/40', 'shadow-gray-300/40', 'shadow-amber-400/30'];
+            const top3BannerDark = ['from-yellow-500/20 to-yellow-600/5', 'from-gray-400/15 to-gray-500/5', 'from-amber-600/20 to-amber-700/5'];
+            const top3BannerLight = ['from-yellow-50 to-white', 'from-gray-50 to-white', 'from-amber-50 to-white'];
+            const top3LabelDark = ['text-yellow-300', 'text-gray-300', 'text-amber-400'];
+            const top3LabelLight = ['text-yellow-700', 'text-gray-600', 'text-amber-700'];
+
+            return (
             <div
               key={competitor.placeId || index}
-              className={`rounded-xl overflow-hidden shadow-lg transition-all duration-300 ${
-                theme === 'dark'
-                  ? 'bg-[#1a1b2e]/90 border border-white/10'
-                  : 'bg-white border border-gray-200'
+              className={`rounded-xl overflow-hidden transition-all duration-300 ${
+                isTop3
+                  ? theme === 'dark'
+                    ? `bg-gradient-to-br ${top3BannerDark[index]} border-2 ${top3BorderDark[index]} shadow-xl ${top3GlowDark[index]}`
+                    : `bg-gradient-to-br ${top3BannerLight[index]} border-2 ${top3BorderLight[index]} shadow-xl ${top3GlowLight[index]}`
+                  : theme === 'dark'
+                    ? 'bg-[#1a1b2e]/90 border border-white/10 shadow-lg'
+                    : 'bg-white border border-gray-200 shadow-lg'
               }`}
             >
+              {/* Top 3 Header Banner */}
+              {isTop3 && (
+                <div className={`px-4 py-2.5 flex items-center justify-between border-b ${
+                  theme === 'dark' ? `border-white/10 bg-gradient-to-r ${top3BannerDark[index]}` : `border-gray-100 bg-gradient-to-r ${top3BannerLight[index]}`
+                }`}>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl">{medals[index]}</span>
+                    <div>
+                      <span className={`text-xs font-bold uppercase tracking-widest ${theme === 'dark' ? top3LabelDark[index] : top3LabelLight[index]}`}>
+                        {index === 0 ? 'Top Threat' : index === 1 ? '2nd Place' : '3rd Place'}
+                      </span>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className={`text-[10px] ${theme === 'dark' ? 'text-white/40' : 'text-gray-400'}`}>
+                          Score:
+                        </span>
+                        <span className={`text-xs font-bold ${theme === 'dark' ? top3LabelDark[index] : top3LabelLight[index]}`}>
+                          {totalScore}/100
+                        </span>
+                        <span className={`text-[10px] ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`}>
+                          (Rating {ratingScore} + Reviews {reviewScore})
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {/* Score bar */}
+                    <div className="hidden sm:flex flex-col items-end gap-1">
+                      <div className={`w-24 h-1.5 rounded-full ${theme === 'dark' ? 'bg-white/10' : 'bg-gray-200'}`}>
+                        <div
+                          className={`h-full rounded-full ${index === 0 ? 'bg-yellow-400' : index === 1 ? 'bg-gray-400' : 'bg-amber-500'}`}
+                          style={{ width: `${totalScore}%` }}
+                        />
+                      </div>
+                    </div>
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                      theme === 'dark' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-red-50 text-red-600 border border-red-200'
+                    }`}>
+                      ⚠ Watch Closely
+                    </span>
+                  </div>
+                </div>
+              )}
+
               {/* Horizontal 3-Part Layout */}
               <div className="flex flex-row min-h-[280px]">
                 {/* LEFT SIDE - Details (40% width) */}
                 <div className="w-[40%] p-4 border-r border-gray-200 dark:border-white/10 flex flex-col">
                   {/* Rank Badge */}
                   <div className="flex items-start justify-between mb-3">
-                    <div className="bg-purple-500/20 text-purple-400 text-xs font-bold px-3 py-1 rounded-full">
-                      #{index + 1}
+                    <div className={`text-xs font-bold px-3 py-1 rounded-full ${
+                      isTop3
+                        ? theme === 'dark'
+                          ? `bg-gradient-to-r from-yellow-500/30 to-orange-500/20 ${top3LabelDark[index]} border border-yellow-500/30`
+                          : `bg-gradient-to-r from-yellow-100 to-orange-50 ${top3LabelLight[index]} border border-yellow-300`
+                        : 'bg-purple-500/20 text-purple-400'
+                    }`}>
+                      {isTop3 ? medals[index] : `#${index + 1}`}
                     </div>
-                    {/* Rating Badge */}
+                    {/* Score pill */}
+                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      theme === 'dark' ? 'bg-white/10 text-white/60' : 'bg-gray-100 text-gray-500'
+                    }`}>
+                      {totalScore}/100
+                    </div>
                     {competitor.rating && (
-                      <div className="bg-yellow-500 text-black text-xs font-bold px-3 py-1 rounded-full flex items-center">
+                      <div className={`text-xs font-bold px-3 py-1 rounded-full flex items-center ${
+                        isTop3
+                          ? 'bg-yellow-500 text-black shadow-md'
+                          : 'bg-yellow-500/80 text-black'
+                      }`}>
                         <Star className="w-3 h-3 mr-1 fill-current" />
                         {competitor.rating}
                       </div>
@@ -1106,7 +1223,8 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
 
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         </div>
 

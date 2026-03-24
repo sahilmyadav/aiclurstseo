@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import { useGoogleBusiness } from './context/GoogleBusinessContext';
@@ -34,10 +34,24 @@ const AuditTool = () => {
     performanceData,
     businesses,
     reviewStats,
-    reviews
+    reviews,
+    scheduledPosts,
+    media,
+    fetchMedia
   } = useGoogleBusiness();
 
   const [activeTab, setActiveTab] = useState('overview');
+
+  // Fetch media when business is selected (needed for photo count in competitors tab)
+  useEffect(() => {
+    if (isConnected && selectedBusiness) {
+      const accountId = selectedBusiness.accountId;
+      const locationId = selectedBusiness.name?.split('/')[1];
+      if (accountId && locationId && (!media || media.length === 0)) {
+        fetchMedia(accountId, locationId);
+      }
+    }
+  }, [isConnected, selectedBusiness]);
 
   const handleBusinessSelect = (businessOrBusinesses) => {
     if (Array.isArray(businessOrBusinesses)) {
@@ -277,6 +291,8 @@ const AuditTool = () => {
                 businessRating={reviewStats?.averageRating || null}
                 businessReviews={reviewStats?.totalReviews || null}
                 reviews={reviews || []}
+                scheduledPosts={scheduledPosts || []}
+                myPhotosCount={(media || []).length}
               />
             )}
           </>
