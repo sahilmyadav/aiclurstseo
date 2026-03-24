@@ -239,290 +239,10 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
           </div>
         </div>
 
-        {/* Ranking Graph */}
-        {competitors.length > 0 && (
-          <div className={`mt-8 py-4 sm:py-6 rounded-xl ${theme === 'dark' ? 'bg-[#1a1b2e]/90 border border-white/10' : 'bg-white border border-gray-200 shadow-sm'}`}>
-            <div className="flex items-center mb-6">
-              <BarChart3 className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-              <h3 className={`text-lg sm:text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                Competitor Rankings by Rating
-              </h3>
-            </div>
-
-            <div className="space-y-4 p-2">
-              <div className="w-full">
-                <div className="relative">
-                  {/* Y-axis labels */}
-                  <div className="absolute left-0 top-0 bottom-0 w-6 flex flex-col justify-between text-xs text-gray-500 pr-1">
-                    <span>5</span>
-                    <span>4</span>
-                    <span>3</span>
-                    <span>2</span>
-                    <span>1</span>
-                    <span>0</span>
-                  </div>
-
-                  {/* Chart area */}
-                  <div className="ml-8 space-y-1">
-                    {competitors
-                      .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-                      .slice(0, 10) // Show top 10
-                      .map((competitor, index) => {
-                        const rating = competitor.rating || 0;
-                        const percentage = (rating / 5) * 100;
-
-                        return (
-                          <div key={competitor.placeId || index} className="flex items-center space-x-2">
-                            {/* Rank */}
-                            <div className={`w-5 text-xs font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-                              #{index + 1}
-                            </div>
-
-                            {/* Business Name - Shorter */}
-                            <div className={`flex-1 min-w-0 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                              <p className="text-xs font-medium truncate">
-                                {competitor.name.substring(0, 15)}...
-                              </p>
-                            </div>
-
-                            {/* Rating */}
-                            <div className={`w-8 text-xs font-medium text-center ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                              {rating > 0 ? rating.toFixed(1) : 'N/A'}
-                            </div>
-
-                            {/* Bar - Shorter */}
-                            <div className="flex-1 relative min-w-[60px]">
-                              <div className={`h-4 rounded ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                                <div
-                                  className={`h-full rounded transition-all duration-1000 ease-out ${
-                                    rating >= 4.0 ? 'bg-green-500' :
-                                    rating >= 3.0 ? 'bg-yellow-500' :
-                                    rating >= 2.0 ? 'bg-orange-500' : 'bg-red-500'
-                                  }`}
-                                  style={{ width: `${percentage}%` }}
-                                ></div>
-                              </div>
-                            </div>
-
-                            {/* Review count - Compact */}
-                            <div className={`w-10 text-xs text-center ${theme === 'dark' ? 'text-white/40' : 'text-gray-500'}`}>
-                              {competitor.totalRatings ? `${competitor.totalRatings}` : '0'}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Legend */}
-              <div className="flex flex-wrap gap-3 sm:gap-4 mt-4 text-xs">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>
-                  <span className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Excellent (4.0+)</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
-                  <span className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Good (3.0-3.9)</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-orange-500 rounded mr-2"></div>
-                  <span className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Average (2.0-2.9)</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-red-500 rounded mr-2"></div>
-                  <span className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Poor (0-1.9)</span>
-                </div>
-              </div>
-
-              {/* Insights */}
-              <div className={`mt-6 p-4 rounded-lg ${theme === 'dark' ? 'bg-blue-500/10 border border-blue-500/20' : 'bg-blue-50 border border-blue-200'}`}>
-                <div className="flex items-center mb-2">
-                  <TrendingUp className={`w-4 h-4 mr-2 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
-                  <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-blue-400' : 'text-blue-700'}`}>
-                    Market Insights
-                  </h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      Top Performer:
-                    </span>
-                    <span className={`ml-1 ${theme === 'dark' ? 'text-white/80' : 'text-gray-700'}`}>
-                      {competitors.sort((a, b) => (b.rating || 0) - (a.rating || 0))[0]?.name || 'N/A'}
-                      ({competitors.sort((a, b) => (b.rating || 0) - (a.rating || 0))[0]?.rating?.toFixed(1) || 'N/A'} ⭐)
-                    </span>
-                  </div>
-                  <div>
-                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      Average Rating:
-                    </span>
-                    <span className={`ml-1 ${theme === 'dark' ? 'text-white/80' : 'text-gray-700'}`}>
-                      {(competitors.reduce((sum, c) => sum + (c.rating || 0), 0) / competitors.filter(c => c.rating).length).toFixed(1)} ⭐
-                    </span>
-                  </div>
-                  <div>
-                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      Competition Level:
-                    </span>
-                    <span className={`ml-1 ${theme === 'dark' ? 'text-white/80' : 'text-gray-700'}`}>
-                      {competitors.filter(c => c.rating && c.rating >= 4.0).length}/{competitors.length} high-rated
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Reviews Ranking Graph */}
-        {competitors.length > 0 && (
-          <div className={`mt-8 py-4 sm:py-6 rounded-xl ${theme === 'dark' ? 'bg-[#1a1b2e]/90 border border-white/10' : 'bg-white border border-gray-200 shadow-sm'}`}>
-            <div className="flex items-center mb-6">
-              <Users className={`w-6 h-6 mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
-              <h3 className={`text-lg sm:text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                Competitor Rankings by Review Count
-              </h3>
-            </div>
-
-            <div className="space-y-4 p-2">
-              <div className="w-full">
-                <div className="relative">
-                  {/* Y-axis labels - Dynamic based on max reviews */}
-                  <div className="absolute left-0 top-0 bottom-0 w-8 flex flex-col justify-between text-xs text-gray-500 pr-1">
-                    {(() => {
-                      const maxReviews = Math.max(...competitors.map(c => c.totalRatings || 0));
-                      const steps = [maxReviews, Math.floor(maxReviews * 0.5), 0];
-                      return steps.map(step => (
-                        <span key={step}>{step.toLocaleString()}</span>
-                      ));
-                    })()}
-                  </div>
-
-                  {/* Chart area */}
-                  <div className="ml-10 space-y-1">
-                    {competitors
-                      .sort((a, b) => (b.totalRatings || 0) - (a.totalRatings || 0))
-                      .slice(0, 10) // Show top 10
-                      .map((competitor, index) => {
-                        const reviewCount = competitor.totalRatings || 0;
-                        const maxReviews = Math.max(...competitors.map(c => c.totalRatings || 0));
-                        const percentage = maxReviews > 0 ? (reviewCount / maxReviews) * 100 : 0;
-
-                        return (
-                          <div key={`reviews-${competitor.placeId || index}`} className="flex items-center space-x-2">
-                            {/* Rank */}
-                            <div className={`w-5 text-xs font-medium ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-                              #{index + 1}
-                            </div>
-
-                            {/* Business Name - Shorter */}
-                            <div className={`flex-1 min-w-0 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                              <p className="text-xs font-medium truncate">
-                                {competitor.name.substring(0, 15)}...
-                              </p>
-                            </div>
-
-                            {/* Review Count */}
-                            <div className={`w-12 text-xs font-medium text-center ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                              {reviewCount.toLocaleString()}
-                            </div>
-
-                            {/* Bar - Shorter */}
-                            <div className="flex-1 relative min-w-[60px]">
-                              <div className={`h-4 rounded ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}>
-                                <div
-                                  className={`h-full rounded transition-all duration-1000 ease-out ${
-                                    reviewCount >= maxReviews * 0.8 ? 'bg-green-500' :
-                                    reviewCount >= maxReviews * 0.6 ? 'bg-blue-500' :
-                                    reviewCount >= maxReviews * 0.4 ? 'bg-yellow-500' :
-                                    reviewCount >= maxReviews * 0.2 ? 'bg-orange-500' : 'bg-red-500'
-                                  }`}
-                                  style={{ width: `${percentage}%` }}
-                                ></div>
-                              </div>
-                            </div>
-
-                            {/* Rating - Compact */}
-                            <div className={`w-8 text-xs text-center ${theme === 'dark' ? 'text-white/40' : 'text-gray-500'}`}>
-                              {competitor.rating ? `${competitor.rating.toFixed(1)}⭐` : 'N/A'}
-                            </div>
-                          </div>
-                        );
-                      })}
-                  </div>
-                </div>
-              </div>
-
-              {/* Legend */}
-              <div className="flex flex-wrap gap-3 sm:gap-4 mt-4 text-xs">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-green-500 rounded mr-2"></div>
-                  <span className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Very Popular (80%+)</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-blue-500 rounded mr-2"></div>
-                  <span className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Popular (60-79%)</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-yellow-500 rounded mr-2"></div>
-                  <span className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Moderate (40-59%)</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-orange-500 rounded mr-2"></div>
-                  <span className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Low (20-39%)</span>
-                </div>
-                <div className="flex items-center">
-                  <div className="w-3 h-3 bg-red-500 rounded mr-2"></div>
-                  <span className={theme === 'dark' ? 'text-white/60' : 'text-gray-600'}>Very Low (0-19%)</span>
-                </div>
-              </div>
-
-              {/* Insights */}
-              <div className={`mt-6 p-4 rounded-lg ${theme === 'dark' ? 'bg-green-500/10 border border-green-500/20' : 'bg-green-50 border border-green-200'}`}>
-                <div className="flex items-center mb-2">
-                  <TrendingUp className={`w-4 h-4 mr-2 ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`} />
-                  <h4 className={`text-sm font-medium ${theme === 'dark' ? 'text-green-400' : 'text-green-700'}`}>
-                    Review Volume Insights
-                  </h4>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      Most Reviewed:
-                    </span>
-                    <span className={`ml-1 ${theme === 'dark' ? 'text-white/80' : 'text-gray-700'}`}>
-                      {competitors.sort((a, b) => (b.totalRatings || 0) - (a.totalRatings || 0))[0]?.name || 'N/A'}
-                      ({competitors.sort((a, b) => (b.totalRatings || 0) - (a.totalRatings || 0))[0]?.totalRatings?.toLocaleString() || '0'} reviews)
-                    </span>
-                  </div>
-                  <div>
-                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      Average Reviews:
-                    </span>
-                    <span className={`ml-1 ${theme === 'dark' ? 'text-white/80' : 'text-gray-700'}`}>
-                      {Math.round(competitors.reduce((sum, c) => sum + (c.totalRatings || 0), 0) / competitors.length).toLocaleString()}
-                    </span>
-                  </div>
-                  <div>
-                    <span className={`font-medium ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      Review Leaders:
-                    </span>
-                    <span className={`ml-1 ${theme === 'dark' ? 'text-white/80' : 'text-gray-700'}`}>
-                      {competitors.filter(c => c.totalRatings && c.totalRatings > 100).length}/{competitors.length} with 100+ reviews
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Combined Line Comparison Graph */}
-        <CompetitorLineGraph competitors={competitors} theme={theme} />
-
-        {/* Pie Chart Distribution */}
-        <CompetitorPieChart competitors={competitors} theme={theme} />
+        {/* Ranking Graph - REMOVED */}
+        {/* Reviews Ranking Graph - REMOVED */}
+        {/* Combined Line Comparison Graph - REMOVED */}
+        {/* Pie Chart Distribution - REMOVED */}
 
         {/* Market Benchmark + Top Competitors Comparison */}
         {competitors.length > 0 && (() => {
@@ -997,11 +717,112 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
                   </div>
                 ))}
               </div>
+
+              {/* Smart Action Plan */}
+              {(() => {
+                const actions = [];
+
+                // Only add actions where there's actually a problem or growth opportunity
+                if (myRev === 0) {
+                  actions.push({ priority: 'High', color: 'red', icon: '⭐', title: 'Get Your First Reviews',
+                    steps: ['Share your Google review link with every customer via WhatsApp or SMS', 'Add a QR code at your counter linking to your Google review page', 'Ask 5 loyal customers today — first reviews are the hardest, but most impactful'] });
+                } else if (myRev < avgReviews) {
+                  actions.push({ priority: 'High', color: 'red', icon: '⭐', title: 'Get More Reviews',
+                    steps: [`You need ${avgReviews - myRev} more reviews to reach market average (${avgReviews})`, 'Send a review request after every purchase/service via WhatsApp', 'Add a QR code at your counter linking to your Google review page'] });
+                } else {
+                  // Above avg — maintain momentum
+                  actions.push({ priority: 'Low', color: 'green', icon: '⭐', title: 'Maintain Review Momentum',
+                    steps: ['Keep asking customers for reviews consistently — don\'t slow down', `You\'re ahead of market avg (${myRev} vs ${avgReviews}) — stay there`, 'Aim to double your current review count this quarter'] });
+                }
+
+                if (replyRatePct < 50) {
+                  actions.push({ priority: 'High', color: 'red', icon: '💬', title: 'Reply to Pending Reviews',
+                    steps: [`${totalRev - repliedRev} reviews are unanswered — reply today`, 'Use the AI Reply feature in the Reviews tab for quick responses', 'Enable Auto-Reply so you never miss a new review'] });
+                } else if (replyRatePct < 80) {
+                  actions.push({ priority: 'Medium', color: 'yellow', icon: '💬', title: 'Improve Reply Rate',
+                    steps: [`${totalRev - repliedRev} reviews still need a response (current: ${replyRatePct}%)`, 'Aim for 90%+ reply rate — Google rewards active engagement', 'Enable Auto-Reply to handle new reviews automatically'] });
+                } else {
+                  // Good reply rate — just maintain
+                  actions.push({ priority: 'Low', color: 'green', icon: '💬', title: 'Keep Replying Consistently',
+                    steps: [`Great reply rate (${replyRatePct}%) — keep it up`, 'Enable Auto-Reply to maintain this even when you\'re busy', 'Personalize replies to stand out from competitors'] });
+                }
+
+                if (myRat === 0) {
+                  actions.push({ priority: 'Medium', color: 'yellow', icon: '📈', title: 'Build Your Rating',
+                    steps: ['Complete your Google Business profile to start receiving ratings', 'Encourage satisfied customers to rate you 5 stars', 'Respond to all reviews to show you care about feedback'] });
+                } else if (myRat < avgRating) {
+                  actions.push({ priority: 'Medium', color: 'yellow', icon: '📈', title: 'Improve Your Rating',
+                    steps: [`Target ${avgRating}★ — you\'re currently at ${myRat}★`, 'Resolve complaints quickly and ask customers to update their review', 'Respond professionally to every negative review'] });
+                } else {
+                  actions.push({ priority: 'Low', color: 'green', icon: '✅', title: 'Protect Your Rating',
+                    steps: [`Your ${myRat}★ rating is above market avg (${avgRating}★) — protect it`, 'Never ignore a negative review — always respond within 24 hours', 'Consistently deliver quality to keep ratings high'] });
+                }
+
+                // Always show profile & photos as growth tips
+                actions.push({ priority: 'Low', color: 'blue', icon: '📸', title: 'Add Fresh Photos & Stay Active',
+                  steps: ['Upload 3-5 new photos this week (products, team, workspace)', 'Post a Google Business update at least once a week', 'Active profiles rank higher — consistency beats one-time effort'] });
+
+                const priorityBg = {
+                  red: theme === 'dark' ? 'bg-red-500/10 border-red-500/30' : 'bg-red-50 border-red-200',
+                  yellow: theme === 'dark' ? 'bg-yellow-500/10 border-yellow-500/30' : 'bg-yellow-50 border-yellow-200',
+                  blue: theme === 'dark' ? 'bg-blue-500/10 border-blue-500/30' : 'bg-blue-50 border-blue-200',
+                  green: theme === 'dark' ? 'bg-green-500/10 border-green-500/30' : 'bg-green-50 border-green-200',
+                };
+                const priorityText = {
+                  red: theme === 'dark' ? 'text-red-400' : 'text-red-700',
+                  yellow: theme === 'dark' ? 'text-yellow-400' : 'text-yellow-700',
+                  blue: theme === 'dark' ? 'text-blue-400' : 'text-blue-700',
+                  green: theme === 'dark' ? 'text-green-400' : 'text-green-700',
+                };
+                const badgeBg = {
+                  High: theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-600',
+                  Medium: theme === 'dark' ? 'bg-yellow-500/20 text-yellow-400' : 'bg-yellow-100 text-yellow-700',
+                  Low: theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700',
+                };
+
+                return (
+                  <div className="mt-5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Zap className={`w-4 h-4 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-500'}`} />
+                      <h4 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Smart Action Plan</h4>
+                    </div>
+                    <div className="space-y-3">
+                      {actions.map((action, i) => (
+                        <div key={i} className={`p-3 rounded-xl border ${priorityBg[action.color]}`}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-base">{action.icon}</span>
+                            <span className={`text-sm font-semibold ${priorityText[action.color]}`}>{action.title}</span>
+                            <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full ${badgeBg[action.priority]}`}>{action.priority}</span>
+                          </div>
+                          <ul className="space-y-1">
+                            {action.steps.map((step, j) => (
+                              <li key={j} className={`flex items-start gap-2 text-xs ${priorityText[action.color]}`}>
+                                <span className="mt-0.5 flex-shrink-0">→</span>
+                                <span>{step}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           );
         })()}
 
-        {/* Competitors Grid - 1 card per row for proper horizontal layout */}
+        {/* Competitors Grid - Live Monitoring */}
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-lg">📡</span>
+            <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              Your vs Top Competitors
+            </h3>
+            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
+              Live Monitoring
+            </span>
+          </div>
         <div className="space-y-6">
           {competitors.map((competitor, index) => (
             <div
@@ -1287,6 +1108,7 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
             </div>
           ))}
         </div>
+        </div>
 
         {/* Load More Message */}
         {competitors.length < 10 && !loading && (
@@ -1298,104 +1120,6 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
             <p className={`text-sm ${theme === 'dark' ? 'text-yellow-300' : 'text-yellow-700'}`}>
               Only {competitors.length} competitors found. This might be due to limited Google Places API data in this area.
             </p>
-          </div>
-        )}
-
-        {/* AI Competitor Action Plan */}
-        {competitors.length > 0 && (
-          <div className={`mt-8 rounded-2xl p-1 ${theme === 'dark' ? 'bg-gradient-to-r from-purple-900/50 via-indigo-900/50 to-purple-900/50' : 'bg-gradient-to-r from-purple-200 via-indigo-200 to-purple-200'}`}>
-            <div className={`rounded-2xl p-6 space-y-4 ${theme === 'dark' ? 'bg-gray-800/80 backdrop-blur-sm' : 'bg-[#f7f8fc]'}`}>
-
-              {/* Header */}
-              <div className="flex items-center gap-3">
-                <Brain className={`w-6 h-6 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`} />
-                <h2 className={`text-xl font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                  AI Competitor Action Plan
-                </h2>
-                <button
-                  onClick={generateActionPlan}
-                  disabled={actionPlanLoading}
-                  className={`ml-auto text-sm font-medium px-4 py-2 rounded-md transition-all duration-300 bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-md ${actionPlanLoading ? 'opacity-70' : 'hover:opacity-90'}`}
-                >
-                  {actionPlanLoading ? 'Generating...' : 'Generate'}
-                </button>
-              </div>
-
-              {actionPlanError && (
-                <div className={`flex items-center gap-2 text-sm ${theme === 'dark' ? 'text-red-400' : 'text-red-500'}`}>
-                  <AlertCircle className="w-4 h-4" /> {actionPlanError}
-                </div>
-              )}
-
-              {actionPlan ? (
-                <div className={`rounded-xl border p-5 ${theme === 'dark' ? 'bg-gray-800/50 border-gray-700' : 'bg-white border-gray-200'}`}>
-                  <p className={`text-sm leading-relaxed whitespace-pre-wrap ${theme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
-                    {actionPlan.text}
-                  </p>
-                </div>
-              ) : (
-                <div className="text-center py-10">
-                  <Brain className={`w-12 h-12 mx-auto mb-3 ${theme === 'dark' ? 'text-purple-400' : 'text-purple-500'}`} />
-                  <h3 className={`text-lg font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    Get AI-Powered Action Plan
-                  </h3>
-                  <p className={`text-sm mt-1 mb-5 ${theme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                    Compare your business against {competitors.length} competitors and get a personalized growth strategy.
-                  </p>
-                  <button
-                    onClick={generateActionPlan}
-                    disabled={actionPlanLoading}
-                    className={`px-6 py-2.5 rounded-lg text-white text-sm font-medium flex items-center gap-2 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 shadow-md transition-all ${actionPlanLoading ? 'opacity-70' : 'hover:opacity-90'}`}
-                  >
-                    {actionPlanLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                    {actionPlanLoading ? 'Analyzing...' : 'Generate Action Plan'}
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Stats Summary */}
-        {competitors.length > 0 && (
-          <div className={`mt-8 py-4 sm:py-6 rounded-xl ${theme === 'dark' ? 'bg-[#1a1b2e]/90 border border-white/10' : 'bg-white border border-gray-200 shadow-sm'}`}>
-            <h3 className={`text-lg sm:text-xl font-semibold mb-4 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              Market Analysis Summary
-            </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="text-center">
-                <div className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-purple-400' : 'text-purple-600'}`}>
-                  {competitors.length}
-                </div>
-                <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-                  Total Competitors
-                </div>
-              </div>
-              <div className="text-center">
-                <div className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                  {competitors.filter(c => c.rating && c.rating >= 4.0).length}
-                </div>
-                <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-                  High Rated (4.0+)
-                </div>
-              </div>
-              <div className="text-center">
-                <div className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-green-400' : 'text-green-600'}`}>
-                  {competitors.filter(c => c.totalRatings && c.totalRatings > 50).length}
-                </div>
-                <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-                  Popular (50+ reviews)
-                </div>
-              </div>
-              <div className="text-center">
-                <div className={`text-xl sm:text-2xl font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-                  {competitors.filter(c => c.photos && c.photos.length > 0).length}
-                </div>
-                <div className={`text-xs sm:text-sm ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
-                  With Images
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>
