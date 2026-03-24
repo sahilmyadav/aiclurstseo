@@ -3,6 +3,66 @@ import dotenv from 'dotenv';
 import Competitor from '../models/Competitor.js';
 dotenv.config();
 
+const toTitleCase = (str) => str.replace(/\b\w/g, c => c.toUpperCase());
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+/**
+ * Generate AI action plan by comparing business with competitors
+ */
+export const generateCompetitorActionPlan = async (req, res) => {
+  try {
+    const { businessName, businessCategory, businessRating, businessReviews, competitors } = req.body;
+
+    if (!competitors || competitors.length === 0) {
+      return res.status(400).json({ success: false, message: 'Competitors data required' });
+    }
+
+    const avgRating = (competitors.reduce((s, c) => s + (c.rating || 0), 0) / competitors.filter(c => c.rating).length).toFixed(1);
+    const avgReviews = Math.round(competitors.reduce((s, c) => s + (c.totalRatings || 0), 0) / competitors.length);
+    const topCompetitor = [...competitors].sort((a, b) => (b.rating || 0) - (a.rating || 0))[0];
+    const mostReviewed = [...competitors].sort((a, b) => (b.totalRatings || 0) - (a.totalRatings || 0))[0];
+
+    const prompt = `You are a local business growth expert. Analyze this business vs its competitors and write a clear action plan in plain text (no JSON, no markdown, no bullet symbols).
+
+MY BUSINESS:
+- Name: ${businessName}
+- Category: ${businessCategory}
+- Rating: ${businessRating || 'Unknown'}
+- Total Reviews: ${businessReviews || 'Unknown'}
+
+COMPETITOR MARKET DATA:
+- Total Competitors: ${competitors.length}
+- Average Competitor Rating: ${avgRating}
+- Average Competitor Reviews: ${avgReviews}
+- Top Rated: ${topCompetitor?.name} (${topCompetitor?.rating}⭐, ${topCompetitor?.totalRatings} reviews)
+- Most Reviewed: ${mostReviewed?.name} (${mostReviewed?.totalRatings} reviews)
+
+Write 4 sections: Competitive Position, Your Strengths, Key Threats, and Top 3 Actions to grow. Keep it concise and practical.`;
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+        })
+      }
+    );
+
+    const data = await response.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    if (!text) throw new Error('Empty AI response');
+
+    res.json({ success: true, data: { text } });
+  } catch (error) {
+    console.error('Action plan error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 /**
  * Get competitors near a location using Google Places API with caching
  * @param {Object} req - Express request object

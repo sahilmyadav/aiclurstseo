@@ -32,7 +32,9 @@ const AuditTool = () => {
     selectBusiness,
     selectMultipleBusinesses,
     performanceData,
-    businesses
+    businesses,
+    reviewStats,
+    reviews
   } = useGoogleBusiness();
 
   const [activeTab, setActiveTab] = useState('overview');
@@ -272,6 +274,9 @@ const AuditTool = () => {
                   parseFloat(selectedBusiness.latlng.latitude.value || selectedBusiness.latlng.latitude.lat || selectedBusiness.latlng.latitude) : null}
                 businessLng={selectedBusiness?.latlng?.longitude ? 
                   parseFloat(selectedBusiness.latlng.longitude.value || selectedBusiness.latlng.longitude.lng || selectedBusiness.latlng.longitude) : null}
+                businessRating={reviewStats?.averageRating || null}
+                businessReviews={reviewStats?.totalReviews || null}
+                reviews={reviews || []}
               />
             )}
           </>

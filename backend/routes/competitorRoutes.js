@@ -1,12 +1,10 @@
 import express from 'express';
-import { getCompetitors, getPlaceDetails } from '../controllers/competitorController.js';
+import { getCompetitors, getPlaceDetails, generateCompetitorActionPlan } from '../controllers/competitorController.js';
 
 const router = express.Router();
 
-// Get competitors near a location
 router.get('/nearby', getCompetitors);
-
-// Get detailed information about a specific place
 router.get('/place/:placeId', getPlaceDetails);
+router.post('/action-plan', generateCompetitorActionPlan);
 
 export default router;
