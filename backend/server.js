@@ -21,6 +21,7 @@ import a from "./routes/analytics.js";
 import planRoutes from "./routes/planRoutes.js";
 import autoReplyRoutes from "./routes/autoReplyRoutes.js";
 import competitorRoutes from "./routes/competitorRoutes.js";
+import loginPageRoutes from "./routes/loginPageRoutes.js";
 import { startSubscriptionJobs } from './jobs/subscriptionJobs.js';
 import { startAutoReplyJob } from './jobs/autoReplyJob.js';
 dotenv.config();
@@ -97,6 +98,7 @@ app.use('/api/post', scheduleRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/competitors', competitorRoutes);
+app.use('/api/login-page', loginPageRoutes);
 
 // Test routes
 app.get('/', (req, res) => {

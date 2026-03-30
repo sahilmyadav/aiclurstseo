@@ -424,10 +424,7 @@ const Dashboard = () => {
                     ? 'bg-gray-800/50 border-gray-700 hover:bg-gray-800/70' 
                     : 'bg-white border-gray-200 shadow-sm hover:shadow-md hover:border-purple-50'
                 }`}>
-                  <div className="h-[calc(100vh-350px)] overflow-y-auto" style={{
-                    scrollbarWidth: 'thin',
-                    scrollbarColor: theme === 'dark' ? '#8b5cf6 #1a1b2e' : '#c4b5fd #f5f3ff'
-                  }}>
+                  <div className="h-[calc(100vh-350px)] overflow-hidden relative">
                     {loading && (
                       <div className={`p-4 ${theme === 'dark' ? 'text-white/60' : 'text-gray-600'}`}>
                         Loading recent reviews...
@@ -440,45 +437,72 @@ const Dashboard = () => {
                         {isConnected ? 'No reviews available yet' : 'Connect Google Business to see reviews'}
                       </div>
                     )}
-                    {!loading && reviews && reviews.length > 0 && reviews.map((review, index) => (
-                      <div key={index} className={`p-3 sm:p-4 flex gap-3 border-b ${
-                        theme === 'dark' ? 'border-white/5' : 'border-gray-100'
-                      } last:border-b-0 hover:${
-                        theme === 'dark' ? 'bg-[#1e1e2d]' : 'bg-purple-50/30'
-                      } transition-all duration-200 transform hover:translate-x-1`}>
-                        <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-base ${
-                          theme === 'dark' 
-                            ? 'bg-gray-700 text-white' 
-                            : 'bg-purple-100 text-purple-800'
-                        }`}>
-                          {(review.reviewer?.displayName || 'U').charAt(0).toUpperCase()}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <div className={`font-semibold text-sm sm:text-base truncate ${
-                              theme === 'dark' ? 'text-white' : 'text-black'
-                            }`}>
-                              {review.reviewer?.displayName || 'Anonymous'}
-                            </div>
-                            <div className={`text-xs flex-shrink-0 ${
-                              theme === 'dark' ? 'text-white/60' : 'text-gray-600'
-                            }`}>
-                              {formatDate(review.createTime)}
-                            </div>
-                          </div>
-                          <div className="flex text-yellow-400 mt-1">
-                            {Array.from({ length: getStarRating(review.starRating) }).map((_, i) => (
-                              <span key={i} className="text-xs sm:text-sm">★</span>
+                    {!loading && reviews && reviews.length > 0 && (() => {
+                      // Duplicate reviews for seamless loop
+                      const doubled = [...reviews, ...reviews, ...reviews];
+                      const animDuration = reviews.length * 4;
+                      return (
+                        <>
+                          <style>{`
+                            @keyframes scrollReviews {
+                              0% { transform: translateY(0); }
+                              100% { transform: translateY(-33.333%); }
+                            }
+                            .reviews-scroll {
+                              animation: scrollReviews ${animDuration}s linear infinite;
+                              will-change: transform;
+                            }
+                            .reviews-scroll:hover {
+                              animation-play-state: paused;
+                            }
+                            @keyframes reviewFadeIn {
+                              0% { opacity: 0; transform: translateX(-8px); }
+                              100% { opacity: 1; transform: translateX(0); }
+                            }
+                            .review-item {
+                              animation: reviewFadeIn 0.5s ease forwards;
+                            }
+                          `}</style>
+                          <div className="reviews-scroll">
+                            {doubled.map((review, index) => (
+                              <div key={index} className={`review-item p-3 sm:p-4 flex gap-3 border-b ${
+                                theme === 'dark' ? 'border-white/5' : 'border-gray-100'
+                              }`}>
+                                <div className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center font-semibold text-base ${
+                                  theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-purple-100 text-purple-800'
+                                }`}>
+                                  {(review.reviewer?.displayName || 'U').charAt(0).toUpperCase()}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className={`font-semibold text-sm truncate ${
+                                      theme === 'dark' ? 'text-white' : 'text-black'
+                                    }`}>
+                                      {review.reviewer?.displayName || 'Anonymous'}
+                                    </div>
+                                    <div className={`text-xs flex-shrink-0 ${
+                                      theme === 'dark' ? 'text-white/50' : 'text-gray-500'
+                                    }`}>
+                                      {formatDate(review.createTime)}
+                                    </div>
+                                  </div>
+                                  <div className="flex text-yellow-400 mt-0.5">
+                                    {Array.from({ length: getStarRating(review.starRating) }).map((_, i) => (
+                                      <span key={i} className="text-xs">★</span>
+                                    ))}
+                                  </div>
+                                  <p className={`text-xs mt-0.5 line-clamp-2 ${
+                                    theme === 'dark' ? 'text-white/70' : 'text-gray-600'
+                                  }`}>
+                                    {review.comment || 'No review text provided.'}
+                                  </p>
+                                </div>
+                              </div>
                             ))}
                           </div>
-                          <p className={`text-sm break-words mt-1 ${
-                            theme === 'dark' ? 'text-white' : 'text-black'
-                          }`}>
-                            {review.comment || 'No review text provided.'}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>

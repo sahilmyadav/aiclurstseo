@@ -23,6 +23,131 @@ import {
   Zap,
 } from 'lucide-react';
 
+const TopCompetitorRow = ({ competitor, index, totalScore, isTopPerformer, theme }) => {
+  const [expanded, setExpanded] = useState(false);
+  const medals = ['🥇', '🥈', '🥉'];
+  const scoreBarColor = index === 0 ? 'bg-blue-500' : index === 1 ? 'bg-blue-400' : index === 2 ? 'bg-blue-300' : 'bg-gray-400';
+
+  return (
+    <div className={`rounded-xl border overflow-hidden transition-all duration-200 ${
+      theme === 'dark' ? 'border-white/10 bg-[#1a1b2e]/60' : 'border-gray-200 bg-white'
+    }`}>
+      {/* Row Header - always visible */}
+      <button
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-black/5 transition-colors"
+        onClick={() => setExpanded(v => !v)}
+      >
+        {/* Rank number */}
+        <span className={`w-6 h-6 flex items-center justify-center text-sm font-bold flex-shrink-0 ${
+          theme === 'dark' ? 'text-white/60' : 'text-gray-500'
+        }`}>
+          {index < 3 ? medals[index] : index + 1}
+        </span>
+
+        {/* Name + Top Performer badge */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-sm font-semibold truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+              {competitor.name}
+            </span>
+            {isTopPerformer && (
+              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                theme === 'dark' ? 'bg-orange-500/20 text-orange-300 border border-orange-500/30' : 'bg-orange-100 text-orange-600 border border-orange-200'
+              }`}>
+                ★ Top Performer
+              </span>
+            )}
+          </div>
+          {/* Mini stats row */}
+          <div className="flex items-center gap-3 mt-0.5">
+            {competitor.rating && (
+              <span className={`text-xs flex items-center gap-0.5 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                <Star className="w-3 h-3 fill-current" />
+                {competitor.rating}
+              </span>
+            )}
+            {competitor.totalRatings && (
+              <span className={`text-xs flex items-center gap-0.5 ${theme === 'dark' ? 'text-white/40' : 'text-gray-400'}`}>
+                <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                {competitor.totalRatings}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Score + chevron */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {/* Score circle */}
+          <div className="flex items-center gap-2">
+            <div className={`w-20 h-1.5 rounded-full ${theme === 'dark' ? 'bg-white/10' : 'bg-gray-200'}`}>
+              <div className={`h-full rounded-full ${scoreBarColor}`} style={{ width: `${totalScore}%` }} />
+            </div>
+            <span className={`text-sm font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+              {totalScore}
+            </span>
+          </div>
+          <svg
+            className={`w-4 h-4 transition-transform duration-200 ${expanded ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-white/40' : 'text-gray-400'}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
+
+      {/* Expanded Details */}
+      {expanded && (
+        <div className={`px-4 pb-4 pt-1 border-t ${theme === 'dark' ? 'border-white/10' : 'border-gray-100'}`}>
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            {/* Rating */}
+            <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-white/5' : 'bg-gray-50'}`}>
+              <p className={`text-xs mb-1 ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>Rating</p>
+              <p className={`text-sm font-bold flex items-center gap-1 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}>
+                <Star className="w-3.5 h-3.5 fill-current" />
+                {competitor.rating ?? 'N/A'}
+              </p>
+            </div>
+            {/* Reviews */}
+            <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-white/5' : 'bg-gray-50'}`}>
+              <p className={`text-xs mb-1 ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>Reviews</p>
+              <p className={`text-sm font-bold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                {competitor.totalRatings ?? 0}
+              </p>
+            </div>
+            {/* Score */}
+            <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-white/5' : 'bg-gray-50'}`}>
+              <p className={`text-xs mb-1 ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>Score</p>
+              <p className={`text-sm font-bold ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
+                {totalScore}/100
+              </p>
+            </div>
+            {/* Status */}
+            <div className={`p-3 rounded-lg ${theme === 'dark' ? 'bg-white/5' : 'bg-gray-50'}`}>
+              <p className={`text-xs mb-1 ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>Status</p>
+              <p className={`text-xs font-semibold ${
+                competitor.businessStatus === 'OPERATIONAL'
+                  ? theme === 'dark' ? 'text-green-400' : 'text-green-600'
+                  : theme === 'dark' ? 'text-red-400' : 'text-red-600'
+              }`}>
+                {competitor.businessStatus === 'OPERATIONAL' ? '● Open' : '● Closed'}
+              </p>
+            </div>
+          </div>
+          {/* Address */}
+          {competitor.address && (
+            <div className={`flex items-start gap-1.5 mt-3 text-xs ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>
+              <MapPin className="w-3 h-3 mt-0.5 flex-shrink-0" />
+              <span>{competitor.address}</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const CompetitorDetails = ({ accountId, locationId, businessName, businessCategory, businessLat, businessLng, businessRating, businessReviews, reviews = [], scheduledPosts = [], myPhotosCount = 0 }) => {
   const { theme } = useTheme();
   const [competitors, setCompetitors] = useState([]);
@@ -745,54 +870,65 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
 
                 // Only add actions where there's actually a problem or growth opportunity
                 if (myRev === 0) {
-                  actions.push({ priority: 'High', color: 'red', icon: '⭐', title: 'Get Your First Reviews',
-                    steps: ['Share your Google review link with every customer via WhatsApp or SMS', 'Add a QR code at your counter linking to your Google review page', 'Ask 5 loyal customers today — first reviews are the hardest, but most impactful'] });
+                  actions.push({ priority: 'High', color: 'red', icon: '⭐', title: 'Get First Reviews',
+                    highlight: 'No reviews yet — #1 priority',
+                    steps: ['Share review link via WhatsApp/SMS', 'Use Clurst Get Reviews feature →'] });
                 } else if (myRev < avgReviews) {
                   actions.push({ priority: 'High', color: 'red', icon: '⭐', title: 'Get More Reviews',
-                    steps: [`You need ${avgReviews - myRev} more reviews to reach market average (${avgReviews})`, 'Send a review request after every purchase/service via WhatsApp', 'Add a QR code at your counter linking to your Google review page'] });
+                    highlight: `${avgReviews - myRev} more needed to reach market avg`,
+                    steps: ['Send review requests after every sale', 'Use Clurst Get Reviews feature →'] });
                 } else {
-                  // Above avg — maintain momentum
-                  actions.push({ priority: 'Low', color: 'green', icon: '⭐', title: 'Maintain Review Momentum',
-                    steps: ['Keep asking customers for reviews consistently — don\'t slow down', `You\'re ahead of market avg (${myRev} vs ${avgReviews}) — stay there`, 'Aim to double your current review count this quarter'] });
+                  actions.push({ priority: 'Low', color: 'green', icon: '⭐', title: 'Reviews On Track',
+                    highlight: `${myRev} reviews — above market avg (${avgReviews})`,
+                    steps: ['Keep collecting consistently'] });
                 }
 
                 if (replyRatePct < 50) {
-                  actions.push({ priority: 'High', color: 'red', icon: '💬', title: 'Reply to Pending Reviews',
-                    steps: [`${totalRev - repliedRev} reviews are unanswered — reply today`, 'Use the AI Reply feature in the Reviews tab for quick responses', 'Enable Auto-Reply so you never miss a new review'] });
+                  actions.push({ priority: 'High', color: 'red', icon: '💬', title: 'Reply to Reviews',
+                    highlight: `${totalRev - repliedRev} unanswered reviews`,
+                    steps: ['Reply today to boost Google ranking', 'Enable Clurst Auto-Reply →'] });
                 } else if (replyRatePct < 80) {
                   actions.push({ priority: 'Medium', color: 'yellow', icon: '💬', title: 'Improve Reply Rate',
-                    steps: [`${totalRev - repliedRev} reviews still need a response (current: ${replyRatePct}%)`, 'Aim for 90%+ reply rate — Google rewards active engagement', 'Enable Auto-Reply to handle new reviews automatically'] });
+                    highlight: `${replyRatePct}% reply rate — aim for 90%+`,
+                    steps: ['Enable Clurst Auto-Reply →'] });
                 } else {
-                  // Good reply rate — just maintain
-                  actions.push({ priority: 'Low', color: 'green', icon: '💬', title: 'Keep Replying Consistently',
-                    steps: [`Great reply rate (${replyRatePct}%) — keep it up`, 'Enable Auto-Reply to maintain this even when you\'re busy', 'Personalize replies to stand out from competitors'] });
+                  actions.push({ priority: 'Low', color: 'green', icon: '💬', title: 'Reply Rate Excellent',
+                    highlight: `${replyRatePct}% — Clurst Auto-Reply active ✓`,
+                    steps: [] });
                 }
 
                 if (myRat === 0) {
                   actions.push({ priority: 'Medium', color: 'yellow', icon: '📈', title: 'Build Your Rating',
-                    steps: ['Complete your Google Business profile to start receiving ratings', 'Encourage satisfied customers to rate you 5 stars', 'Respond to all reviews to show you care about feedback'] });
+                    highlight: 'No rating yet — complete your profile',
+                    steps: ['Ask satisfied customers to rate 5★'] });
                 } else if (myRat < avgRating) {
-                  actions.push({ priority: 'Medium', color: 'yellow', icon: '📈', title: 'Improve Your Rating',
-                    steps: [`Target ${avgRating}★ — you\'re currently at ${myRat}★`, 'Resolve complaints quickly and ask customers to update their review', 'Respond professionally to every negative review'] });
+                  actions.push({ priority: 'Medium', color: 'yellow', icon: '📈', title: 'Improve Rating',
+                    highlight: `${myRat}★ → target ${avgRating}★ (market avg)`,
+                    steps: ['Respond to every negative review professionally'] });
                 } else {
-                  actions.push({ priority: 'Low', color: 'green', icon: '✅', title: 'Protect Your Rating',
-                    steps: [`Your ${myRat}★ rating is above market avg (${avgRating}★) — protect it`, 'Never ignore a negative review — always respond within 24 hours', 'Consistently deliver quality to keep ratings high'] });
+                  actions.push({ priority: 'Low', color: 'green', icon: '✅', title: 'Rating Strong',
+                    highlight: `${myRat}★ — above market avg (${avgRating}★)`,
+                    steps: [] });
                 }
 
-                // Always show profile & photos as growth tips
-                actions.push({ priority: 'Low', color: 'blue', icon: '📸', title: 'Add Fresh Photos & Stay Active',
-                  steps: ['Upload 3-5 new photos this week (products, team, workspace)', 'Post a Google Business update at least once a week', 'Active profiles rank higher — consistency beats one-time effort'] });
+                // Posting frequency action
+                actions.push({ priority: 'Medium', color: 'yellow', icon: '📅', title: 'Post 3x/Week',
+                  highlight: 'Competitors post 4x/week — +10% visibility',
+                  steps: ['Use Clurst Auto Posting to schedule →'] });
 
                 // Photo action
                 if (myPhotos === 0) {
-                  actions.push({ priority: 'High', color: 'red', icon: '📸', title: 'Add Photos to Your Profile',
-                    steps: ['You have 0 photos — businesses with photos get 42% more direction requests', 'Upload at least 5 photos: storefront, interior, products, team', 'Go to Settings → Google My Business Photos to manage your photos'] });
+                  actions.push({ priority: 'High', color: 'red', icon: '📸', title: 'Add Photos',
+                    highlight: '0 photos — 42% fewer direction requests',
+                    steps: ['Upload 5+ photos: storefront, products, team'] });
                 } else if (myPhotos < benchmarkPhotos) {
                   actions.push({ priority: 'Medium', color: 'yellow', icon: '📸', title: 'Add More Photos',
-                    steps: [`You have ${myPhotos} photos — aim for ${benchmarkPhotos}+ for best results`, 'Add photos of products, services, team, and your workspace', 'Fresh photos signal an active business to Google'] });
+                    highlight: `${myPhotos} photos — aim for ${benchmarkPhotos}+`,
+                    steps: ['Add fresh photos weekly'] });
                 } else {
-                  actions.push({ priority: 'Low', color: 'green', icon: '📸', title: 'Keep Photos Fresh',
-                    steps: [`${myPhotos} photos — great profile presence`, 'Add new photos monthly to keep your profile active', 'Seasonal photos (offers, events) perform especially well'] });
+                  actions.push({ priority: 'Low', color: 'green', icon: '📸', title: 'Photos Good',
+                    highlight: `${myPhotos} photos — keep adding monthly`,
+                    steps: [] });
                 }
 
                 const priorityBg = {
@@ -819,22 +955,27 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
                       <Zap className={`w-4 h-4 ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-500'}`} />
                       <h4 className={`text-sm font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>Smart Action Plan</h4>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-1.5">
                       {actions.map((action, i) => (
-                        <div key={i} className={`p-3 rounded-xl border ${priorityBg[action.color]}`}>
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="text-base">{action.icon}</span>
-                            <span className={`text-sm font-semibold ${priorityText[action.color]}`}>{action.title}</span>
-                            <span className={`ml-auto text-xs font-bold px-2 py-0.5 rounded-full ${badgeBg[action.priority]}`}>{action.priority}</span>
+                        <div key={i} className={`px-3 py-2 rounded-lg border ${priorityBg[action.color]}`}>
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <span className="text-sm">{action.icon}</span>
+                            <span className={`text-xs font-semibold ${priorityText[action.color]}`}>{action.title}</span>
+                            <span className={`ml-auto text-[10px] font-bold px-1.5 py-0.5 rounded-full ${badgeBg[action.priority]}`}>{action.priority}</span>
                           </div>
-                          <ul className="space-y-1">
-                            {action.steps.map((step, j) => (
-                              <li key={j} className={`flex items-start gap-2 text-xs ${priorityText[action.color]}`}>
-                                <span className="mt-0.5 flex-shrink-0">→</span>
-                                <span>{step}</span>
-                              </li>
-                            ))}
-                          </ul>
+                          {action.highlight && (
+                            <p className={`text-[11px] font-medium mb-1 ${priorityText[action.color]}`}>{action.highlight}</p>
+                          )}
+                          {action.steps && action.steps.length > 0 && (
+                            <ul className="space-y-0.5">
+                              {action.steps.map((step, j) => (
+                                <li key={j} className={`flex items-start gap-1.5 text-[11px] leading-tight ${priorityText[action.color]} opacity-80`}>
+                                  <span className="flex-shrink-0">→</span>
+                                  <span>{step}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -845,388 +986,55 @@ const CompetitorDetails = ({ accountId, locationId, businessName, businessCatego
           );
         })()}
 
-        {/* Competitors Grid - Live Monitoring */}
-        <div className="mt-8">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-lg">📡</span>
-            <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-              Your vs Top Competitors
-            </h3>
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
-              Live Monitoring
-            </span>
-          </div>
-        <div className="space-y-6">
-          {[...competitors].sort((a, b) => {
-            // Sort by combined score: rating weight 60% + review count weight 40%
+        {/* Top 5 Competitors - Live Monitoring */}
+        {competitors.length > 0 && (() => {
+          const sorted = [...competitors].sort((a, b) => {
             const maxRatings = Math.max(...competitors.map(c => c.totalRatings || 0), 1);
             const scoreA = ((a.rating || 0) / 5) * 0.6 + ((a.totalRatings || 0) / maxRatings) * 0.4;
             const scoreB = ((b.rating || 0) / 5) * 0.6 + ((b.totalRatings || 0) / maxRatings) * 0.4;
             return scoreB - scoreA;
-          }).map((competitor, index) => {
-            const maxRatings = Math.max(...competitors.map(c => c.totalRatings || 0), 1);
-            const ratingScore = Math.round(((competitor.rating || 0) / 5) * 0.6 * 100);
-            const reviewScore = Math.round(((competitor.totalRatings || 0) / maxRatings) * 0.4 * 100);
-            const totalScore = ratingScore + reviewScore;
-            const isTop3 = index < 3;
-            const medals = ['🥇', '🥈', '🥉'];
-            const top3BorderDark = ['border-yellow-400/60', 'border-gray-300/50', 'border-amber-600/50'];
-            const top3BorderLight = ['border-yellow-400', 'border-gray-400', 'border-amber-600'];
-            const top3GlowDark = ['shadow-yellow-500/20', 'shadow-gray-400/20', 'shadow-amber-600/20'];
-            const top3GlowLight = ['shadow-yellow-300/40', 'shadow-gray-300/40', 'shadow-amber-400/30'];
-            const top3BannerDark = ['from-yellow-500/20 to-yellow-600/5', 'from-gray-400/15 to-gray-500/5', 'from-amber-600/20 to-amber-700/5'];
-            const top3BannerLight = ['from-yellow-50 to-white', 'from-gray-50 to-white', 'from-amber-50 to-white'];
-            const top3LabelDark = ['text-yellow-300', 'text-gray-300', 'text-amber-400'];
-            const top3LabelLight = ['text-yellow-700', 'text-gray-600', 'text-amber-700'];
+          }).slice(0, 5);
 
-            return (
-            <div
-              key={competitor.placeId || index}
-              className={`rounded-xl overflow-hidden transition-all duration-300 ${
-                isTop3
-                  ? theme === 'dark'
-                    ? `bg-gradient-to-br ${top3BannerDark[index]} border-2 ${top3BorderDark[index]} shadow-xl ${top3GlowDark[index]}`
-                    : `bg-gradient-to-br ${top3BannerLight[index]} border-2 ${top3BorderLight[index]} shadow-xl ${top3GlowLight[index]}`
-                  : theme === 'dark'
-                    ? 'bg-[#1a1b2e]/90 border border-white/10 shadow-lg'
-                    : 'bg-white border border-gray-200 shadow-lg'
-              }`}
-            >
-              {/* Top 3 Header Banner */}
-              {isTop3 && (
-                <div className={`px-4 py-2.5 flex items-center justify-between border-b ${
-                  theme === 'dark' ? `border-white/10 bg-gradient-to-r ${top3BannerDark[index]}` : `border-gray-100 bg-gradient-to-r ${top3BannerLight[index]}`
-                }`}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">{medals[index]}</span>
-                    <div>
-                      <span className={`text-xs font-bold uppercase tracking-widest ${theme === 'dark' ? top3LabelDark[index] : top3LabelLight[index]}`}>
-                        {index === 0 ? 'Top Threat' : index === 1 ? '2nd Place' : '3rd Place'}
-                      </span>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <span className={`text-[10px] ${theme === 'dark' ? 'text-white/40' : 'text-gray-400'}`}>
-                          Score:
-                        </span>
-                        <span className={`text-xs font-bold ${theme === 'dark' ? top3LabelDark[index] : top3LabelLight[index]}`}>
-                          {totalScore}/100
-                        </span>
-                        <span className={`text-[10px] ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`}>
-                          (Rating {ratingScore} + Reviews {reviewScore})
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {/* Score bar */}
-                    <div className="hidden sm:flex flex-col items-end gap-1">
-                      <div className={`w-24 h-1.5 rounded-full ${theme === 'dark' ? 'bg-white/10' : 'bg-gray-200'}`}>
-                        <div
-                          className={`h-full rounded-full ${index === 0 ? 'bg-yellow-400' : index === 1 ? 'bg-gray-400' : 'bg-amber-500'}`}
-                          style={{ width: `${totalScore}%` }}
-                        />
-                      </div>
-                    </div>
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                      theme === 'dark' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-red-50 text-red-600 border border-red-200'
-                    }`}>
-                      ⚠ Watch Closely
-                    </span>
-                  </div>
-                </div>
-              )}
+          const maxRatings = Math.max(...competitors.map(c => c.totalRatings || 0), 1);
 
-              {/* Responsive Layout: stacked on mobile, 3-col on desktop */}
-              <div className="flex flex-col md:flex-row md:min-h-[280px]">
-                {/* Details */}
-                <div className="w-full md:w-[40%] p-4 border-b md:border-b-0 md:border-r border-gray-200 dark:border-white/10 flex flex-col">
-                  {/* Rank Badge */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={`text-xs font-bold px-3 py-1 rounded-full ${
-                      isTop3
-                        ? theme === 'dark'
-                          ? `bg-gradient-to-r from-yellow-500/30 to-orange-500/20 ${top3LabelDark[index]} border border-yellow-500/30`
-                          : `bg-gradient-to-r from-yellow-100 to-orange-50 ${top3LabelLight[index]} border border-yellow-300`
-                        : 'bg-purple-500/20 text-purple-400'
-                    }`}>
-                      {isTop3 ? medals[index] : `#${index + 1}`}
-                    </div>
-                    {/* Score pill */}
-                    <div className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                      theme === 'dark' ? 'bg-white/10 text-white/60' : 'bg-gray-100 text-gray-500'
-                    }`}>
-                      {totalScore}/100
-                    </div>
-                    {competitor.rating && (
-                      <div className={`text-xs font-bold px-3 py-1 rounded-full flex items-center ${
-                        isTop3
-                          ? 'bg-yellow-500 text-black shadow-md'
-                          : 'bg-yellow-500/80 text-black'
-                      }`}>
-                        <Star className="w-3 h-3 mr-1 fill-current" />
-                        {competitor.rating}
-                      </div>
-                    )}
-                  </div>
+          return (
+            <div className={`mt-8 rounded-2xl p-6 ${theme === 'dark' ? 'bg-[#1a1b2e]/90 border border-white/10' : 'bg-white border border-gray-200 shadow-sm'}`}>
+              {/* Header */}
+              <div className="flex items-center gap-2 mb-1">
+                <Users className={`w-5 h-5 ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`} />
+                <h3 className={`text-base font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
+                  Top 5 Competitors
+                </h3>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'}`}>
+                  Live Monitoring
+                </span>
+              </div>
+              <p className={`text-xs mb-5 ${theme === 'dark' ? 'text-white/50' : 'text-gray-500'}`}>
+                Your closest competitors ranked by growth score
+              </p>
 
-                  <h3 className={`text-base sm:text-lg font-semibold mb-2 line-clamp-2 ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                    {competitor.name}
-                  </h3>
+              <div className="space-y-2">
+                {sorted.map((competitor, index) => {
+                  const ratingScore = Math.round(((competitor.rating || 0) / 5) * 0.6 * 100);
+                  const reviewScore = Math.round(((competitor.totalRatings || 0) / maxRatings) * 0.4 * 100);
+                  const totalScore = ratingScore + reviewScore;
+                  const isTopPerformer = index < 3;
 
-                  {/* Address */}
-                  <div className={`flex items-start mb-3 text-xs sm:text-sm ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
-                    <MapPin className="w-3 h-3 sm:w-4 sm:h-4 mr-2 mt-0.5 flex-shrink-0" />
-                    <span className="line-clamp-2">{competitor.address}</span>
-                  </div>
-
-                  {/* Rating & Reviews */}
-                  {competitor.rating && (
-                    <div className="flex items-center mb-3">
-                      <div className={`flex items-center text-xs sm:text-sm ${theme === 'dark' ? 'text-yellow-400' : 'text-yellow-600'}`}>
-                        <Star className="w-3 h-3 sm:w-4 sm:h-4 mr-1 fill-current" />
-                        <span className="font-medium">{competitor.rating}</span>
-                        {competitor.totalRatings && (
-                          <span className={`ml-1 text-xs ${theme === 'dark' ? 'text-white/40' : 'text-gray-500'}`}>
-                            ({competitor.totalRatings} reviews)
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Categories */}
-                  {competitor.categories?.primaryCategory && (
-                    <div className="mb-2 flex flex-wrap gap-1">
-                      <span className={`inline-flex items-center text-xs font-semibold px-2 py-1 rounded-full ${
-                        theme === 'dark' ? 'bg-blue-500/20 text-blue-300' : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        🏷️ {competitor.categories.primaryCategory.displayName}
-                      </span>
-                      {competitor.categories.additionalCategories?.slice(0, 2).map((cat, i) => (
-                        <span key={i} className={`inline-block text-xs px-2 py-1 rounded-full ${
-                          theme === 'dark' ? 'bg-purple-500/10 text-purple-300' : 'bg-purple-50 text-purple-600'
-                        }`}>
-                          {cat.displayName}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* Phone */}
-                  {competitor.phoneNumbers?.primaryPhone && (
-                    <div className={`flex items-center mb-2 text-xs ${theme === 'dark' ? 'text-white/70' : 'text-gray-600'}`}>
-                      <Phone className="w-3 h-3 mr-1 flex-shrink-0" />
-                      <a href={`tel:${competitor.phoneNumbers.primaryPhone}`} className="hover:underline truncate">
-                        {competitor.phoneNumbers.primaryPhone}
-                      </a>
-                    </div>
-                  )}
-
-                  {/* Website */}
-                  {competitor.websiteUri && (
-                    <div className={`flex items-center mb-3 text-xs ${theme === 'dark' ? 'text-blue-400' : 'text-blue-600'}`}>
-                      <Globe className="w-3 h-3 mr-1 flex-shrink-0" />
-                      <a href={competitor.websiteUri} target="_blank" rel="noopener noreferrer" className="hover:underline truncate">
-                        {competitor.websiteUri.replace(/^https?:\/\//, '').split('/')[0]}
-                      </a>
-                    </div>
-                  )}
-
-                  {/* Business Status */}
-                  {competitor.businessStatus && (
-                    <div className="mb-3">
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        competitor.businessStatus === 'OPERATIONAL'
-                          ? theme === 'dark' ? 'bg-green-500/20 text-green-400' : 'bg-green-100 text-green-700'
-                          : theme === 'dark' ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700'
-                      }`}>
-                        {competitor.businessStatus === 'OPERATIONAL' ? '● Open' : '● ' + competitor.businessStatus.replace(/_/g, ' ')}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-2 mt-auto pt-3 border-t border-gray-200 dark:border-white/10">
-                    <a
-                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(competitor.name + ' ' + competitor.address)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex-1 flex items-center justify-center px-2 py-2 rounded-lg text-xs font-medium transition ${
-                        theme === 'dark'
-                          ? 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-300'
-                          : 'bg-blue-100 hover:bg-blue-200 text-blue-700'
-                      }`}
-                    >
-                      <MapPin className="w-3 h-3 mr-1" />
-                      Map
-                    </a>
-                    <a
-                      href={`https://www.google.com/search?q=${encodeURIComponent(competitor.name)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`flex-1 flex items-center justify-center px-2 py-2 rounded-lg text-xs font-medium transition ${
-                        theme === 'dark'
-                          ? 'bg-green-500/20 hover:bg-green-500/30 text-green-300'
-                          : 'bg-green-100 hover:bg-green-200 text-green-700'
-                      }`}
-                    >
-                      <Globe className="w-3 h-3 mr-1" />
-                      Search
-                    </a>
-                  </div>
-                </div>
-
-                {/* MIDDLE - Images Gallery (30% width) */}
-                <div className={`w-full md:w-[30%] p-3 border-b md:border-b-0 md:border-r border-gray-200 dark:border-white/10 flex flex-col ${theme === 'dark' ? 'bg-gray-800/30' : 'bg-gray-50'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      Photos ({competitor.totalPhotos || competitor.photos?.length || 0})
-                    </span>
-                    {competitor.photos && competitor.photos.length > 5 && (
-                      <button
-                        onClick={() => setImageModal({ name: competitor.name, photos: competitor.photos })}
-                        className={`text-xs font-medium ${theme === 'dark' ? 'text-purple-400 hover:text-purple-300' : 'text-purple-600 hover:text-purple-700'}`}
-                      >
-                        View All
-                      </button>
-                    )}
-                  </div>
-                  
-                  {competitor.photos && competitor.photos.length > 0 ? (
-                    <div className="grid grid-cols-2 gap-2 flex-1">
-                      {competitor.photos.slice(0, 4).map((photo, i) => (
-                        <div
-                          key={i}
-                          className="relative rounded-lg overflow-hidden cursor-pointer group h-20"
-                          onClick={() => setImageModal({ name: competitor.name, photos: competitor.photos })}
-                        >
-                          <img
-                            src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=300&photoreference=${photo.photoReference}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}`}
-                            alt={`${competitor.name} ${i + 1}`}
-                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                            onError={e => { e.target.src = `https://via.placeholder.com/150x100/8B5CF6/FFFFFF?text=No+Image`; }}
-                          />
-                        </div>
-                      ))}
-                      {competitor.photos.length > 4 && (
-                        <div 
-                          className="col-span-2 relative rounded-lg overflow-hidden cursor-pointer group h-20"
-                          onClick={() => setImageModal({ name: competitor.name, photos: competitor.photos })}
-                        >
-                          <img
-                            src={`https://maps.googleapis.com/maps/api/place/photo?maxwidth=300&photoreference=${competitor.photos[4].photoReference}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ''}`}
-                            alt={`${competitor.name} 5`}
-                            className="w-full h-full object-cover"
-                            onError={e => { e.target.src = `https://via.placeholder.com/150x100/8B5CF6/FFFFFF?text=No+Image`; }}
-                          />
-                          {competitor.photos.length > 5 && (
-                            <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
-                              <span className="text-white font-semibold text-sm">
-                                +{competitor.photos.length - 5} more
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <div className={`flex flex-col items-center justify-center flex-1 rounded-lg ${
-                      theme === 'dark' ? 'bg-gray-700/30' : 'bg-gray-200'
-                    }`}>
-                      <ImageIcon className={`w-8 h-8 mb-2 ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`} />
-                      <span className={`text-xs ${theme === 'dark' ? 'text-white/40' : 'text-gray-500'}`}>
-                        No photos
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* RIGHT SIDE - Reviews (30% width) */}
-                <div className={`w-full md:w-[30%] p-3 flex flex-col ${theme === 'dark' ? 'bg-gray-900/30' : 'bg-gray-100'}`}>
-                  <div className="flex items-center justify-between mb-2">
-                    <span className={`text-xs font-semibold ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                      Reviews ({competitor.totalReviews ?? competitor.reviews?.length ?? 0})
-                    </span>
-                  </div>
-
-                  {competitor.reviews && competitor.reviews.length > 0 ? (
-                    <div className="space-y-2 overflow-y-auto flex-1 pr-1" style={{ maxHeight: '240px' }}>
-                      {competitor.reviews.map((review, i) => (
-                        <div
-                          key={i}
-                          className={`p-2 rounded-lg ${
-                            theme === 'dark' ? 'bg-gray-800/50' : 'bg-white'
-                          }`}
-                        >
-                          {/* Reviewer Info */}
-                          <div className="flex items-center mb-1">
-                            {review.profilePhotoUrl ? (
-                              <img
-                                src={review.profilePhotoUrl}
-                                alt={review.authorName}
-                                className="w-6 h-6 rounded-full mr-2"
-                                onError={e => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.authorName)}&size=24`; }}
-                              />
-                            ) : (
-                              <div className={`w-6 h-6 rounded-full mr-2 flex items-center justify-center text-xs font-bold ${
-                                theme === 'dark' ? 'bg-purple-500/20 text-purple-300' : 'bg-purple-100 text-purple-700'
-                              }`}>
-                                {review.authorName?.charAt(0) || '?'}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className={`text-xs font-medium truncate ${theme === 'dark' ? 'text-white' : 'text-gray-900'}`}>
-                                {review.authorName}
-                              </p>
-                              <div className="flex items-center">
-                                <div className="flex items-center mr-1">
-                                  {[...Array(5)].map((_, starIdx) => (
-                                    <Star
-                                      key={starIdx}
-                                      className={`w-2.5 h-2.5 ${
-                                        starIdx < review.rating
-                                          ? 'text-yellow-400 fill-current'
-                                          : theme === 'dark' ? 'text-gray-600' : 'text-gray-300'
-                                      }`}
-                                    />
-                                  ))}
-                                </div>
-                                <span className={`text-xs ${theme === 'dark' ? 'text-white/40' : 'text-gray-500'}`}>
-                                  {review.relativeTimeDescription}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Review Text */}
-                          {review.text && (
-                            <p className={`text-xs leading-relaxed line-clamp-2 ${
-                              theme === 'dark' ? 'text-white/70' : 'text-gray-600'
-                            }`}>
-                              {review.text}
-                            </p>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className={`flex flex-col items-center justify-center flex-1 rounded-lg ${
-                      theme === 'dark' ? 'bg-gray-800/30' : 'bg-white'
-                    }`}>
-                      <Star className={`w-8 h-8 mb-2 ${theme === 'dark' ? 'text-white/30' : 'text-gray-400'}`} />
-                      <span className={`text-xs ${theme === 'dark' ? 'text-white/40' : 'text-gray-500'}`}>
-                        No reviews
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-
+                  return (
+                    <TopCompetitorRow
+                      key={competitor.placeId || index}
+                      competitor={competitor}
+                      index={index}
+                      totalScore={totalScore}
+                      isTopPerformer={isTopPerformer}
+                      theme={theme}
+                    />
+                  );
+                })}
               </div>
             </div>
-            );
-          })}
-        </div>
-        </div>
+          );
+        })()}
 
         {/* Load More Message */}
         {competitors.length < 10 && !loading && (

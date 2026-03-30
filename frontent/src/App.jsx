@@ -26,6 +26,7 @@ import { useAuth } from './components/context/AuthContext'
 import AdminDashboard from './components/admin/AdminDashboard'
 import AllUsers from './components/admin/AllUsers'
 import EditPlans from './components/admin/EditPlans'
+import LoginPageEditor from './components/admin/LoginPageEditor'
 import { AdminProvider } from './context/AdminContext'
 import SubscriptionPage from './components/subscription/SubscriptionPage'
 import SubscriptionSuccess from './components/subscription/SubscriptionSuccess'
@@ -129,6 +130,7 @@ const AppContent = () => {
               <Route path="billing" element={<UserSubscriptionDetails />} />
               <Route path="plans" element={<EditPlans />} />
               <Route path="subscription-plans" element={<EditPlans />} />
+              <Route path="login-page" element={<LoginPageEditor />} />
             </Route>
           )
         }

@@ -215,6 +215,7 @@ const Posts = () => {
       const params = new URLSearchParams({
         pageSize: pagination.pageSize,
         ...(loadMore && pagination.nextPageToken && { pageToken: pagination.nextPageToken }),
+        ...(!loadMore && { countAll: 'true' }), // get total count on first load
         ...(oauthTokens.access_token && { access_token: oauthTokens.access_token }),
         ...(oauthTokens.refresh_token && { refresh_token: oauthTokens.refresh_token }),
         ...(oauthTokens.expiry_date && { expiry_date: oauthTokens.expiry_date })
@@ -262,7 +263,8 @@ const Posts = () => {
         hasMore: !!nextPageToken,
         nextPageToken,
         loadingMore: false,
-        totalItems,
+        // Only update totalItems on first load (not loadMore), so count stays accurate
+        ...((!loadMore) && { totalItems }),
         currentPage: loadMore ? prev.currentPage + 1 : 1
       }));
 
@@ -849,7 +851,11 @@ const Posts = () => {
                         ? 'bg-white/10 text-white/60'
                         : 'bg-gray-100 text-gray-600'
                     }`}>
-                    {tab === 'scheduled' ? formattedScheduledPosts.length : posts.filter(p => p.status === tab).length}
+                    {tab === 'scheduled'
+                      ? formattedScheduledPosts.length
+                      : tab === 'published'
+                        ? (pagination.totalItems || posts.filter(p => p.status === tab).length)
+                        : posts.filter(p => p.status === tab).length}
                   </span>
                 </button>
               ))}

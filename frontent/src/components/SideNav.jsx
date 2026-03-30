@@ -131,6 +131,7 @@ const SideNav = () => {
     { name: 'Users', icon: Users, path: '/ad-dashboard/users', active: location.pathname === '/ad-dashboard/users' },
     { name: 'Analytics', icon: BarChart2, path: '/ad-dashboard/analytics', active: location.pathname === '/ad-dashboard/analytics' },
     { name: 'Edit Plans', icon: CreditCard, path: '/ad-dashboard/plans', active: location.pathname === '/ad-dashboard/plans' },
+    { name: 'Login Page', icon: Image, path: '/ad-dashboard/login-page', active: location.pathname === '/ad-dashboard/login-page' },
     { name: 'Logout', icon: LogOut, path: '#', active: false, isLogout: true },
   ];
 

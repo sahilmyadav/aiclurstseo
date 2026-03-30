@@ -185,14 +185,15 @@ const BusinessProfileDropdown = ({
             ? `${internalSelectedMultiple.length} selected`
             : internalSelected?.title || 'Select Business'}
         </span>
-        <ChevronDown className={`h-4 w-4 transition ${isOpen ? 'rotate-180' : ''}`} />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className={`text-[11px] font-semibold px-1.5 py-0.5 rounded-full ${
+            theme === 'dark' ? 'bg-purple-500/30 text-purple-300' : 'bg-purple-100 text-purple-700'
+          }`}>
+            {usedProfiles}/{maxProfiles}
+          </span>
+          <ChevronDown className={`h-4 w-4 transition ${isOpen ? 'rotate-180' : ''}`} />
+        </div>
       </button>
-
-      <div className={`absolute right-2 -top-2 text-xs px-2 py-0.5 rounded ${
-        theme === 'dark' ? 'bg-purple-900/50 text-purple-300' : 'bg-purple-100 text-purple-800'
-      }`}>
-        {usedProfiles}/{maxProfiles}
-      </div>
 
       {isOpen && (
         <div className={`absolute z-50 mt-1 w-full rounded shadow border ${

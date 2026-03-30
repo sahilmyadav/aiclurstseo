@@ -144,6 +144,7 @@ const SocialSharing = () => {
   });
 
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [ctaDropdownOpen, setCtaDropdownOpen] = useState(false);
   
   // CTA Button State
   // CTA Handler Functions
@@ -794,23 +795,55 @@ const SocialSharing = () => {
               <label className={`block text-sm font-medium mb-2 ${theme === 'dark' ? 'text-gray-300' : 'text-black'}`}>
                 Call-to-Action Button Type
               </label>
-              <select
-                value={formData.cta.type}
-                onChange={handleCtaTypeChange}
-                className={`w-full rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                  theme === 'dark' 
-                    ? 'bg-gray-700 border-gray-600 text-white' 
-                    : 'bg-white border-gray-300 text-black'
-                } border`}
-              >
-                <option value="NONE">No Button</option>
-                <option value="BOOK">Book Appointment</option>
-                <option value="ORDER">Order Online</option>
-                <option value="SHOP">Buy Now</option>
-                <option value="LEARN">Learn More</option>
-                <option value="SIGNUP">Sign Up</option>
-                <option value="CALL">Call Now</option>
-              </select>
+              {/* Custom CTA Dropdown with icons */}
+              {(() => {
+                const ctaOptions = [
+                  { value: 'NONE',   label: 'No Button',        icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg> },
+                  { value: 'BOOK',   label: 'Book Appointment', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> },
+                  { value: 'ORDER',  label: 'Order Online',     icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg> },
+                  { value: 'SHOP',   label: 'Buy Now',          icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg> },
+                  { value: 'LEARN',  label: 'Learn More',       icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> },
+                  { value: 'SIGNUP', label: 'Sign Up',          icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg> },
+                  { value: 'CALL',   label: 'Call Now',         icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.18 2 2 0 0 1 3.6 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.6a16 16 0 0 0 6.29 6.29l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg> },
+                ];
+                const selected = ctaOptions.find(o => o.value === formData.cta.type) || ctaOptions[0];
+                return (
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setCtaDropdownOpen(v => !v)}
+                      className={`w-full flex items-center gap-2 rounded-lg px-4 py-2 border focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        theme === 'dark' ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-black'
+                      }`}
+                    >
+                      <span className={theme === 'dark' ? 'text-gray-300' : 'text-gray-500'}>{selected.icon}</span>
+                      <span className="flex-1 text-left text-sm">{selected.label}</span>
+                      <svg className={`w-4 h-4 transition-transform duration-200 ${ctaDropdownOpen ? 'rotate-180' : ''} ${theme === 'dark' ? 'text-gray-400' : 'text-gray-500'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    {ctaDropdownOpen && (
+                      <div className={`absolute z-50 w-full mt-1 rounded-lg border shadow-lg overflow-hidden ${
+                        theme === 'dark' ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-200'
+                      }`}>
+                        {ctaOptions.map(opt => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => { handleCtaTypeChange({ target: { value: opt.value } }); setCtaDropdownOpen(false); }}
+                            className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                              formData.cta.type === opt.value
+                                ? theme === 'dark' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-700'
+                                : theme === 'dark' ? 'text-gray-200 hover:bg-gray-600' : 'text-gray-700 hover:bg-gray-50'
+                            }`}
+                          >
+                            <span>{opt.icon}</span>
+                            <span>{opt.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* URL Input for web actions */}
               {(formData.cta.type === 'BOOK' || formData.cta.type === 'ORDER' || formData.cta.type === 'SHOP' || formData.cta.type === 'LEARN' || formData.cta.type === 'SIGNUP') && (

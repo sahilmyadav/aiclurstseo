@@ -207,7 +207,7 @@ export const createGooglePost = async (req, res) => {
   }
 };
 
-// 📋 Get Google Posts (Paginated)
+// 📋 Get Google Posts (Paginated) with total count
 export const getGooglePosts = async (req, res) => {
   try {
     const tokens = {
@@ -219,25 +219,43 @@ export const getGooglePosts = async (req, res) => {
     if (!tokens.access_token) return res.status(401).json({ error: "Not authenticated" });
 
     const { accountId, locationId } = req.params;
-    const { pageSize = 100, pageToken } = req.query;
+    const { pageSize = 20, pageToken, countAll } = req.query;
     const token = await getBearerToken(tokens);
 
-    let url = `https://mybusiness.googleapis.com/v4/accounts/${accountId}/locations/${locationId}/localPosts`;
-    const params = new URLSearchParams();
+    const baseUrl = `https://mybusiness.googleapis.com/v4/accounts/${accountId}/locations/${locationId}/localPosts`;
 
-    params.append("pageSize", pageSize);
+    // Fetch the requested page
+    const params = new URLSearchParams({ pageSize });
     if (pageToken) params.append("pageToken", pageToken);
 
-    if (params.toString()) url += `?${params.toString()}`;
-
-    const response = await axios.get(url, {
+    const response = await axios.get(`${baseUrl}?${params}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
 
+    let totalCount = response.data.localPosts?.length || 0;
+
+    // If countAll=true or first page (no pageToken), traverse all pages to get total count
+    if (countAll === 'true' || !pageToken) {
+      let nextToken = response.data.nextPageToken;
+      let runningCount = totalCount;
+
+      while (nextToken) {
+        const countParams = new URLSearchParams({ pageSize: 100, pageToken: nextToken });
+        const countRes = await axios.get(`${baseUrl}?${countParams}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        runningCount += countRes.data.localPosts?.length || 0;
+        nextToken = countRes.data.nextPageToken;
+      }
+
+      totalCount = runningCount;
+    }
+
     res.json({
       ...response.data,
+      totalItems: totalCount,
       pagination: {
-        totalPosts: response.data.localPosts?.length || 0,
+        totalPosts: totalCount,
         nextPageToken: response.data.nextPageToken,
         hasMore: !!response.data.nextPageToken,
       },

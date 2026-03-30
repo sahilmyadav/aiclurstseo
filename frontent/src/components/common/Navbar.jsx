@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -51,65 +51,58 @@ const Navbar = () => {
           </div>
 
           <div className="hidden md:flex items-center justify-between md:justify-around gap-4 lg:gap-6 space-x-4 lg:space-x-6 font-medium text-gray-900">
-            <Link 
+            <NavLink 
               to="/" 
-              className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
-              activeClassName="text-purple-700 bg-purple-50"
+              end
+              className={({ isActive }) => `text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700 ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-900'}`}
             >
               Home
-            </Link>
-            <Link 
+            </NavLink>
+            <NavLink 
               to="/about" 
-              className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
-              activeClassName="text-purple-700 bg-purple-50"
+              className={({ isActive }) => `text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700 ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-900'}`}
             >
               About
-            </Link>
-            <Link 
+            </NavLink>
+            <NavLink 
               to="/privacy-policy" 
-              className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
-              activeClassName="text-purple-700 bg-purple-50"
+              className={({ isActive }) => `text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700 ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-900'}`}
             >
               Privacy Policy
-            </Link>
-            <Link 
+            </NavLink>
+            <NavLink 
               to="/terms-of-service" 
-              className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
-              activeClassName="text-purple-700 bg-purple-50"
+              className={({ isActive }) => `text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700 ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-900'}`}
             >
               Terms of Service
-            </Link>
+            </NavLink>
             {isAuthenticated && (
               <>
-                <Link 
+                <NavLink 
                   to={user?.role === 'admin' ? '/ad-dashboard' : '/dashboard'} 
-                  className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
-                  activeClassName="text-purple-700 bg-purple-50"
+                  className={({ isActive }) => `text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700 ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-900'}`}
                 >
                   Dashboard
-                </Link>
-                <Link 
+                </NavLink>
+                <NavLink 
                   to="/reviews" 
-                  className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
-                  activeClassName="text-purple-700 bg-purple-50"
+                  className={({ isActive }) => `text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700 ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-900'}`}
                 >
                   Reviews
-                </Link>
-                <Link 
+                </NavLink>
+                <NavLink 
                   to="/seo-dashboard" 
-                  className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
-                  activeClassName="text-purple-700 bg-purple-50"
+                  className={({ isActive }) => `text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700 ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-900'}`}
                 >
                   SEO
-                </Link>
+                </NavLink>
                 {user?.role === 'admin' && (
-                  <Link 
+                  <NavLink 
                     to="/analytics-dashboard" 
-                    className="text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 text-gray-900 hover:bg-purple-50 hover:text-purple-700"
-                    activeClassName="text-purple-700 bg-purple-50"
+                    className={({ isActive }) => `text-sm font-medium px-3 py-2 rounded-lg transition-colors duration-200 hover:bg-purple-50 hover:text-purple-700 ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-900'}`}
                   >
                     Analytics
-                  </Link>
+                  </NavLink>
                 )}
               </>
             )}
@@ -181,15 +174,14 @@ const Navbar = () => {
                 { name: 'Settings', path: '/dashboard/settings' }
               ] : [])
             ].map((item, index) => (
-              <Link
+              <NavLink
                 key={index}
                 to={item.path}
-                className="block px-4 py-3 text-base font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-700 rounded-lg transition-colors duration-200"
+                className={({ isActive }) => `block px-4 py-3 text-base font-medium rounded-lg transition-colors duration-200 ${isActive ? 'text-purple-700 bg-purple-50' : 'text-gray-700 hover:bg-purple-50 hover:text-purple-700'}`}
                 onClick={closeMobileMenu}
-                activeClassName="text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-900/30"
               >
                 {item.name}
-              </Link>
+              </NavLink>
             ))}
 
 {/* Auth Buttons for Mobile */}
