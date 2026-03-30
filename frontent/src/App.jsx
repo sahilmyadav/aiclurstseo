@@ -1,4 +1,11 @@
 import { Route, Routes, useLocation } from 'react-router-dom'
+import { useEffect } from 'react'
+
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
 import { AuthContextProvider } from './components/context/AuthContext'
 import Navbar from './components/common/Navbar'
 import Home from './components/common/Home'
@@ -56,6 +63,7 @@ const AppContent = () => {
 
   return (
     <>
+      <ScrollToTop />
       {!isDashboardRoute && user?.role !== 'admin' && <Navbar />}
       <Routes>
 

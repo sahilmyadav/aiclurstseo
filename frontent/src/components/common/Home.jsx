@@ -25,15 +25,15 @@ export default function Home() {
   return (
     <>
       <Hero />
-      <Features />
+      <div id="features"><Features /></div>
       <HowItWorks />
       <WhyItWorks />
-      <Pricing />
+      <div id="pricing"><Pricing /></div>
       <WhoIsFor />
-      <Testimonials />
-      <FAQ />
+      <div id="reviews"><Testimonials /></div>
+      <div id="faq"><FAQ /></div>
       <FinalCTA />
-      {/* <Footer/> */}
+      <Footer />
     </>
   );
 }
